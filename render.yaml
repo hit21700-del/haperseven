@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────
+# Render 배포 설정 (Blueprint)
+# GitHub 저장소를 Render 에 연결하면 이 파일로 자동 구성됩니다.
+# Dockerfile 기반 빌드 → Next.js standalone 서버 실행.
+# Render 가 주입하는 PORT 환경변수를 server.js 가 자동으로 사용합니다.
+# ─────────────────────────────────────────────────────────────
+services:
+  - type: web
+    name: haperseven
+    runtime: docker
+    plan: free # 무료 플랜 (15분 미사용 시 절전, 첫 접속이 느릴 수 있음)
+    healthCheckPath: /
+    envVars:
+      # AI 채팅을 켤 때만 대시보드에서 값 설정 (지금은 기능 꺼져 있어 불필요)
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.5
