@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { MemberTypeBadge } from "@/components/ui/Badge";
 import { PeriodFilter } from "@/components/common/PeriodFilter";
@@ -9,6 +9,7 @@ import { periodLabel } from "@/lib/stats/period";
 import { formatWon } from "@/lib/utils/format";
 import { summarizeAll, unpaidMembers, totals } from "@/lib/payments/paymentService";
 import { aggregate, topN, recentMatchSummary, type PlayerAggregate } from "@/lib/stats/statsService";
+import { readJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 
 /** 장식용 스파크라인 */
 function Spark({ up = false }: { up?: boolean }) {
@@ -101,7 +102,12 @@ export function DashboardPage() {
 
   const activeCount = members.filter((m) => m.isActive).length || 1;
   const unpaidPct = Math.round((t.unpaidCount / activeCount) * 1000) / 10;
-  const avgExpected = Math.round(t.totalExpected / activeCount);
+
+  // 현재 총 회비(잔고) — 회비 화면에서 수정한 값 사용
+  const [teamBalance, setTeamBalance] = useState(8_825_526);
+  useEffect(() => {
+    setTeamBalance(readJSON<number>(STORAGE_KEYS.teamBalance, 8_825_526));
+  }, []);
 
   return (
     <div className="space-y-5">
@@ -139,10 +145,10 @@ export function DashboardPage() {
           icon="🧾"
           iconBg="bg-brand-50"
           iconColor="text-brand-600"
-          label="예상 회비"
-          value={formatWon(t.totalExpected)}
+          label="총 회비 (잔고)"
+          value={formatWon(teamBalance)}
           valueColor="text-brand-600"
-          sub={`1인당 평균 ${avgExpected.toLocaleString("ko-KR")}원`}
+          sub="회비 화면에서 수정 가능"
         />
         <StatCardX
           icon="◔"

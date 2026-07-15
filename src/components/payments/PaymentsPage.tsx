@@ -55,13 +55,16 @@ export function PaymentsPage() {
   const t = useMemo(() => totals(summaries), [summaries]);
   const visible = onlyUnpaid ? summaries.filter((s) => s.status === "미납" || s.status === "일부") : summaries;
 
-  // 월별 납부 상태 토글
+  // 반기(6개월) 단위 납부 상태 토글 — 회비가 6개월 단위이므로 한 번에 반기 전체 변경
   const cycleStatus = (memberId: string, month: number) => {
     const m = members.find((x) => x.id === memberId);
     if (!m) return;
+    const half = month <= 6 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
     const cur = m.monthlyPaymentStatus[month] ?? "UNKNOWN";
     const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur) + 1) % STATUS_CYCLE.length];
-    upsertMember({ ...m, monthlyPaymentStatus: { ...m.monthlyPaymentStatus, [month]: next } });
+    const monthly = { ...m.monthlyPaymentStatus };
+    half.forEach((mo) => (monthly[mo] = next));
+    upsertMember({ ...m, monthlyPaymentStatus: monthly });
   };
 
   // 실제 납부 금액 직접 입력 — 이 기간의 기존 납부 입력을 대체하는 단일 항목으로 저장
@@ -145,7 +148,7 @@ export function PaymentsPage() {
           />
           <div className="mt-1 text-xs text-gray-400">클릭해서 수정 가능</div>
         </Card>
-        <StatCard label="예상 회비" value={formatWon(t.totalExpected)} />
+        <StatCard label="회비 합계 (청구 기준)" value={formatWon(t.totalExpected)} />
         <StatCard label="총 납부" value={formatWon(t.totalPaid)} tone="green" sub={`납부율 ${t.paymentRate}%`} />
         <StatCard label="미납 합계" value={formatWon(t.totalUnpaid)} tone="red" sub={`미납자 ${t.unpaidCount}명`} />
       </div>
@@ -166,12 +169,12 @@ export function PaymentsPage() {
             <TR>
               <TH>이름</TH>
               <TH>구분</TH>
-              <TH>예상</TH>
+              <TH>회비</TH>
               <TH>납부</TH>
               <TH>미납</TH>
               <TH>상태</TH>
               {Array.from({ length: 12 }, (_, i) => i + 1).map((mo) => (
-                <TH key={mo} className="px-2 text-center">
+                <TH key={mo} className={`px-1 text-center ${mo === 7 ? "border-l border-gray-200" : ""}`}>
                   {mo}
                 </TH>
               ))}
@@ -195,13 +198,13 @@ export function PaymentsPage() {
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((mo) => {
                   const st = s.member.monthlyPaymentStatus[mo] ?? "UNKNOWN";
                   return (
-                    <TD key={mo} className="px-2 text-center">
+                    <TD key={mo} className={`px-1 text-center ${mo === 7 ? "border-l border-gray-100" : ""}`}>
                       <button
-                        title={`${mo}월 (클릭: 납부/미납/면제)`}
+                        title={`${mo <= 6 ? "상반기" : "하반기"} 일괄 변경 (납부/미납/면제)`}
                         onClick={() => cycleStatus(s.member.id, mo)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-gray-100"
+                        className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-gray-100"
                       >
-                        <span className={`h-3 w-3 rounded-full ${DOT[st]}`} />
+                        <span className={`h-2.5 w-2.5 rounded-full ${DOT[st]}`} />
                       </button>
                     </TD>
                   );
@@ -211,11 +214,11 @@ export function PaymentsPage() {
           </tbody>
         </Table>
         <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
-          ※ 월별 점 클릭으로 상태 변경 —
+          ※ 회비는 <b className="text-gray-500">6개월(반기) 단위</b> — 점을 클릭하면 해당 반기(1~6월/7~12월) 전체가 함께 바뀝니다.
           <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" /> 납부
           <span className="ml-1 inline-block h-2.5 w-2.5 rounded-full bg-red-500" /> 미납
           <span className="ml-1 inline-block h-2.5 w-2.5 rounded-full bg-gray-300" /> 면제.
-          <b className="text-gray-500">납부 금액</b> 칸은 직접 입력(엔터로 저장) → 미납·상태가 자동 갱신됩니다.
+          <b className="text-gray-500">납부 금액</b> 칸은 직접 입력(엔터로 저장)도 가능합니다.
         </p>
       </Card>
 

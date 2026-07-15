@@ -41,7 +41,13 @@ function attendanceCountInPeriod(memberId: string, matches: Match[], period: Per
   }).length;
 }
 
-/** 한 회원의 기간 회비 요약 계산 */
+/**
+ * 한 회원의 기간 회비 요약 계산 — 6개월(반기) 단위.
+ * 회비 금액(feeAmount)은 '6개월치'이며, 반기에 납부/미납 표시가 있으면 그 반기가 청구된 것으로 본다.
+ *   - 반기 내 월에 PAID 표시 → 해당 반기 납부(회비 전액)
+ *   - 반기 내 월에 UNPAID 표시 → 해당 반기 미납(회비 전액 청구)
+ *   - 표시 없음/면제 → 청구하지 않음
+ */
 export function summarizeMember(
   member: Member,
   entries: PaymentEntry[],
@@ -51,31 +57,36 @@ export function summarizeMember(
   const months = monthsInPeriod(period);
   const rule = getFeeRule(member.memberType);
 
-  // 면제 대상: 비활동(휴식/탈퇴) 또는 회장/스텝이 면제로 처리된 경우는 아님 → 비활동만 면제 취급
+  // 비활동(휴식/탈퇴)은 면제 취급
   if (!member.isActive) {
     return { member, expected: 0, paid: 0, unpaid: 0, perAttendanceFee: 0, status: "면제" };
   }
 
-  // 정기 회비 예상액: 월 환산 * 기간 월수. 단, 면제(EXEMPT)인 월은 제외
-  const monthly = monthlyExpected(member);
-  const billableMonths = months.filter((m) => member.monthlyPaymentStatus[m] !== "EXEMPT");
-  let expected = monthly * billableMonths.length;
+  const fee = Math.max(0, member.feeAmount || 0); // 6개월 단위 회비
+  // 기간에 걸친 반기 목록 (1=상반기 1~6월, 2=하반기 7~12월)
+  const halves = [...new Set(months.map((mo) => (mo <= 6 ? 1 : 2)))];
+
+  let expected = 0;
+  let paidRegular = 0;
+  for (const h of halves) {
+    const hMonths = h === 1 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
+    const statuses = hMonths.map((mo) => member.monthlyPaymentStatus[mo] ?? "UNKNOWN");
+    const anyPaid = statuses.includes("PAID");
+    const anyUnpaid = statuses.includes("UNPAID");
+    if (anyPaid || anyUnpaid) expected += fee; // 표시된 반기만 청구
+    if (anyPaid && !anyUnpaid) paidRegular += fee; // 반기 납부 완료
+  }
 
   // 참석비(준회원/용병): 참석 횟수 * perAttendance
   const attendCount = attendanceCountInPeriod(member.id, matches, period);
   const perAttendanceFee = (rule.perAttendance ?? 0) * attendCount;
   expected += perAttendanceFee;
 
-  // 실제 납부액: PaymentEntry 합산(기간 내). 없으면 PAID 월 수 * 월환산으로 추정
+  // 실제 납부액 입력이 있으면 그 값을 우선
   const entrySum = entries
     .filter((e) => e.memberId === member.id && (period.type === "range" || e.year === period.year) && months.includes(e.month))
     .reduce((s, e) => s + e.paidAmount, 0);
-
-  let paid = entrySum;
-  if (entrySum === 0) {
-    const paidMonths = months.filter((m) => member.monthlyPaymentStatus[m] === "PAID").length;
-    paid = monthly * paidMonths;
-  }
+  const paid = entrySum > 0 ? entrySum : paidRegular;
 
   const unpaid = Math.max(0, expected - paid);
   const status: MemberPaymentSummary["status"] =
