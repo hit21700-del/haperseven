@@ -15,6 +15,7 @@ import { formatWon, currentYear } from "@/lib/utils/format";
 import type { PaymentStatus } from "@/types/member";
 import type { RefundRecord } from "@/types/payment";
 import { RefundModal } from "./RefundModal";
+import { readJSON, writeJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 
 const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
 // 월별 납부 상태 점(dot) 색상: 미표시=연회색, 납부=초록, 미납=빨강, 면제=회색
@@ -30,6 +31,22 @@ export function PaymentsPage() {
   const [period, setPeriod] = useState<Period>({ type: "year", year: 2025 });
   const [onlyUnpaid, setOnlyUnpaid] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
+
+  // 현재 팀 잔고(총 회비) — localStorage 에 저장, 직접 수정 가능
+  const DEFAULT_BALANCE = 8_825_526;
+  const [balanceInput, setBalanceInput] = useState(String(DEFAULT_BALANCE));
+  useEffect(() => {
+    setBalanceInput(readJSON<number>(STORAGE_KEYS.teamBalance, DEFAULT_BALANCE).toLocaleString("ko-KR") + "원");
+  }, []);
+  const commitBalance = () => {
+    const n = Number(balanceInput.replace(/[, 원]/g, ""));
+    if (!Number.isNaN(n) && n >= 0) {
+      writeJSON(STORAGE_KEYS.teamBalance, Math.round(n));
+      setBalanceInput(Math.round(n).toLocaleString("ko-KR") + "원");
+    } else {
+      setBalanceInput(readJSON<number>(STORAGE_KEYS.teamBalance, DEFAULT_BALANCE).toLocaleString("ko-KR") + "원");
+    }
+  };
 
   const summaries = useMemo(
     () => summarizeAll(members, paymentEntries, matches, period),
@@ -98,8 +115,8 @@ export function PaymentsPage() {
       </div>
 
       {/* 계좌 정보 + 합계 */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <Card className="md:col-span-1">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <Card>
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FEE500] text-lg font-extrabold text-[#3A1D1D]">
               B
@@ -111,6 +128,22 @@ export function PaymentsPage() {
               <div className="text-xs text-gray-500">예금주: {ACCOUNT_INFO.holder}</div>
             </div>
           </div>
+        </Card>
+        <Card>
+          <div className="text-[13px] text-gray-500">현재 총 회비 (잔고)</div>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={balanceInput}
+            onChange={(e) => setBalanceInput(e.target.value)}
+            onBlur={commitBalance}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            title="현재 팀 잔고 직접 입력 (엔터로 저장)"
+            className="mt-1 w-full rounded-lg border border-transparent bg-transparent text-[24px] font-extrabold leading-none text-brand-600 hover:border-gray-200 focus:border-brand-500 focus:outline-none"
+          />
+          <div className="mt-1 text-xs text-gray-400">클릭해서 수정 가능</div>
         </Card>
         <StatCard label="예상 회비" value={formatWon(t.totalExpected)} />
         <StatCard label="총 납부" value={formatWon(t.totalPaid)} tone="green" sub={`납부율 ${t.paymentRate}%`} />

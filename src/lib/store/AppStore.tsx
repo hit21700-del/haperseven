@@ -23,7 +23,7 @@ import {
   SEED_VERSION,
 } from "@/lib/data/sampleData";
 import { applyDefaultTeams } from "@/lib/data/defaultTeams";
-import { applyPaymentSeed } from "@/lib/data/paymentSeed";
+import { applyPaymentSeed, SEED_VERSION_PAYMENT } from "@/lib/data/paymentSeed";
 
 type AppState = {
   ready: boolean;
@@ -80,11 +80,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       memberRepository.saveAll(loadedMembers);
       writeJSON(STORAGE_KEYS.teamsSeeded, true);
     }
-    // 회비 납부 현황 최초 1회 반영(엑셀 캡처 기준 — 회비 금액/월별 상태만 갱신)
-    if (!readJSON<boolean>(STORAGE_KEYS.paymentSeeded, false)) {
+    // 회비 납부 현황 반영 — 버전이 바뀌면 1회 재적용(회비 금액/월별 상태만 갱신)
+    if (readJSON<string | boolean>(STORAGE_KEYS.paymentSeeded, "") !== SEED_VERSION_PAYMENT) {
       loadedMembers = applyPaymentSeed(loadedMembers);
       memberRepository.saveAll(loadedMembers);
-      writeJSON(STORAGE_KEYS.paymentSeeded, true);
+      writeJSON(STORAGE_KEYS.paymentSeeded, SEED_VERSION_PAYMENT);
     }
     setMembersState(loadedMembers);
     setMatchesState(matchRepository.getAll());
@@ -172,7 +172,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     writeJSON(STORAGE_KEYS.seeded, true);
     writeJSON(STORAGE_KEYS.seedVersion, SEED_VERSION);
     writeJSON(STORAGE_KEYS.teamsSeeded, true);
-    writeJSON(STORAGE_KEYS.paymentSeeded, true);
+    writeJSON(STORAGE_KEYS.paymentSeeded, SEED_VERSION_PAYMENT);
     setMembersState(seededMembers);
     setMatchesState([...SAMPLE_MATCHES].sort((a, b) => b.date.localeCompare(a.date)));
     setPaymentEntriesState(SAMPLE_PAYMENT_ENTRIES);

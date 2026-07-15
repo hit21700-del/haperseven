@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   seedVersion: `${PREFIX}seedVersion`,
   teamsSeeded: `${PREFIX}teamsSeeded`,
   paymentSeeded: `${PREFIX}paymentSeeded`,
+  teamBalance: `${PREFIX}teamBalance`,
 } as const;
 
 /** JSON 값을 읽는다. 없거나 파싱 실패 시 fallback 반환 */
