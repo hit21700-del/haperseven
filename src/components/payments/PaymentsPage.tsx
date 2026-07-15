@@ -15,6 +15,7 @@ import { formatWon, currentYear } from "@/lib/utils/format";
 import type { PaymentStatus } from "@/types/member";
 import type { RefundRecord } from "@/types/payment";
 import { RefundModal } from "./RefundModal";
+import { BulkPaymentModal } from "./BulkPaymentModal";
 import { readJSON, writeJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 
 const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
@@ -31,6 +32,7 @@ export function PaymentsPage() {
   const [period, setPeriod] = useState<Period>({ type: "year", year: 2025 });
   const [onlyUnpaid, setOnlyUnpaid] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   // 현재 팀 잔고(총 회비) — localStorage 에 저장, 직접 수정 가능
   const DEFAULT_BALANCE = 8_825_526;
@@ -54,6 +56,18 @@ export function PaymentsPage() {
   );
   const t = useMemo(() => totals(summaries), [summaries]);
   const visible = onlyUnpaid ? summaries.filter((s) => s.status === "미납" || s.status === "일부") : summaries;
+
+  // 일괄 등록: 선택한 회원들의 반기 상태를 한 번에 변경
+  const applyBulk = (memberIds: string[], half: 1 | 2, status: PaymentStatus) => {
+    const halfMonths = half === 1 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
+    for (const id of memberIds) {
+      const m = members.find((x) => x.id === id);
+      if (!m) continue;
+      const monthly = { ...m.monthlyPaymentStatus };
+      halfMonths.forEach((mo) => (monthly[mo] = status));
+      upsertMember({ ...m, monthlyPaymentStatus: monthly });
+    }
+  };
 
   // 반기(6개월) 단위 납부 상태 토글 — 회비가 6개월 단위이므로 한 번에 반기 전체 변경
   const cycleStatus = (memberId: string, month: number) => {
@@ -156,10 +170,13 @@ export function PaymentsPage() {
       <Card>
         <SectionTitle
           action={
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input type="checkbox" checked={onlyUnpaid} onChange={(e) => setOnlyUnpaid(e.target.checked)} />
-              미납자만 보기
-            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input type="checkbox" checked={onlyUnpaid} onChange={(e) => setOnlyUnpaid(e.target.checked)} />
+                미납자만 보기
+              </label>
+              <Button onClick={() => setBulkOpen(true)}>☑ 일괄 등록</Button>
+            </div>
           }
         >
           회원별 납부 현황
@@ -263,6 +280,7 @@ export function PaymentsPage() {
       </Card>
 
       <RefundModal open={refundOpen} onClose={() => setRefundOpen(false)} members={members} onSave={addRefund} />
+      <BulkPaymentModal open={bulkOpen} members={members} onClose={() => setBulkOpen(false)} onApply={applyBulk} />
     </div>
   );
 }
