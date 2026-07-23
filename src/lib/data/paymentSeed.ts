@@ -8,7 +8,7 @@
 import type { Member, PaymentStatus } from "@/types/member";
 
 /** 회비 반영 버전 — 값을 바꾸면 접속 시 1회 재적용 */
-export const SEED_VERSION_PAYMENT = "v2-20260715";
+export const SEED_VERSION_PAYMENT = "v3-20260715";
 
 type SeedRow = {
   /** 회비 금액(원). 지정 시 덮어씀 */
@@ -46,16 +46,16 @@ const SEED: Record<string, SeedRow> = {
   임건: { fee: 350_000, paid: H1 },
   배현우: { fee: 180_000, paid: H1, note: "하반기 준회원 전환 예정" },
   성태현: { fee: 350_000, paid: H1 },
+  황민성: { fee: 160_000, paid: H1 },
+  이양호: { fee: 180_000, paid: H1 },
+  최성우: { fee: 180_000, paid: H1 },
+  박건: { fee: 180_000, paid: H1 },
+  봉진우: { fee: 140_000, paid: ALL }, // 전체 기간(연간) 납부 완료
   // ── 미납 ──
-  황민성: { fee: 160_000, unpaid: H1 },
   박성재: { fee: 0, unpaid: H1 },
   이창현: { fee: 0, unpaid: H1 },
-  이양호: { fee: 180_000, unpaid: H1 },
   이수형: { fee: 0, unpaid: H1 },
   이지섭: { fee: 180_000, unpaid: H1 },
-  봉진우: { fee: 140_000, unpaid: H1 },
-  최성우: { fee: 180_000, unpaid: H1 },
-  박건: { fee: 180_000, unpaid: H1 },
   // ── 특수 ──
   이중한: { fee: 0, exempt: ALL, note: "부상" },
   // ── 회비 없음(준회원/탈퇴/휴식 등) ──
