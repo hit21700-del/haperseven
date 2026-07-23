@@ -19,13 +19,24 @@ import { BulkPaymentModal } from "./BulkPaymentModal";
 import { readJSON, writeJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 
 const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
-// 월별 납부 상태 점(dot) 색상: 미표시=연회색, 납부=초록, 미납=빨강, 면제=회색
-const DOT: Record<PaymentStatus, string> = {
-  UNKNOWN: "bg-gray-200",
-  PAID: "bg-green-500",
-  UNPAID: "bg-red-500",
-  EXEMPT: "bg-gray-300",
+
+// 반기(6개월) 상태 표시 배지 스타일/라벨
+const HALF_BADGE: Record<PaymentStatus, { label: string; cls: string }> = {
+  PAID: { label: "납부", cls: "bg-green-100 text-green-700" },
+  UNPAID: { label: "미납", cls: "bg-red-100 text-red-600" },
+  EXEMPT: { label: "면제", cls: "bg-gray-200 text-gray-500" },
+  UNKNOWN: { label: "－", cls: "border border-gray-200 bg-white text-gray-300" },
 };
+
+/** 반기의 대표 상태: 미납 표시가 하나라도 있으면 미납, 납부 표시가 있으면 납부, 전부 면제면 면제 */
+function halfStatusOf(monthly: Record<number, PaymentStatus>, half: 1 | 2): PaymentStatus {
+  const months = half === 1 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
+  const sts = months.map((mo) => monthly[mo] ?? "UNKNOWN");
+  if (sts.includes("UNPAID")) return "UNPAID";
+  if (sts.includes("PAID")) return "PAID";
+  if (sts.every((s) => s === "EXEMPT")) return "EXEMPT";
+  return "UNKNOWN";
+}
 
 export function PaymentsPage() {
   const { members, matches, paymentEntries, setPaymentEntries, upsertMember, refunds, setRefunds } = useAppStore();
@@ -190,11 +201,8 @@ export function PaymentsPage() {
               <TH>납부</TH>
               <TH>미납</TH>
               <TH>상태</TH>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((mo) => (
-                <TH key={mo} className={`px-1 text-center ${mo === 7 ? "border-l border-gray-200" : ""}`}>
-                  {mo}
-                </TH>
-              ))}
+              <TH className="text-center">상반기 (1~6월)</TH>
+              <TH className="text-center">하반기 (7~12월)</TH>
             </TR>
           </THead>
           <tbody>
@@ -212,16 +220,17 @@ export function PaymentsPage() {
                 <TD>
                   <PaymentStatusBadge status={s.status} />
                 </TD>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((mo) => {
-                  const st = s.member.monthlyPaymentStatus[mo] ?? "UNKNOWN";
+                {([1, 2] as const).map((half) => {
+                  const st = halfStatusOf(s.member.monthlyPaymentStatus, half);
+                  const badge = HALF_BADGE[st];
                   return (
-                    <TD key={mo} className={`px-1 text-center ${mo === 7 ? "border-l border-gray-100" : ""}`}>
+                    <TD key={half} className="text-center">
                       <button
-                        title={`${mo <= 6 ? "상반기" : "하반기"} 일괄 변경 (납부/미납/면제)`}
-                        onClick={() => cycleStatus(s.member.id, mo)}
-                        className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-gray-100"
+                        title={`${half === 1 ? "상반기" : "하반기"} 상태 변경 (클릭: 납부→미납→면제→해제)`}
+                        onClick={() => cycleStatus(s.member.id, half === 1 ? 1 : 7)}
+                        className={`min-w-14 rounded-full px-3 py-1 text-xs font-semibold transition hover:opacity-80 ${badge.cls}`}
                       >
-                        <span className={`h-2.5 w-2.5 rounded-full ${DOT[st]}`} />
+                        {badge.label}
                       </button>
                     </TD>
                   );
@@ -230,12 +239,11 @@ export function PaymentsPage() {
             ))}
           </tbody>
         </Table>
-        <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-gray-400">
-          ※ 회비는 <b className="text-gray-500">6개월(반기) 단위</b> — 점을 클릭하면 해당 반기(1~6월/7~12월) 전체가 함께 바뀝니다.
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" /> 납부
-          <span className="ml-1 inline-block h-2.5 w-2.5 rounded-full bg-red-500" /> 미납
-          <span className="ml-1 inline-block h-2.5 w-2.5 rounded-full bg-gray-300" /> 면제.
-          <b className="text-gray-500">납부 금액</b> 칸은 직접 입력(엔터로 저장)도 가능합니다.
+        <p className="mt-2 text-xs text-gray-400">
+          ※ 회비는 <b className="text-gray-500">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
+          <b className="text-green-600">납부</b> → <b className="text-red-500">미납</b> →{" "}
+          <b className="text-gray-500">면제</b> → 해제 순으로 바뀌고, <b className="text-gray-500">납부 금액</b> 칸은 직접
+          입력(엔터로 저장)도 가능합니다.
         </p>
       </Card>
 
