@@ -14,12 +14,17 @@ export function QuarterLineupCard({
   members,
   attendeeIds,
   onChange,
+  copyQuarters,
+  onCopyFrom,
 }: {
   lineup: QuarterLineup;
   template: FormationTemplate;
   members: Member[];
   attendeeIds: string[];
   onChange: (updated: QuarterLineup) => void;
+  /** 이 쿼터로 복사해올 수 있는 다른 쿼터 번호 목록 */
+  copyQuarters?: number[];
+  onCopyFrom?: (fromQuarter: number) => void;
 }) {
   const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? id;
 
@@ -53,14 +58,34 @@ export function QuarterLineupCard({
 
   return (
     <Card>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="font-semibold text-gray-800">{lineup.quarter}쿼터</h3>
-        <div className="flex gap-1 text-xs">
-          {(["GK", "DF", "MF", "FW"] as const).map((p) => (
-            <span key={p} className={overfilled(p) ? "text-red-500" : "text-gray-500"}>
-              {p} {counts[p]}/{template.positions[p]}
-            </span>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 text-xs">
+            {(["GK", "DF", "MF", "FW"] as const).map((p) => (
+              <span key={p} className={overfilled(p) ? "text-red-500" : "text-gray-500"}>
+                {p} {counts[p]}/{template.positions[p]}
+              </span>
+            ))}
+          </div>
+          {onCopyFrom && (copyQuarters?.length ?? 0) > 0 && (
+            <select
+              value=""
+              onChange={(e) => {
+                const from = Number(e.target.value);
+                if (from) onCopyFrom(from);
+              }}
+              className="rounded border border-gray-300 px-1 py-0.5 text-xs text-gray-600"
+              title="다른 쿼터 포메이션을 이 쿼터로 복사"
+            >
+              <option value="">↺ 불러오기</option>
+              {copyQuarters!.map((q) => (
+                <option key={q} value={q}>
+                  {q}쿼터
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

@@ -124,6 +124,18 @@ export function FormationPage() {
     setPlan({ ...plan, quarters, summary: summarizeQuarters(quarters, attendeeIds) });
   };
 
+  // 같은 경기 안에서 다른 쿼터의 포메이션을 현재 쿼터로 복사
+  const copyQuarterFrom = (fromQ: number, toQ: number) => {
+    if (!plan || fromQ === toQ) return;
+    const src = plan.quarters.find((q) => q.quarter === fromQ);
+    if (!src) return;
+    if (!confirm(`${toQ}쿼터를 ${fromQ}쿼터 포메이션으로 덮어씌울까요?`)) return;
+    const quarters = plan.quarters.map((q) =>
+      q.quarter === toQ ? { ...q, players: src.players.map((p) => ({ ...p })), rests: [...src.rests] } : q,
+    );
+    setPlan({ ...plan, quarters, summary: summarizeQuarters(quarters, attendeeIds) });
+  };
+
   const savePlan = () => {
     if (!match || !plan) return;
     upsertMatch({ ...match, formationPlan: plan });
@@ -261,7 +273,7 @@ export function FormationPage() {
                         onClick={() => setViewMode("list")}
                         className={`px-3 py-1.5 ${viewMode === "list" ? "bg-brand-600 text-white" : "bg-white text-gray-600"}`}
                       >
-                        리스트 수정
+                        리스트뷰
                       </button>
                     </div>
                     <Button variant="secondary" onClick={() => generate()}>
@@ -278,23 +290,43 @@ export function FormationPage() {
               </SectionTitle>
 
               {viewMode === "pitch" ? (
-                <div className="mx-auto w-full max-w-lg space-y-3">
-                  {/* 쿼터 탭 */}
-                  <div className="grid grid-cols-4 gap-1">
-                    {plan.quarters.map((q) => (
-                      <button
-                        key={q.quarter}
-                        onClick={() => setActiveQuarter(q.quarter)}
-                        className={`flex flex-col items-center rounded-lg px-2 py-2 text-sm ${
-                          activeQuarter === q.quarter
-                            ? "bg-brand-600 text-white"
-                            : "bg-white text-gray-600 ring-1 ring-gray-200"
-                        }`}
-                      >
-                        <span className="font-bold">{q.quarter}쿼터</span>
-                        <span className="text-xs opacity-80">{q.players.length}명</span>
-                      </button>
-                    ))}
+                <div className="mx-auto w-full max-w-4xl space-y-3">
+                  {/* 쿼터 탭 + 다른 쿼터 불러오기 */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="grid min-w-[240px] flex-1 grid-cols-4 gap-1">
+                      {plan.quarters.map((q) => (
+                        <button
+                          key={q.quarter}
+                          onClick={() => setActiveQuarter(q.quarter)}
+                          className={`flex flex-col items-center rounded-lg px-2 py-2 text-sm ${
+                            activeQuarter === q.quarter
+                              ? "bg-brand-600 text-white"
+                              : "bg-white text-gray-600 ring-1 ring-gray-200"
+                          }`}
+                        >
+                          <span className="font-bold">{q.quarter}쿼터</span>
+                          <span className="text-xs opacity-80">{q.players.length}명</span>
+                        </button>
+                      ))}
+                    </div>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const from = Number(e.target.value);
+                        if (from) copyQuarterFrom(from, activeQuarter);
+                      }}
+                      className="rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-sm text-gray-600"
+                      title="같은 경기의 다른 쿼터 포메이션을 현재 쿼터로 복사"
+                    >
+                      <option value="">↺ 쿼터 불러오기</option>
+                      {plan.quarters
+                        .filter((q) => q.quarter !== activeQuarter)
+                        .map((q) => (
+                          <option key={q.quarter} value={q.quarter}>
+                            {q.quarter}쿼터 → {activeQuarter}쿼터
+                          </option>
+                        ))}
+                    </select>
                   </div>
 
                   {/* 선택된 쿼터 필드 에디터 */}
@@ -310,9 +342,9 @@ export function FormationPage() {
                         onChange={editQuarter}
                       />
                     ))}
-                  <p className="text-xs text-gray-400">
-                    ※ <b>드래그 앤 드롭</b>으로 선수를 옮기거나(겹치면 교체) <b>출전 가능</b> 영역으로 끌어 벤치로 내릴 수 있습니다.
-                    모바일에서는 <b className="text-red-500">−</b> / 빈 자리 클릭 후 선수 선택으로도 됩니다.
+                  <p className="text-center text-xs text-gray-400">
+                    ※ 드래그 또는 클릭으로 선수의 위치를 변경할 수 있습니다. 모바일에서는{" "}
+                    <b className="text-red-500">−</b> / 빈 자리 클릭 후 선수 선택으로도 됩니다.
                   </p>
                 </div>
               ) : (
@@ -325,6 +357,8 @@ export function FormationPage() {
                       members={allMembers}
                       attendeeIds={attendeeIds}
                       onChange={editQuarter}
+                      copyQuarters={plan.quarters.map((x) => x.quarter).filter((x) => x !== q.quarter)}
+                      onCopyFrom={(from) => copyQuarterFrom(from, q.quarter)}
                     />
                   ))}
                 </div>
