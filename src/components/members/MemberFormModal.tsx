@@ -143,10 +143,10 @@ export function MemberFormModal({
                   key={p}
                   type="button"
                   onClick={() => togglePosition(p)}
-                  className={`rounded-lg border px-3 py-1 text-sm ${
+                  className={`rounded-sm border px-3 py-1 text-sm font-bold ${
                     draft.positions.includes(p)
-                      ? "border-brand-500 bg-brand-50 text-brand-700"
-                      : "border-gray-300 text-gray-600"
+                      ? "border-blue-400 bg-blue-500/10 text-blue-300"
+                      : "border-slate-400/40 text-slate-300 hover:bg-white/5"
                   }`}
                 >
                   {p}
@@ -187,18 +187,18 @@ export function MemberFormModal({
           </Select>
         </FormRow>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm text-slate-200">
             <input type="checkbox" checked={!!draft.isCoach} onChange={(e) => set("isCoach", e.target.checked)} />
             ⭐ 감독
           </label>
         </div>
 
         <div className="flex items-center gap-4 sm:col-span-2">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm text-slate-200">
             <input type="checkbox" checked={draft.canPlayGK} onChange={(e) => set("canPlayGK", e.target.checked)} />
             GK 가능
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm text-slate-200">
             <input type="checkbox" checked={draft.fixedGK} onChange={(e) => set("fixedGK", e.target.checked)} />
             고정 GK
           </label>

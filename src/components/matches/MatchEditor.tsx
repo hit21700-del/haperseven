@@ -54,7 +54,7 @@ export function MatchEditor({
     <Card>
       <SectionTitle>
         출석 · 스탯 입력{" "}
-        <span className="ml-2 text-sm font-normal text-gray-500">(참석 {attendCount}명)</span>
+        <span className="ml-2 text-sm font-normal text-slate-400">(참석 {attendCount}명)</span>
       </SectionTitle>
       <Table>
         <THead>
@@ -73,7 +73,7 @@ export function MatchEditor({
             const stat = statOf(m.id);
             return (
               <TR key={m.id}>
-                <TD className="font-medium">{m.name}</TD>
+                <TD className="font-medium text-white">{m.name}</TD>
                 <TD>
                   <MemberTypeBadge type={m.memberType} />
                 </TD>

@@ -73,7 +73,7 @@ export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p:
             onChange={(e) => onChange({ ...value, from: e.target.value })}
             className="w-40"
           />
-          <span className="text-gray-400">~</span>
+          <span className="text-slate-400">~</span>
           <TextInput
             type="date"
             value={value.to ?? ""}

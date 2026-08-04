@@ -2,10 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+}
+
 html,
 body {
-  background-color: #f3f2fb;
-  color: #2b2b3a;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: #f6f8ff;
+  background:
+    radial-gradient(circle at 58% 0%, rgba(36, 74, 171, 0.26), transparent 34%),
+    linear-gradient(135deg, #030817 0%, #07132d 48%, #020611 100%);
+  font-family: Arial, "Noto Sans KR", sans-serif;
+}
+
+button,
+select {
+  font: inherit;
 }
 
 /* 숫자 입력 스피너 정리 */
@@ -13,4 +30,113 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* ── 2008/09 브로드캐스트 레트로 스킨 ─────────────────────── */
+
+.retro-panel {
+  position: relative;
+  border: 1px solid rgba(184, 205, 255, 0.68);
+  background: linear-gradient(180deg, rgba(13, 31, 76, 0.97), rgba(3, 10, 28, 0.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    inset 0 0 0 3px rgba(13, 24, 47, 0.92),
+    inset 0 0 0 4px rgba(131, 151, 184, 0.42),
+    0 16px 42px rgba(0, 0, 0, 0.38);
+}
+
+.retro-panel::before,
+.retro-panel::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+}
+
+.retro-panel::before {
+  top: 4px;
+  left: 4px;
+  border-top: 2px solid rgba(255, 255, 255, 0.65);
+  border-left: 2px solid rgba(255, 255, 255, 0.65);
+}
+
+.retro-panel::after {
+  right: 4px;
+  bottom: 4px;
+  border-right: 2px solid rgba(77, 116, 196, 0.85);
+  border-bottom: 2px solid rgba(77, 116, 196, 0.85);
+}
+
+.chrome-button {
+  border: 1px solid rgba(191, 211, 255, 0.85);
+  color: white;
+  background: linear-gradient(180deg, #194cd6 0%, #082a8b 48%, #03175b 50%, #0b43c8 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.75),
+    0 0 0 2px rgba(0, 0, 0, 0.6),
+    0 0 15px rgba(31, 91, 255, 0.38);
+}
+
+.chrome-button:hover {
+  filter: brightness(1.14);
+}
+
+.silver-button {
+  border: 1px solid #c9d0dc;
+  color: #111827;
+  background: linear-gradient(180deg, #ffffff, #cbd2dc 47%, #f5f7fa 50%, #aeb7c5);
+  box-shadow:
+    inset 0 1px 0 white,
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32),
+    0 0 0 2px rgba(0, 0, 0, 0.45);
+}
+
+.silver-button:hover {
+  filter: brightness(1.05);
+}
+
+.pitch-grid {
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.025) 0,
+      rgba(255, 255, 255, 0.025) 34px,
+      rgba(0, 0, 0, 0.04) 34px,
+      rgba(0, 0, 0, 0.04) 68px
+    ),
+    linear-gradient(180deg, rgba(47, 88, 44, 0.97), rgba(18, 53, 26, 0.99));
+}
+
+.jersey {
+  position: relative;
+  width: 72px;
+  height: 67px;
+  clip-path: polygon(29% 0, 42% 8%, 58% 8%, 71% 0, 100% 18%, 84% 39%, 76% 32%, 76% 100%, 24% 100%, 24% 32%, 16% 39%, 0 18%);
+  background:
+    linear-gradient(90deg, transparent 0 47%, rgba(255, 255, 255, 0.13) 48% 52%, transparent 53%),
+    linear-gradient(180deg, #132c74 0%, #07173e 62%, #020817 100%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0 8px 7px rgba(0, 0, 0, 0.55));
+}
+
+.jersey::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 35%);
+}
+
+.jersey-gk {
+  background:
+    linear-gradient(90deg, transparent 0 47%, rgba(255, 255, 255, 0.15) 48% 52%, transparent 53%),
+    linear-gradient(180deg, #2da348 0%, #0f5727 65%, #062313 100%);
+}
+
+@media (max-width: 1024px) {
+  .jersey {
+    width: 58px;
+    height: 54px;
+  }
 }

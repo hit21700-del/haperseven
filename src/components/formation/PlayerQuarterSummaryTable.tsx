@@ -38,8 +38,8 @@ export function PlayerQuarterSummaryTable({
           return (
             <TR key={s.memberId}>
               <TD className="font-medium">{nameOf(s.memberId)}</TD>
-              <TD className="text-xs text-gray-500">{typeOf(s.memberId)}</TD>
-              <TD className={`font-semibold ${under ? "text-red-600" : ""}`}>{s.totalQuarters}</TD>
+              <TD className="text-xs text-slate-400">{typeOf(s.memberId)}</TD>
+              <TD className={`font-semibold ${under ? "text-rose-400" : ""}`}>{s.totalQuarters}</TD>
               <TD>{s.fieldQuarters}</TD>
               <TD>{s.gkQuarters}</TD>
               <TD>{s.restQuarters}</TD>
@@ -49,7 +49,7 @@ export function PlayerQuarterSummaryTable({
         })}
         {sorted.length === 0 && (
           <TR>
-            <TD className="text-gray-400">배정 결과가 없습니다.</TD>
+            <TD className="text-slate-500">배정 결과가 없습니다.</TD>
           </TR>
         )}
       </tbody>

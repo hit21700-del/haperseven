@@ -11,9 +11,9 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
   return (
     <div className="space-y-3">
       {hasViolations && (
-        <Card className="border-red-200 bg-red-50">
-          <h3 className="mb-1 text-sm font-semibold text-red-700">⚠ 규칙 위반</h3>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-red-700">
+        <Card className="border-rose-400/40 bg-rose-500/10">
+          <h3 className="mb-1 text-sm font-semibold text-rose-300">⚠ 규칙 위반</h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm text-rose-300">
             {plan.ruleViolations.map((v, i) => (
               <li key={i}>{v.message}</li>
             ))}
@@ -22,9 +22,9 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {hasWarnings && (
-        <Card className="border-yellow-200 bg-yellow-50">
-          <h3 className="mb-1 text-sm font-semibold text-yellow-700">경고 / 충돌</h3>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-yellow-700">
+        <Card className="border-amber-400/40 bg-amber-500/10">
+          <h3 className="mb-1 text-sm font-semibold text-amber-300">경고 / 충돌</h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm text-amber-300">
             {plan.warnings.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
@@ -33,9 +33,9 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {plan.reasons.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50">
-          <h3 className="mb-1 text-sm font-semibold text-blue-700">자동 배정 사유</h3>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-blue-700">
+        <Card className="border-sky-400/40 bg-sky-500/10">
+          <h3 className="mb-1 text-sm font-semibold text-sky-300">자동 배정 사유</h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm text-sky-300">
             {plan.reasons.map((r, i) => (
               <li key={i}>{r}</li>
             ))}
@@ -44,8 +44,8 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {!hasWarnings && !hasViolations && (
-        <Card className="border-green-200 bg-green-50">
-          <p className="text-sm text-green-700">✅ 규칙 위반이나 경고가 없습니다.</p>
+        <Card className="border-emerald-400/40 bg-emerald-500/10">
+          <p className="text-sm text-emerald-300">✅ 규칙 위반이나 경고가 없습니다.</p>
         </Card>
       )}
     </div>

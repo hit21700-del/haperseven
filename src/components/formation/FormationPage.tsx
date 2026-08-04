@@ -144,7 +144,10 @@ export function FormationPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-extrabold text-gray-800">포메이션 자동 배정</h1>
+      <div>
+        <p className="text-xs font-black tracking-[.26em] text-blue-300">HAPER SEVEN MATCH CENTER</p>
+        <h1 className="text-3xl font-black tracking-tight text-white">포메이션 자동 배정</h1>
+      </div>
 
       {/* 설정 */}
       <Card>
@@ -179,37 +182,40 @@ export function FormationPage() {
         </div>
 
         {/* 참여 인원 선택 */}
-        <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <div className="my-5 h-px bg-gradient-to-r from-transparent via-slate-400/40 to-transparent" />
+        <div>
           {/* 자체전 팀 빠른 선택 */}
-          <div className="mb-2 flex flex-wrap items-center gap-2 border-b border-gray-200 pb-2">
-            <span className="text-xs font-semibold text-gray-500">자체전 팀</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-black text-slate-300">자체전 팀</span>
             <button
               onClick={() => loadTeam("WHITE")}
-              className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200 hover:bg-indigo-200"
+              className="silver-button rounded-full px-5 py-2 text-sm font-black text-slate-900"
             >
-              🤍 화이트 {teamCount("WHITE")}
+              ● 화이트 {teamCount("WHITE")}
             </button>
             <button
               onClick={() => loadTeam("BLACK")}
-              className="rounded-full bg-gray-800 px-3 py-1 text-xs font-semibold text-white hover:bg-black"
+              className="rounded-full border border-slate-500 bg-gradient-to-b from-slate-800 to-black px-5 py-2 text-sm font-black text-white shadow-chrome hover:brightness-125"
             >
-              🖤 블랙 {teamCount("BLACK")}
+              ● 블랙 {teamCount("BLACK")}
             </button>
             <button
               onClick={() => setTeamModalOpen(true)}
-              className="rounded-full border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-white"
+              className="rounded-full border border-slate-500/60 bg-black/25 px-4 py-2 text-sm font-black text-slate-300 hover:bg-white/5"
             >
               ✎ 팀 편집
             </button>
-            <span className="text-[11px] text-gray-400">팀 버튼을 누르면 해당 팀 명단으로 참여 인원이 채워집니다.</span>
+            <span className="text-sm text-slate-400">※ 버튼을 누르면 해당 팀 명단으로 참여 인원이 재배정됩니다.</span>
           </div>
 
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm font-medium text-gray-700">
-              참여 인원 <span className="text-brand-600">{attendees.length}명</span>
-              <span className="ml-1 text-xs text-gray-400">· 기준 정원 {template?.playerCount ?? "-"}명</span>
+          <div className="my-5 h-px bg-gradient-to-r from-transparent via-slate-400/40 to-transparent" />
+
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <span className="font-black text-white">
+              참여 인원 <span className="text-blue-300">{attendees.length}명</span>
+              <span className="ml-2 text-sm font-normal text-slate-400">· 기준 정원 {template?.playerCount ?? "-"}명</span>
             </span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => setPickerOpen(true)}>
                 참여 인원 선택
               </Button>
@@ -224,22 +230,22 @@ export function FormationPage() {
             </div>
           </div>
           {attendees.length === 0 ? (
-            <p className="text-sm text-gray-400">
-              <b>참여 인원 선택</b>을 눌러 오늘 출전할 선수를 직접 고르세요.
+            <p className="text-sm text-slate-400">
+              <b className="text-slate-200">참여 인원 선택</b>을 눌러 오늘 출전할 선수를 직접 고르세요.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-2">
               {attendees.map((m) => (
                 <span
                   key={m.id}
-                  className="flex items-center gap-1 rounded-full bg-white px-2 py-1 text-xs text-gray-700 shadow-sm"
+                  className="flex items-center gap-2 rounded-sm border border-slate-500/60 bg-black/25 px-3 py-2 text-sm font-bold text-white shadow-inner"
                 >
-                  {m.isCoach && <span title="감독">⭐</span>}
+                  {m.isCoach && <span title="감독" className="text-amber-300">★</span>}
                   {m.name}
                   <MemberTypeBadge type={m.memberType} />
                   <button
                     onClick={() => setSelectedIds((prev) => prev.filter((id) => id !== m.id))}
-                    className="ml-0.5 text-gray-400 hover:text-red-500"
+                    className="ml-0.5 text-slate-500 hover:text-rose-400"
                     aria-label="제외"
                   >
                     ✕
@@ -262,20 +268,22 @@ export function FormationPage() {
                 action={
                   <div className="flex flex-wrap gap-2">
                     {/* 보기 모드 토글 */}
-                    <div className="flex overflow-hidden rounded-lg border border-gray-300 text-sm">
-                      <button
-                        onClick={() => setViewMode("pitch")}
-                        className={`px-3 py-1.5 ${viewMode === "pitch" ? "bg-brand-600 text-white" : "bg-white text-gray-600"}`}
-                      >
-                        필드뷰
-                      </button>
-                      <button
-                        onClick={() => setViewMode("list")}
-                        className={`px-3 py-1.5 ${viewMode === "list" ? "bg-brand-600 text-white" : "bg-white text-gray-600"}`}
-                      >
-                        리스트뷰
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setViewMode("pitch")}
+                      className={`rounded-sm px-5 py-2 text-sm font-black ${
+                        viewMode === "pitch" ? "chrome-button text-white" : "silver-button text-slate-900"
+                      }`}
+                    >
+                      필드뷰
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`rounded-sm px-5 py-2 text-sm font-black ${
+                        viewMode === "list" ? "chrome-button text-white" : "silver-button text-slate-900"
+                      }`}
+                    >
+                      리스트뷰
+                    </button>
                     <Button variant="secondary" onClick={() => generate()}>
                       다시 실행
                     </Button>
@@ -290,21 +298,21 @@ export function FormationPage() {
               </SectionTitle>
 
               {viewMode === "pitch" ? (
-                <div className="mx-auto w-full max-w-4xl space-y-3">
+                <div className="mx-auto w-full max-w-5xl space-y-3">
                   {/* 쿼터 탭 + 다른 쿼터 불러오기 */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="grid min-w-[240px] flex-1 grid-cols-4 gap-1">
+                    <div className="grid min-w-[240px] flex-1 grid-cols-4 gap-1.5">
                       {plan.quarters.map((q) => (
                         <button
                           key={q.quarter}
                           onClick={() => setActiveQuarter(q.quarter)}
-                          className={`flex flex-col items-center rounded-lg px-2 py-2 text-sm ${
+                          className={`flex flex-col items-center rounded-sm px-2 py-2 text-sm ${
                             activeQuarter === q.quarter
-                              ? "bg-brand-600 text-white"
-                              : "bg-white text-gray-600 ring-1 ring-gray-200"
+                              ? "chrome-button text-white"
+                              : "border border-slate-500/60 bg-black/25 text-slate-300 hover:bg-white/5"
                           }`}
                         >
-                          <span className="font-bold">{q.quarter}쿼터</span>
+                          <span className="font-black">{q.quarter}쿼터</span>
                           <span className="text-xs opacity-80">{q.players.length}명</span>
                         </button>
                       ))}
@@ -315,7 +323,7 @@ export function FormationPage() {
                         const from = Number(e.target.value);
                         if (from) copyQuarterFrom(from, activeQuarter);
                       }}
-                      className="rounded-lg border border-gray-300 bg-white px-2 py-2.5 text-sm text-gray-600"
+                      className="rounded-sm border border-slate-400/70 bg-gradient-to-b from-white to-slate-300 px-3 py-2.5 text-sm font-bold text-slate-900"
                       title="같은 경기의 다른 쿼터 포메이션을 현재 쿼터로 복사"
                     >
                       <option value="">↺ 쿼터 불러오기</option>
@@ -342,9 +350,9 @@ export function FormationPage() {
                         onChange={editQuarter}
                       />
                     ))}
-                  <p className="text-center text-xs text-gray-400">
+                  <p className="text-center text-sm text-slate-400">
                     ※ 드래그 또는 클릭으로 선수의 위치를 변경할 수 있습니다. 모바일에서는{" "}
-                    <b className="text-red-500">−</b> / 빈 자리 클릭 후 선수 선택으로도 됩니다.
+                    <b className="text-rose-400">−</b> / 빈 자리 클릭 후 선수 선택으로도 됩니다.
                   </p>
                 </div>
               ) : (
@@ -373,8 +381,9 @@ export function FormationPage() {
             </>
           ) : (
             <Card>
-              <p className="text-sm text-gray-400">
-                <b>참여 인원</b>과 템플릿을 선택하고 <b>자동 배정 생성</b>을 누르세요.
+              <p className="text-sm text-slate-400">
+                <b className="text-slate-200">참여 인원</b>과 템플릿을 선택하고{" "}
+                <b className="text-slate-200">자동 배정 생성</b>을 누르세요.
               </p>
             </Card>
           )}
@@ -436,7 +445,7 @@ function CustomTemplateForm({ onSave }: { onSave: (t: FormationTemplate) => void
   const total = gk + df + mf + fw;
 
   return (
-    <div className="mt-3 rounded-lg border border-dashed border-gray-300 p-3">
+    <div className="mt-3 rounded-md border border-dashed border-slate-400/40 bg-black/25 p-3">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
         <div className="col-span-2">
           <FormRow label="이름">
@@ -457,7 +466,7 @@ function CustomTemplateForm({ onSave }: { onSave: (t: FormationTemplate) => void
         ))}
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-sm text-gray-500">정원 {total}명</span>
+        <span className="text-sm text-slate-400">정원 {total}명</span>
         <Button
           onClick={() => {
             if (!name.trim()) return alert("이름을 입력하세요.");

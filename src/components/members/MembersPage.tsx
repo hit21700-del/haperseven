@@ -58,8 +58,8 @@ export function MembersPage() {
       {/* 헤더 */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-800">회원 관리</h1>
-          <p className="mt-0.5 text-sm text-gray-400">팀의 모든 회원을 관리하고 정보를 확인하세요.</p>
+          <h1 className="text-3xl font-black tracking-tight text-white">회원 관리</h1>
+          <p className="mt-0.5 text-sm text-slate-400">팀의 모든 회원을 관리하고 정보를 확인하세요.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setImportOpen(true)}>
@@ -74,7 +74,7 @@ export function MembersPage() {
 
       {/* 검색/필터 + 지표 카드 */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_2px_12px_rgba(80,70,160,0.06)] xl:col-span-1">
+        <div className="retro-panel rounded-md p-5 xl:col-span-1">
           <TextInput
             placeholder="이름 검색"
             value={search}
@@ -99,14 +99,14 @@ export function MembersPage() {
             ))}
           </Select>
         </div>
-        <StatIconCard icon="👥" iconBg="bg-brand-50" iconColor="text-brand-600" label="전체 회원" value={`${members.length}명`} sub="팀의 모든 등록 회원" />
-        <StatIconCard icon="🛡" iconBg="bg-blue-50" iconColor="text-blue-500" label="정회원" value={`${jeongCount}명`} sub="월 회비 납부 회원" />
-        <StatIconCard icon="🧑" iconBg="bg-red-50" iconColor="text-red-500" label="스텝" value={`${stepCount}명`} sub="코칭 및 운영 스텝" />
+        <StatIconCard icon="👥" iconBg="bg-blue-500/15" iconColor="text-blue-300" label="전체 회원" value={`${members.length}명`} sub="팀의 모든 등록 회원" />
+        <StatIconCard icon="🛡" iconBg="bg-sky-500/15" iconColor="text-sky-400" label="정회원" value={`${jeongCount}명`} sub="월 회비 납부 회원" />
+        <StatIconCard icon="🧑" iconBg="bg-rose-500/15" iconColor="text-rose-400" label="스텝" value={`${stepCount}명`} sub="코칭 및 운영 스텝" />
       </div>
 
       {/* 테이블 */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_2px_12px_rgba(80,70,160,0.06)]">
-        <div className="mb-2 text-sm text-gray-500">총 회원 수 {filtered.length}명</div>
+      <div className="retro-panel rounded-md p-5">
+        <div className="mb-2 text-sm text-slate-400">총 회원 수 {filtered.length}명</div>
         <Table>
           <THead>
             <TR>
@@ -123,9 +123,9 @@ export function MembersPage() {
           </THead>
           <tbody>
             {pageRows.map((m) => (
-              <TR key={m.id} className={!m.isActive ? "text-gray-400" : ""}>
-                <TD className="text-gray-400">{m.no ?? "-"}</TD>
-                <TD className="font-semibold text-gray-700">{m.name}</TD>
+              <TR key={m.id} className={!m.isActive ? "text-slate-500" : ""}>
+                <TD className="text-slate-500">{m.no ?? "-"}</TD>
+                <TD className="font-semibold text-slate-200">{m.name}</TD>
                 <TD>
                   <MemberTypeBadge type={m.memberType} />
                 </TD>
@@ -148,7 +148,7 @@ export function MembersPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => openEdit(m)}
-                      className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                      className="rounded-sm border border-slate-500/60 bg-black/25 px-2.5 py-1 text-xs text-slate-300 hover:bg-white/5"
                     >
                       ✎ 수정
                     </button>
@@ -156,7 +156,7 @@ export function MembersPage() {
                       onClick={() => {
                         if (confirm(`${m.name} 회원을 삭제할까요?`)) removeMember(m.id);
                       }}
-                      className="rounded-lg border border-red-200 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50"
+                      className="rounded-sm border border-rose-400/30 bg-rose-500/10 px-2.5 py-1 text-xs text-rose-400 hover:bg-rose-500/20"
                     >
                       🗑 삭제
                     </button>
@@ -166,7 +166,7 @@ export function MembersPage() {
             ))}
             {pageRows.length === 0 && (
               <TR>
-                <TD className="text-gray-400">조건에 맞는 회원이 없습니다.</TD>
+                <TD className="text-slate-500">조건에 맞는 회원이 없습니다.</TD>
               </TR>
             )}
           </tbody>
@@ -174,12 +174,12 @@ export function MembersPage() {
 
         {/* 페이지네이션 */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm text-gray-500">전체 {filtered.length}명</span>
+          <span className="text-sm text-slate-400">전체 {filtered.length}명</span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={curPage <= 1}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-sm border border-slate-500/60 bg-black/25 text-slate-300 hover:bg-white/5 disabled:opacity-40"
             >
               ‹
             </button>
@@ -187,11 +187,13 @@ export function MembersPage() {
               .filter((p) => Math.abs(p - curPage) <= 2 || p === 1 || p === totalPages)
               .map((p, idx, arr) => (
                 <React.Fragment key={p}>
-                  {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-gray-300">…</span>}
+                  {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-slate-400">…</span>}
                   <button
                     onClick={() => setPage(p)}
-                    className={`flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm ${
-                      p === curPage ? "bg-brand-600 font-semibold text-white" : "text-gray-500 hover:bg-gray-100"
+                    className={`flex h-8 min-w-8 items-center justify-center px-2 text-sm ${
+                      p === curPage
+                        ? "chrome-button rounded-sm font-black text-white"
+                        : "rounded-sm border border-slate-500/60 bg-black/25 text-slate-300 hover:bg-white/5"
                     }`}
                   >
                     {p}
@@ -201,7 +203,7 @@ export function MembersPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={curPage >= totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-sm border border-slate-500/60 bg-black/25 text-slate-300 hover:bg-white/5 disabled:opacity-40"
             >
               ›
             </button>

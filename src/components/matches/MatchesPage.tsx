@@ -47,7 +47,7 @@ export function MatchesPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-extrabold text-gray-800">경기 관리</h1>
+        <h1 className="text-3xl font-black tracking-tight text-white">경기 관리</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => exportMatchStatsToExcel(matches, members)}>
             ⬆ 스탯 엑셀 내보내기
@@ -61,8 +61,8 @@ export function MatchesPage() {
         <Card className="lg:col-span-1">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600">🏆</span>
-              <h2 className="text-base font-bold text-gray-800">경기 목록</h2>
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-300">🏆</span>
+              <h2 className="text-base font-bold text-white">경기 목록</h2>
             </div>
             <Badge tone="gray">총 {matches.length}개</Badge>
           </div>
@@ -74,25 +74,25 @@ export function MatchesPage() {
                 <li key={m.id}>
                   <button
                     onClick={() => setSelectedId(m.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                      active ? "border-brand-200 bg-brand-50" : "border-gray-100 hover:bg-gray-50"
+                    className={`flex w-full items-center gap-3 rounded-md border px-3 py-3 text-left transition ${
+                      active ? "border-blue-400/40 bg-blue-500/10" : "border-white/10 hover:bg-white/5"
                     }`}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-brand-600 shadow-sm">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-blue-300">
                       ⚽
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
-                        <span className="truncate font-semibold text-gray-800">{m.title ?? "경기"}</span>
+                        <span className="truncate font-semibold text-white">{m.title ?? "경기"}</span>
                         {m.matchType === "SCRIMMAGE" && <Badge tone="purple">자체전</Badge>}
                         {active && <Badge tone="blue">선택됨</Badge>}
                       </span>
-                      <span className="block text-xs text-gray-400">
+                      <span className="block text-xs text-slate-500">
                         📅 {m.date} · 참석 {attend}명
                       </span>
                     </span>
                     <span
-                      className="shrink-0 text-xs text-red-400 hover:text-red-600"
+                      className="shrink-0 text-xs text-rose-400 hover:text-rose-300"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (confirm("경기를 삭제할까요?")) {
@@ -107,11 +107,11 @@ export function MatchesPage() {
                 </li>
               );
             })}
-            {matches.length === 0 && <p className="py-4 text-center text-sm text-gray-400">경기가 없습니다.</p>}
+            {matches.length === 0 && <p className="py-4 text-center text-sm text-slate-500">경기가 없습니다.</p>}
           </ul>
           <button
             onClick={() => setCreateOpen(true)}
-            className="mt-3 w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-500 hover:border-brand-400 hover:text-brand-600"
+            className="mt-3 w-full rounded-md border border-dashed border-slate-400/40 py-2.5 text-sm font-medium text-slate-300 hover:border-blue-400 hover:text-blue-300"
           >
             ＋ 경기 추가
           </button>
@@ -123,7 +123,7 @@ export function MatchesPage() {
             <MatchEditor match={selected} members={members} onChange={upsertMatch} />
           ) : (
             <Card>
-              <p className="text-sm text-gray-400">왼쪽에서 경기를 선택하거나 새 경기를 생성하세요.</p>
+              <p className="text-sm text-slate-500">왼쪽에서 경기를 선택하거나 새 경기를 생성하세요.</p>
             </Card>
           )}
         </div>
@@ -156,10 +156,10 @@ export function MatchesPage() {
                     key={k}
                     type="button"
                     onClick={() => setDraft({ ...draft, kind: k })}
-                    className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                    className={`flex-1 rounded-sm border px-3 py-2 text-sm ${
                       draft.kind === k
-                        ? "border-brand-500 bg-brand-50 font-semibold text-brand-700"
-                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                        ? "border-blue-400 bg-blue-500/10 font-semibold text-blue-300"
+                        : "border-slate-400/40 text-slate-300 hover:bg-white/5"
                     }`}
                   >
                     {label}
@@ -169,7 +169,7 @@ export function MatchesPage() {
             </FormRow>
           </div>
           {draft.kind === "SCRIMMAGE" && (
-            <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-700 sm:col-span-2">
+            <div className="rounded-sm border border-blue-400/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-300 sm:col-span-2">
               화이트/블랙 팀에 배정된 활동 회원 전원이 <b>참석</b>으로 자동 추가됩니다. 포메이션 화면에서 팀별로 편성하세요.
             </div>
           )}
