@@ -98,7 +98,7 @@ export function RefundModal({
           </FormRow>
         </div>
       </div>
-      <p className="mt-2 text-xs text-slate-500">※ 1개월당 {REFUND_POLICY.amountPerMonth.toLocaleString()}원. 장기부상은 스텝 협의 후 승인 처리하세요.</p>
+      <p className="mt-2 text-xs text-gray-400">※ 1개월당 {REFUND_POLICY.amountPerMonth.toLocaleString()}원. 장기부상은 스텝 협의 후 승인 처리하세요.</p>
     </Modal>
   );
 }

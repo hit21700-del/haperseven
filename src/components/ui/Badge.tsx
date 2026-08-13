@@ -5,17 +5,17 @@ import { TEAM_LABEL } from "@/types/member";
 type Tone = "green" | "red" | "yellow" | "gray" | "blue" | "purple";
 
 const TONE_CLASS: Record<Tone, string> = {
-  green: "border border-emerald-400/30 bg-emerald-500/10 text-emerald-300",
-  red: "border border-rose-400/30 bg-rose-500/10 text-rose-300",
-  yellow: "border border-amber-400/30 bg-amber-500/10 text-amber-300",
-  gray: "border border-slate-400/30 bg-slate-500/10 text-slate-300",
-  blue: "border border-sky-400/30 bg-sky-500/10 text-sky-300",
-  purple: "border border-purple-400/30 bg-purple-500/10 text-purple-300",
+  green: "bg-emerald-50 text-emerald-600",
+  red: "bg-red-50 text-red-500",
+  yellow: "bg-amber-50 text-amber-600",
+  gray: "bg-gray-100 text-gray-500",
+  blue: "bg-sky-50 text-sky-600",
+  purple: "bg-purple-50 text-purple-600",
 };
 
 export function Badge({ children, tone = "gray" }: { children: React.ReactNode; tone?: Tone }) {
   return (
-    <span className={`inline-block rounded-sm px-1.5 py-0.5 text-xs font-bold ${TONE_CLASS[tone]}`}>{children}</span>
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TONE_CLASS[tone]}`}>{children}</span>
   );
 }
 
@@ -54,15 +54,13 @@ export function AttendanceBadge({ status }: { status: "ATTEND" | "ABSENT" | "LAT
   return <Badge tone={tone}>{label}</Badge>;
 }
 
-/** 자체전 팀 배지 (화이트=밝은 실버 / 블랙=다크). 감독이면 ⭐ */
+/** 자체전 팀 배지 (화이트=화이트 칩 / 블랙=다크 칩). 감독이면 ⭐ */
 export function TeamBadge({ team, coach }: { team?: TeamColor; coach?: boolean }) {
-  if (!team) return <span className="text-xs text-slate-500">-</span>;
+  if (!team) return <span className="text-xs text-gray-300">-</span>;
   return (
     <span
-      className={`inline-flex items-center gap-0.5 rounded-sm px-2 py-0.5 text-xs font-bold ${
-        team === "WHITE"
-          ? "border border-slate-300/60 bg-white/90 text-slate-900"
-          : "border border-white/30 bg-black text-white"
+      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium ${
+        team === "WHITE" ? "border border-gray-300 bg-white text-gray-800" : "bg-gray-900 text-white"
       }`}
     >
       {coach && <span title="감독">⭐</span>}
@@ -71,17 +69,17 @@ export function TeamBadge({ team, coach }: { team?: TeamColor; coach?: boolean }
   );
 }
 
-/** 포지션 배지 (FW 로즈 / MF 라임 / DF 스카이 / GK 옐로) */
+/** 포지션 배지 (FW 레드 / MF 그린 / DF 블루 / GK 옐로) */
 export function PositionBadge({ position }: { position: string }) {
   const cls =
     position === "GK"
-      ? "border-amber-300/40 bg-amber-500/10 text-yellow-300"
+      ? "bg-amber-50 text-amber-600"
       : position === "DF"
-        ? "border-sky-400/30 bg-sky-500/10 text-sky-300"
+        ? "bg-sky-50 text-sky-600"
         : position === "MF"
-          ? "border-lime-400/30 bg-lime-500/10 text-lime-300"
+          ? "bg-emerald-50 text-emerald-600"
           : position === "FW"
-            ? "border-rose-400/30 bg-rose-500/10 text-rose-300"
-            : "border-slate-400/30 bg-slate-500/10 text-slate-300";
-  return <span className={`inline-block rounded-sm border px-1.5 py-0.5 text-xs font-bold ${cls}`}>{position}</span>;
+            ? "bg-red-50 text-red-500"
+            : "bg-gray-100 text-gray-500";
+  return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>{position}</span>;
 }

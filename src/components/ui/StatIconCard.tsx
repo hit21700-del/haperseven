@@ -1,15 +1,15 @@
 import React from "react";
 
-/** 컬러 아이콘 지표 카드 (대시보드/회원 등 공용) — 레트로 다크 */
+/** 컬러 아이콘 지표 카드 (대시보드/회원 등 공용) — 라이트 */
 export function StatIconCard({
   icon,
   iconBg,
   iconColor,
   label,
   value,
-  valueColor = "text-white",
+  valueColor = "text-gray-900",
   sub,
-  subColor = "text-slate-400",
+  subColor = "text-gray-400",
   className = "",
 }: {
   icon: React.ReactNode;
@@ -23,14 +23,14 @@ export function StatIconCard({
   className?: string;
 }) {
   return (
-    <div className={`retro-panel rounded-md p-4 ${className}`}>
+    <div className={`rounded-xl border border-gray-200 bg-white p-4 shadow-sm ${className}`}>
       <div className="flex items-center gap-3">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-xl ${iconBg} ${iconColor}`}>
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-lg ${iconBg} ${iconColor}`}>
           {icon}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-xs font-bold text-slate-400">{label}</div>
-          <div className={`text-2xl font-black leading-tight ${valueColor}`}>{value}</div>
+          <div className="truncate text-xs font-medium text-gray-500">{label}</div>
+          <div className={`text-2xl font-bold leading-tight ${valueColor}`}>{value}</div>
           {sub && <div className={`mt-0.5 text-[11px] ${subColor}`}>{sub}</div>}
         </div>
       </div>

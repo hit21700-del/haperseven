@@ -22,10 +22,10 @@ const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
 
 // 반기(6개월) 상태 표시 배지 스타일/라벨
 const HALF_BADGE: Record<PaymentStatus, { label: string; cls: string }> = {
-  PAID: { label: "납부", cls: "border border-emerald-400/30 bg-emerald-500/15 text-emerald-300" },
-  UNPAID: { label: "미납", cls: "border border-rose-400/30 bg-rose-500/15 text-rose-300" },
-  EXEMPT: { label: "면제", cls: "border border-slate-400/30 bg-slate-500/15 text-slate-300" },
-  UNKNOWN: { label: "－", cls: "border border-white/10 bg-white/5 text-slate-500" },
+  PAID: { label: "납부", cls: "bg-emerald-50 text-emerald-600" },
+  UNPAID: { label: "미납", cls: "bg-red-50 text-red-500" },
+  EXEMPT: { label: "면제", cls: "bg-gray-100 text-gray-500" },
+  UNKNOWN: { label: "－", cls: "bg-gray-50 text-gray-400" },
 };
 
 /** 반기의 대표 상태: 미납 표시가 하나라도 있으면 미납, 납부 표시가 있으면 납부, 전부 면제면 면제 */
@@ -131,8 +131,8 @@ export function PaymentsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">회비 관리</h1>
-          <p className="mt-0.5 text-sm text-slate-400">{periodLabel(period)} 기준 · {FEE_DEADLINE_NOTICE}</p>
+          <h1 className="text-2xl font-bold text-gray-900">회비 관리</h1>
+          <p className="mt-0.5 text-sm text-gray-500">{periodLabel(period)} 기준 · {FEE_DEADLINE_NOTICE}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <PeriodFilter value={period} onChange={setPeriod} />
@@ -150,15 +150,15 @@ export function PaymentsPage() {
               B
             </div>
             <div className="min-w-0">
-              <div className="text-xs text-slate-400">입금 계좌</div>
-              <div className="text-sm font-bold text-white">{ACCOUNT_INFO.bank}</div>
-              <div className="truncate text-lg font-extrabold text-blue-300">{ACCOUNT_INFO.number}</div>
-              <div className="text-xs text-slate-400">예금주: {ACCOUNT_INFO.holder}</div>
+              <div className="text-xs text-gray-500">입금 계좌</div>
+              <div className="text-sm font-bold text-gray-900">{ACCOUNT_INFO.bank}</div>
+              <div className="truncate text-lg font-extrabold text-brand-600">{ACCOUNT_INFO.number}</div>
+              <div className="text-xs text-gray-500">예금주: {ACCOUNT_INFO.holder}</div>
             </div>
           </div>
         </Card>
         <Card>
-          <div className="text-[13px] text-slate-300">현재 총 회비 (잔고)</div>
+          <div className="text-[13px] text-gray-600">현재 총 회비 (잔고)</div>
           <input
             type="text"
             inputMode="numeric"
@@ -169,9 +169,9 @@ export function PaymentsPage() {
               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
             }}
             title="현재 팀 잔고 직접 입력 (엔터로 저장)"
-            className="mt-1 w-full rounded-sm border border-transparent bg-transparent text-[24px] font-extrabold leading-none text-blue-300 hover:border-white/10 focus:border-blue-400/50 focus:outline-none"
+            className="mt-1 w-full rounded-sm border border-transparent bg-transparent text-[24px] font-extrabold leading-none text-brand-600 hover:border-gray-200 focus:border-brand-400 focus:outline-none"
           />
-          <div className="mt-1 text-xs text-slate-500">클릭해서 수정 가능</div>
+          <div className="mt-1 text-xs text-gray-400">클릭해서 수정 가능</div>
         </Card>
         <StatCard label="회비 합계 (청구 기준)" value={formatWon(t.totalExpected)} />
         <StatCard label="총 납부" value={formatWon(t.totalPaid)} tone="green" sub={`납부율 ${t.paymentRate}%`} />
@@ -182,7 +182,7 @@ export function PaymentsPage() {
         <SectionTitle
           action={
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-slate-300">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input type="checkbox" checked={onlyUnpaid} onChange={(e) => setOnlyUnpaid(e.target.checked)} />
                 미납자만 보기
               </label>
@@ -216,7 +216,7 @@ export function PaymentsPage() {
                 <TD>
                   <EditablePaid value={s.paid} onCommit={(v) => setPaidAmount(s.member.id, v)} />
                 </TD>
-                <TD className={s.unpaid > 0 ? "font-semibold text-rose-400" : ""}>{formatWon(s.unpaid)}</TD>
+                <TD className={s.unpaid > 0 ? "font-semibold text-red-500" : ""}>{formatWon(s.unpaid)}</TD>
                 <TD>
                   <PaymentStatusBadge status={s.status} />
                 </TD>
@@ -239,10 +239,10 @@ export function PaymentsPage() {
             ))}
           </tbody>
         </Table>
-        <p className="mt-2 text-xs text-slate-500">
-          ※ 회비는 <b className="text-slate-300">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
-          <b className="text-emerald-400">납부</b> → <b className="text-rose-400">미납</b> →{" "}
-          <b className="text-slate-300">면제</b> → 해제 순으로 바뀌고, <b className="text-slate-300">납부 금액</b> 칸은 직접
+        <p className="mt-2 text-xs text-gray-400">
+          ※ 회비는 <b className="text-gray-600">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
+          <b className="text-emerald-600">납부</b> → <b className="text-red-500">미납</b> →{" "}
+          <b className="text-gray-600">면제</b> → 해제 순으로 바뀌고, <b className="text-gray-600">납부 금액</b> 칸은 직접
           입력(엔터로 저장)도 가능합니다.
         </p>
       </Card>
@@ -250,9 +250,9 @@ export function PaymentsPage() {
       {/* 환불 관리 */}
       <Card>
         <SectionTitle action={<Button onClick={() => setRefundOpen(true)}>환불 추가</Button>}>환불 관리</SectionTitle>
-        <p className="mb-2 text-xs text-slate-400">{REFUND_POLICY.description}</p>
+        <p className="mb-2 text-xs text-gray-500">{REFUND_POLICY.description}</p>
         {refunds.length === 0 ? (
-          <p className="text-sm text-slate-500">환불 내역이 없습니다.</p>
+          <p className="text-sm text-gray-400">환불 내역이 없습니다.</p>
         ) : (
           <Table>
             <THead>
@@ -276,7 +276,7 @@ export function PaymentsPage() {
                   <TD>{r.date}</TD>
                   <TD>{r.approved ? "✅" : "대기"}</TD>
                   <TD>
-                    <Button variant="ghost" className="px-2 py-1 text-rose-400" onClick={() => removeRefund(r.id)}>
+                    <Button variant="ghost" className="px-2 py-1 text-red-500" onClick={() => removeRefund(r.id)}>
                       삭제
                     </Button>
                   </TD>
@@ -317,7 +317,7 @@ function EditablePaid({ value, onCommit }: { value: number; onCommit: (v: number
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
       title="실제 납부 금액 입력 (엔터로 저장)"
-      className="w-24 rounded-sm border border-slate-400/70 bg-gradient-to-b from-white to-slate-300 px-2 py-1 text-right text-sm font-bold text-slate-900 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400/50"
+      className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm font-bold text-gray-900 focus:border-brand-500 focus:outline-none"
     />
   );
 }

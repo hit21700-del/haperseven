@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { Card } from "@/components/ui/Card";
 import { PositionBadge, Badge } from "@/components/ui/Badge";
 import type { QuarterLineup, FormationTemplate } from "@/types/formation";
 import type { Member, Position } from "@/types/member";
@@ -57,13 +56,13 @@ export function QuarterLineupCard({
   const overfilled = (pos: "GK" | "DF" | "MF" | "FW") => counts[pos] > template.positions[pos];
 
   return (
-    <Card>
+    <div className="rounded-xl border border-white/10 bg-[#12161D] p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-black text-white">{lineup.quarter}쿼터</h3>
+        <h3 className="font-bold text-gray-100">{lineup.quarter}쿼터</h3>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 text-xs">
             {(["GK", "DF", "MF", "FW"] as const).map((p) => (
-              <span key={p} className={overfilled(p) ? "font-bold text-rose-400" : "text-slate-400"}>
+              <span key={p} className={overfilled(p) ? "font-bold text-[#ff5666]" : "text-gray-500"}>
                 {p} {counts[p]}/{template.positions[p]}
               </span>
             ))}
@@ -75,7 +74,7 @@ export function QuarterLineupCard({
                 const from = Number(e.target.value);
                 if (from) onCopyFrom(from);
               }}
-              className="rounded-sm border border-slate-400/70 bg-gradient-to-b from-white to-slate-300 px-1 py-0.5 text-xs font-bold text-slate-900"
+              className="fm-select !w-auto !px-2 !py-1 text-xs"
               title="다른 쿼터 포메이션을 이 쿼터로 복사"
             >
               <option value="">↺ 불러오기</option>
@@ -93,15 +92,15 @@ export function QuarterLineupCard({
         {attendeeIds.map((id) => {
           const cur = stateOf(id);
           return (
-            <div key={id} className="flex items-center justify-between gap-2 text-sm">
+            <div key={id} className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-white/5">
               <span className="flex items-center gap-2">
                 {cur === "REST" ? <Badge tone="gray">휴식</Badge> : <PositionBadge position={cur} />}
-                <span className={cur === "REST" ? "text-slate-500" : "font-bold text-white"}>{nameOf(id)}</span>
+                <span className={cur === "REST" ? "text-gray-600" : "font-semibold text-gray-200"}>{nameOf(id)}</span>
               </span>
               <select
                 value={cur}
                 onChange={(e) => changePlayer(id, e.target.value as Position | "REST")}
-                className="rounded-sm border border-slate-400/70 bg-gradient-to-b from-white to-slate-300 px-1 py-0.5 text-xs font-bold text-slate-900"
+                className="fm-select !w-auto !px-1.5 !py-0.5 text-xs"
               >
                 {POS_OPTIONS.map((o) => (
                   <option key={o} value={o}>
@@ -113,6 +112,6 @@ export function QuarterLineupCard({
           );
         })}
       </div>
-    </Card>
+    </div>
   );
 }

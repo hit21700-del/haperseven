@@ -1,8 +1,8 @@
 import React from "react";
 
-/** 카드 컨테이너 (2008/09 브로드캐스트 레트로 패널) */
+/** 카드 컨테이너 (라이트 SaaS) */
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`retro-panel rounded-md p-5 ${className}`}>{children}</div>;
+  return <div className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm ${className}`}>{children}</div>;
 }
 
 /** 지표 카드 (대시보드용) — 큰 숫자 강조 */
@@ -18,17 +18,17 @@ export function StatCard({
   tone?: "default" | "green" | "red" | "yellow" | "blue";
 }) {
   const toneClass = {
-    default: "text-blue-300",
-    green: "text-emerald-400",
-    red: "text-rose-400",
-    yellow: "text-amber-400",
-    blue: "text-sky-400",
+    default: "text-brand-600",
+    green: "text-emerald-600",
+    red: "text-red-500",
+    yellow: "text-amber-600",
+    blue: "text-sky-600",
   }[tone];
   return (
     <Card>
-      <div className="text-[13px] font-bold text-slate-400">{label}</div>
-      <div className={`mt-2 text-[32px] font-black leading-none ${toneClass}`}>{value}</div>
-      {sub && <div className="mt-2 text-xs text-slate-400">{sub}</div>}
+      <div className="text-[13px] font-medium text-gray-500">{label}</div>
+      <div className={`mt-2 text-[30px] font-bold leading-none ${toneClass}`}>{value}</div>
+      {sub && <div className="mt-2 text-xs text-gray-400">{sub}</div>}
     </Card>
   );
 }
@@ -36,7 +36,7 @@ export function StatCard({
 export function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="mb-3 flex items-center justify-between">
-      <h2 className="text-base font-black tracking-tight text-blue-300">{children}</h2>
+      <h2 className="text-base font-bold text-gray-900">{children}</h2>
       {action}
     </div>
   );

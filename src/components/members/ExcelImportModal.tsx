@@ -68,7 +68,7 @@ export function ExcelImportModal({
     >
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-sm text-slate-300">
+          <p className="mb-2 text-sm text-gray-600">
             회원 명단 엑셀 파일(.xlsx)을 선택하세요. <code>2023년 명단</code> / <code>2024년 명단</code> /{" "}
             <code>2025</code> 처럼 연도별 시트를 인식하며, 기본으로 <b>최신 연도 시트</b>를 선택합니다.
           </p>
@@ -76,16 +76,16 @@ export function ExcelImportModal({
             type="file"
             accept=".xlsx,.xls"
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            className="block w-full text-sm text-slate-300 file:mr-3 file:rounded-sm file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:font-black file:text-white"
+            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:font-semibold file:text-white"
           />
-          {fileError && <p className="mt-2 text-sm text-rose-400">{fileError}</p>}
+          {fileError && <p className="mt-2 text-sm text-red-500">{fileError}</p>}
         </div>
 
         {parsed && (
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-300">시트 선택</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">시트 선택</label>
                 <Select value={sheet} onChange={(e) => setSheet(e.target.value)}>
                   {parsed.sheetNames.map((s) => (
                     <option key={s} value={s}>
@@ -95,7 +95,7 @@ export function ExcelImportModal({
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-300">가져오기 방식</label>
+                <label className="mb-1 block text-xs font-medium text-gray-600">가져오기 방식</label>
                 <Select value={mode} onChange={(e) => setMode(e.target.value as "replace" | "merge")}>
                   <option value="replace">기존 명단 대체</option>
                   <option value="merge">기존 명단에 추가</option>
@@ -104,16 +104,16 @@ export function ExcelImportModal({
             </div>
 
             {parsed.errors.length > 0 && (
-              <div className="rounded-sm border border-amber-400/30 bg-amber-500/10 p-2 text-xs text-amber-300">
+              <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
                 {parsed.errors.map((e, i) => (
                   <div key={i}>⚠ {e}</div>
                 ))}
               </div>
             )}
 
-            <div className="max-h-48 overflow-y-auto rounded-sm border border-white/10 text-sm">
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-100 text-sm">
               <table className="w-full">
-                <thead className="sticky top-0 bg-slate-900 text-xs text-slate-300">
+                <thead className="sticky top-0 bg-gray-50 text-xs text-gray-600">
                   <tr>
                     <th className="px-2 py-1 text-left">이름</th>
                     <th className="px-2 py-1 text-left">구분</th>
@@ -122,7 +122,7 @@ export function ExcelImportModal({
                 </thead>
                 <tbody>
                   {members.slice(0, 50).map((m) => (
-                    <tr key={m.id} className="border-t border-white/10">
+                    <tr key={m.id} className="border-t border-gray-100">
                       <td className="px-2 py-1">{m.name}</td>
                       <td className="px-2 py-1">{m.memberType}</td>
                       <td className="px-2 py-1 text-right">{m.feeAmount.toLocaleString()}</td>
@@ -131,7 +131,7 @@ export function ExcelImportModal({
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-gray-400">
               ※ 나이/포지션/GK 가능 여부는 엑셀에 없으므로 가져온 뒤 회원 수정에서 입력하세요.
             </p>
           </>

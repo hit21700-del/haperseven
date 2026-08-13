@@ -1,15 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import type { QuarterLineup, FormationTemplate } from "@/types/formation";
 import type { Member, Position } from "@/types/member";
 import { ELEVEN_GRID, gridZones, detailToGroup, type Group } from "@/lib/formation/positions";
 
-/** 포지션 그룹별 강조 색 (2008/09 브로드캐스트 팔레트) */
-const POS_TEXT: Record<Group, string> = {
-  FW: "text-rose-400",
-  MF: "text-lime-400",
-  DF: "text-sky-400",
-  GK: "text-yellow-300",
+/* ────────────────────────────────────────────────────────────
+   포지션 컬러 (FC24 팔레트)
+   ──────────────────────────────────────────────────────────── */
+const POS_HEX: Record<Group, string> = {
+  FW: "#ff5666",
+  MF: "#31ef76",
+  DF: "#45a1ff",
+  GK: "#ffc928",
 };
 
 const LEGEND: { group: Group; label: string }[] = [
@@ -19,38 +21,110 @@ const LEGEND: { group: Group; label: string }[] = [
   { group: "GK", label: "골키퍼" },
 ];
 
-/** 경기장 마킹 (페널티 박스/센터서클) — 원근 클립 내부에 그려짐 */
+/* 그리드 슬롯 → 경기장 % 좌표 (x: 0~100 좌→우, y: 0~100 위=상대 골대) */
+const SLOT_POS: Record<string, { x: number; y: number }> = {
+  LW: { x: 14, y: 9 }, LS: { x: 32, y: 9 }, CF: { x: 50, y: 9 }, RS: { x: 68, y: 9 }, RW: { x: 86, y: 9 },
+  LAM: { x: 26, y: 26 }, CAM: { x: 50, y: 26 }, RAM: { x: 74, y: 26 },
+  LM: { x: 12, y: 43 }, LCM: { x: 31, y: 43 }, CM: { x: 50, y: 43 }, RCM: { x: 69, y: 43 }, RM: { x: 88, y: 43 },
+  LWB: { x: 12, y: 60 }, LDM: { x: 31, y: 60 }, CDM: { x: 50, y: 60 }, RDM: { x: 69, y: 60 }, RWB: { x: 88, y: 60 },
+  LB: { x: 13, y: 77 }, LCB: { x: 31.5, y: 77 }, CB: { x: 50, y: 77 }, RCB: { x: 68.5, y: 77 }, RB: { x: 87, y: 77 },
+  GK: { x: 50, y: 92 },
+};
+
+/** 사다리꼴 원근(위가 좁음)에 맞춰 x 좌표 보정 */
+const xAdj = (x: number, y: number) => 50 + (x - 50) * (0.8 + 0.2 * (y / 100));
+
+/* ────────────────────────────────────────────────────────────
+   경기장 마킹 (센터라인/서클/페널티박스/골에어리어/아크)
+   ──────────────────────────────────────────────────────────── */
 function PitchMarkings() {
   return (
-    <div className="pointer-events-none absolute inset-[4%] border-2 border-white/60">
-      <div className="absolute left-1/2 top-0 h-[16%] w-[34%] -translate-x-1/2 border-x-2 border-b-2 border-white/60" />
-      <div className="absolute bottom-0 left-1/2 h-[16%] w-[34%] -translate-x-1/2 border-x-2 border-t-2 border-white/60" />
-      <div className="absolute left-0 top-1/2 w-full border-t-2 border-white/60" />
-      <div className="absolute left-1/2 top-1/2 aspect-square h-[21%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60" />
-      <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/80" />
+    <div className="pointer-events-none absolute inset-[3.5%] border border-white/25">
+      {/* 상단 페널티박스 + 골에어리어 + 아크 */}
+      <div className="absolute left-1/2 top-0 h-[15%] w-[46%] -translate-x-1/2 border-x border-b border-white/25" />
+      <div className="absolute left-1/2 top-0 h-[6.5%] w-[22%] -translate-x-1/2 border-x border-b border-white/25" />
+      <div className="absolute left-1/2 top-[15%] h-[5%] w-[14%] -translate-x-1/2 overflow-hidden">
+        <div className="absolute -top-[100%] h-[200%] w-full rounded-full border border-white/25" />
+      </div>
+      {/* 하단 페널티박스 + 골에어리어 + 아크 */}
+      <div className="absolute bottom-0 left-1/2 h-[15%] w-[46%] -translate-x-1/2 border-x border-t border-white/25" />
+      <div className="absolute bottom-0 left-1/2 h-[6.5%] w-[22%] -translate-x-1/2 border-x border-t border-white/25" />
+      <div className="absolute bottom-[15%] left-1/2 h-[5%] w-[14%] -translate-x-1/2 overflow-hidden">
+        <div className="absolute -bottom-[100%] h-[200%] w-full rounded-full border border-white/25" />
+      </div>
+      {/* 센터라인 + 센터서클 */}
+      <div className="absolute left-0 top-1/2 w-full border-t border-white/25" />
+      <div className="absolute left-1/2 top-1/2 aspect-square h-[18%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/25" />
+      <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40" />
     </div>
   );
 }
 
-/** 등번호 유니폼 칩 (clip-path 저지) */
-function JerseyChip({ number, name, gk }: { number: number; name: string; gk?: boolean }) {
+/* ────────────────────────────────────────────────────────────
+   유니폼 칩 (등번호 + 이름 + 포지션)
+   ──────────────────────────────────────────────────────────── */
+function PlayerJersey({
+  number,
+  name,
+  slot,
+  gk,
+}: {
+  number: number;
+  name: string;
+  slot: string;
+  gk?: boolean;
+}) {
+  const group = gk ? "GK" : ((detailToGroup(slot) ?? "MF") as Group);
+  const textCls = gk ? "text-[#241a00]" : "text-white";
   return (
-    <div className={`jersey ${gk ? "jersey-gk" : ""}`}>
-      <span className="absolute inset-x-0 top-[12px] z-10 text-center text-lg font-black leading-none text-white drop-shadow-[0_2px_1px_rgba(0,0,0,.95)]">
-        {number}
-      </span>
-      <span className="absolute inset-x-0 bottom-[7px] z-10 truncate px-2 text-center text-[10px] font-black text-white drop-shadow-[0_2px_1px_rgba(0,0,0,.95)]">
-        {name}
+    <div className="flex flex-col items-center">
+      <div className={`fm-jersey ${gk ? "fm-jersey-gk" : ""}`}>
+        <span
+          className={`absolute inset-x-0 top-[10px] z-10 text-center text-base font-extrabold leading-none ${textCls} ${
+            gk ? "" : "drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
+          }`}
+        >
+          {number}
+        </span>
+        <span
+          className={`absolute inset-x-0 bottom-[6px] z-10 truncate px-1.5 text-center text-[9px] font-bold ${textCls} ${
+            gk ? "" : "drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
+          }`}
+        >
+          {name}
+        </span>
+      </div>
+      <span
+        className="-mt-0.5 text-[10px] font-extrabold drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
+        style={{ color: POS_HEX[group] }}
+      >
+        {slot}
       </span>
     </div>
   );
 }
+
+/* ────────────────────────────────────────────────────────────
+   드래그 상태
+   ──────────────────────────────────────────────────────────── */
+type DragState = {
+  id: string;
+  from: "pitch" | "bench";
+  x: number; // 경기장 기준 %
+  y: number;
+  moved: boolean;
+  startCX: number;
+  startCY: number;
+  hover: string | null; // 드롭 예상 슬롯
+  overBench: boolean;
+};
 
 /**
- * 자유 편집 포메이션 에디터(한 쿼터) — 2008/09 브로드캐스트 필드뷰.
- * - 11인제 전체 포지션 그리드 위에서 드래그앤드롭/클릭으로 자유 배치·교체
- * - 배치된 선수는 등번호 유니폼 칩(GK 초록), 빈 칸은 은은한 포지션 라벨
- * - 우측 '후보 명단' 패널로 드롭하면 후보로 이동
+ * FC24 스타일 전술 보드 (한 쿼터).
+ * - 선수는 % 좌표 기반 절대 배치, Pointer Event 드래그로 이동/교체
+ * - 후보 명단은 우측 사이드바, 드롭하면 후보로 이동
+ * - 빈 슬롯 탭 → 후보 탭으로도 배치 가능 (모바일 폴백)
+ * 슬롯(포지션) 데이터 모델과 자동 배정 로직은 기존 그대로 유지한다.
  */
 export function PitchEditor({
   lineup,
@@ -65,15 +139,17 @@ export function PitchEditor({
   attendeeIds: string[];
   onChange: (updated: QuarterLineup) => void;
 }) {
+  const pitchRef = useRef<HTMLDivElement>(null);
+  const benchRef = useRef<HTMLDivElement>(null);
   const [pickingZone, setPickingZone] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<string | "bench" | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
   const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? id;
 
   const zones = gridZones();
   const zoneByLabel = new Map(zones.map((z) => [z.label, z]));
 
-  // 현재 배치 계산: 선수의 slot 라벨이 그리드 칸이면 그 칸에, 아니면 그룹의 빈 칸에
-  const placement = new Map<string, string>(); // zoneLabel -> memberId
+  // 현재 배치 계산: slot 라벨이 그리드 칸이면 그 칸에, 아니면 그룹의 빈 칸에
+  const placement = new Map<string, string>(); // slotLabel -> memberId
   const used = new Set<string>();
   lineup.players.forEach((p) => {
     if (p.slot && zoneByLabel.has(p.slot) && !placement.has(p.slot)) {
@@ -90,12 +166,11 @@ export function PitchEditor({
       used.add(p.memberId);
     }
   });
-  const memberAt = (label: string) => placement.get(label) ?? null;
 
   const onPitchIds = new Set(placement.values());
   const bench = attendeeIds.filter((id) => !onPitchIds.has(id));
 
-  // 등번호: GK(1) → 수비 → 미드필더 → 공격 순, 각 줄 좌→우. 후보는 이어서 12, 13…
+  // 등번호: GK(1) → 수비 → 미드필더 → 공격 순, 각 줄 좌→우. 후보는 12, 13…
   const numberOf = new Map<string, number>();
   let no = 1;
   for (let ri = ELEVEN_GRID.length - 1; ri >= 0; ri--) {
@@ -112,10 +187,9 @@ export function PitchEditor({
     return ((m?.preferredPosition ?? m?.positions.find((p) => p !== "ANY")) as Group) ?? "MF";
   };
 
-  // 포메이션 이름 (예: "11인제 4-2-3-1 (11명)" → "4-2-3-1")
   const formationName = template.name.match(/\d+(?:-\d+)+/)?.[0] ?? template.name;
 
-  /** 배치 맵 → 라인업 커밋 */
+  /* ── 라인업 커밋 (슬롯 → 포지션/GK 매핑은 기존 로직 그대로) ── */
   const commit = (next: Map<string, string>) => {
     const players = [...next.entries()].map(([label, mid]) => ({
       memberId: mid,
@@ -128,20 +202,18 @@ export function PitchEditor({
     onChange({ ...lineup, players, rests });
   };
 
-  /** 선수를 특정 칸에 배치(이동/교체) */
   const placeAt = (memberId: string, targetLabel: string) => {
     const copy = new Map(placement);
     let curLabel: string | null = null;
     for (const [l, m] of copy) if (m === memberId) curLabel = l;
     const occupant = copy.get(targetLabel);
-    // 후보에서 빈 칸으로 들어올 때 정원 초과 방지
     if (curLabel === null && !occupant && onPitchIds.size >= template.playerCount) {
       alert(`이미 ${template.playerCount}명이 배치되어 있습니다. 먼저 다른 선수를 후보로 내려주세요.`);
       return;
     }
     if (curLabel) copy.delete(curLabel);
     copy.set(targetLabel, memberId);
-    if (occupant && occupant !== memberId && curLabel) copy.set(curLabel, occupant); // 칸↔칸 교체
+    if (occupant && occupant !== memberId && curLabel) copy.set(curLabel, occupant); // 자리 교체
     commit(copy);
     setPickingZone(null);
   };
@@ -160,176 +232,254 @@ export function PitchEditor({
     if (zone) placeAt(memberId, zone.label);
   };
 
-  // 드래그
-  const onDragStart = (memberId: string) => (e: React.DragEvent) => {
-    e.dataTransfer.setData("text/plain", memberId);
-    e.dataTransfer.effectAllowed = "move";
+  /* ── Pointer Event 드래그 ── */
+  const pctOf = (e: { clientX: number; clientY: number }) => {
+    const rect = pitchRef.current!.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    };
   };
-  const onDropZone = (label: string) => (e: React.DragEvent) => {
+
+  const nearestSlot = (x: number, y: number): string | null => {
+    let best: string | null = null;
+    let bestDist = Infinity;
+    for (const z of zones) {
+      const p = SLOT_POS[z.label];
+      if (!p) continue;
+      const dx = xAdj(p.x, p.y) - x;
+      const dy = p.y - y;
+      const d = dx * dx + dy * dy;
+      if (d < bestDist) {
+        bestDist = d;
+        best = z.label;
+      }
+    }
+    return bestDist <= 20 * 20 ? best : null;
+  };
+
+  const inBench = (cx: number, cy: number) => {
+    const r = benchRef.current?.getBoundingClientRect();
+    return !!r && cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
+  };
+
+  const startDrag = (id: string, from: "pitch" | "bench") => (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const { x, y } = pctOf(e);
+    setDrag({ id, from, x, y, moved: false, startCX: e.clientX, startCY: e.clientY, hover: null, overBench: false });
+  };
+
+  const moveDrag = (e: React.PointerEvent) => {
+    if (!drag) return;
     e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain");
-    setDragOver(null);
-    if (id) placeAt(id, label);
+    const { x, y } = pctOf(e);
+    const cx = Math.min(98, Math.max(2, x));
+    const cy = Math.min(97, Math.max(3, y));
+    const moved = drag.moved || Math.abs(e.clientX - drag.startCX) + Math.abs(e.clientY - drag.startCY) > 6;
+    const inside = x >= -2 && x <= 102 && y >= -2 && y <= 102;
+    setDrag({
+      ...drag,
+      x: cx,
+      y: cy,
+      moved,
+      hover: inside ? nearestSlot(cx, cy) : null,
+      overBench: inBench(e.clientX, e.clientY),
+    });
   };
-  const onDropBench = (e: React.DragEvent) => {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain");
-    setDragOver(null);
-    if (id) removeMember(id);
+
+  const endDrag = () => {
+    if (!drag) return;
+    const d = drag;
+    setDrag(null);
+    if (!d.moved) {
+      if (d.from === "bench") placeFromBench(d.id); // 탭 = 자동 배치
+      return;
+    }
+    if (d.overBench) {
+      if (d.from === "pitch") removeMember(d.id);
+      return;
+    }
+    if (d.hover) placeAt(d.id, d.hover);
+    // 그 외: 원래 자리로 스냅백 (상태 변경 없음)
   };
-  const allowDrop = (key: string) => (e: React.DragEvent) => {
-    e.preventDefault();
-    if (dragOver !== key) setDragOver(key);
-  };
+
+  const dragging = (id: string) => drag?.id === id && drag.moved;
 
   return (
-    <div className="retro-panel relative overflow-hidden rounded-md bg-[#020819] p-4 shadow-panel">
-      {/* 상단 글로우 장식 */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_50%_0%,rgba(86,135,255,.42),transparent_66%)]" />
-      <div className="pointer-events-none absolute left-[13%] top-[5%] h-20 w-20 rounded-full bg-blue-200/15 blur-2xl" />
-      <div className="pointer-events-none absolute right-[13%] top-[5%] h-20 w-20 rounded-full bg-blue-200/15 blur-2xl" />
-
-      <div className="relative grid gap-4 xl:grid-cols-[1fr_190px]">
-        {/* 필드 영역 */}
-        <div className="relative">
-          {/* 포메이션 카드 */}
-          <div className="absolute left-0 top-0 z-30 rounded-sm border border-slate-400/70 bg-gradient-to-b from-[#18254b] to-[#030817] px-5 py-2.5 shadow-chrome">
-            <div className="text-2xl font-black tracking-tight text-white">{formationName}</div>
-            <div className="text-center text-xs text-slate-300">{lineup.quarter}쿼터 포메이션</div>
-          </div>
-          {/* 출전 카운터 */}
-          <div className="absolute right-0 top-0 z-30 rounded-sm border border-slate-400/70 bg-gradient-to-b from-[#18254b] to-[#030817] px-4 py-2.5 text-right shadow-chrome">
-            <div className="text-sm font-black text-white">
-              출전 {onPitchIds.size}
-              <span className="text-slate-400">/{template.playerCount}</span>
+    <div className="rounded-2xl border border-white/10 bg-[#12161D] p-4 sm:p-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_230px]">
+        {/* ── 필드 영역 ── */}
+        <div className="min-w-0">
+          {/* 상단 정보 */}
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold tracking-tight text-gray-100">{formationName}</span>
+              <span className="text-xs font-semibold text-[#31ef76]">{lineup.quarter}쿼터</span>
             </div>
-            <div className="text-[10px] text-slate-400">후보 {bench.length}명</div>
+            <div className="text-sm text-gray-500">
+              출전 <b className="text-gray-100">{onPitchIds.size}</b>/{template.playerCount} · 후보{" "}
+              <b className="text-gray-300">{bench.length}</b>명
+            </div>
           </div>
 
-          {/* 원근 잔디 필드 */}
-          <div className="relative min-h-[640px]">
-            <div className="pitch-grid absolute inset-0 overflow-hidden border border-white/45 shadow-[0_0_28px_rgba(74,135,255,.18)] [clip-path:polygon(14%_0,86%_0,100%_100%,0_100%)]">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent,rgba(0,0,0,.42)_82%)]" />
+          {/* 경기장 */}
+          <div
+            ref={pitchRef}
+            className="relative h-[560px] touch-none select-none overflow-hidden rounded-xl bg-[#0B0F14] sm:h-[640px]"
+          >
+            {/* 스타디움 분위기 (어두운 외곽 + 아주 약한 그린 톤) */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_50%_0%,rgba(49,239,118,.06),transparent_70%)]" />
+            {/* 잔디 (약한 원근 사다리꼴) */}
+            <div className="fm-pitch absolute inset-x-0 bottom-2 top-3 [clip-path:polygon(9%_0,91%_0,100%_100%,0_100%)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,transparent,rgba(0,0,0,.4)_85%)]" />
               <PitchMarkings />
             </div>
 
-            {/* 포지션 그리드 (드래그앤드롭) */}
-            <div className="relative z-10 flex h-full min-h-[640px] flex-col justify-between gap-1 px-[5%] pb-5 pt-[74px]">
-              {ELEVEN_GRID.map((row, ri) => (
-                <div key={ri} className="flex items-end justify-around gap-1">
-                  {row.map((label) => {
-                    const memberId = memberAt(label);
-                    const selecting = pickingZone === label;
-                    const over = dragOver === label;
-                    if (memberId) {
-                      const g = (detailToGroup(label) ?? "MF") as Group;
-                      return (
-                        <div
-                          key={label}
-                          draggable
-                          onDragStart={onDragStart(memberId)}
-                          onDragOver={allowDrop(label)}
-                          onDrop={onDropZone(label)}
-                          className={`relative flex cursor-grab flex-col items-center transition duration-200 active:cursor-grabbing ${
-                            over ? "z-30 scale-110" : "hover:z-30 hover:scale-105"
-                          }`}
-                          title={`${nameOf(memberId)} (${label})`}
-                        >
-                          <button
-                            onClick={() => removeMember(memberId)}
-                            className="absolute -top-1.5 right-0 z-20 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white opacity-80 shadow hover:opacity-100"
-                            aria-label="후보로 내리기"
-                            title="후보로 내리기"
-                          >
-                            −
-                          </button>
-                          <span className="text-[8px] font-black text-white/60 drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]">
-                            {label}
-                          </span>
-                          <JerseyChip number={numberOf.get(memberId) ?? 0} name={nameOf(memberId)} gk={label === "GK"} />
-                          <span
-                            className={`-mt-1 text-[11px] font-black drop-shadow-[0_2px_1px_rgba(0,0,0,.95)] ${POS_TEXT[g]}`}
-                          >
-                            {g}
-                          </span>
-                        </div>
-                      );
-                    }
-                    return (
-                      <button
-                        key={label}
-                        onClick={() => setPickingZone(selecting ? null : label)}
-                        onDragOver={allowDrop(label)}
-                        onDrop={onDropZone(label)}
-                        className={`flex h-7 w-14 items-center justify-center rounded-full text-[9px] font-black transition ${
-                          selecting || over
-                            ? "bg-yellow-300 text-slate-900 ring-2 ring-yellow-400"
-                            : "border border-dashed border-white/30 bg-black/20 text-white/50 hover:bg-black/40 hover:text-white/80"
-                        }`}
-                        title="이 자리에 선수 넣기 (드롭/클릭)"
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
+            {/* 빈 슬롯 마커 */}
+            {zones.map((z) => {
+              const p = SLOT_POS[z.label];
+              if (!p || placement.has(z.label)) return null;
+              const active = pickingZone === z.label || drag?.hover === z.label;
+              return (
+                <button
+                  key={z.label}
+                  onClick={() => setPickingZone(pickingZone === z.label ? null : z.label)}
+                  className={`absolute z-10 flex h-7 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md text-[9px] font-bold transition ${
+                    active
+                      ? "bg-[#31ef76] text-[#062313]"
+                      : "border border-dashed border-white/15 bg-black/25 text-white/35 hover:bg-black/40 hover:text-white/60"
+                  }`}
+                  style={{ left: `${xAdj(p.x, p.y)}%`, top: `${p.y}%` }}
+                  title="이 자리에 선수 넣기"
+                >
+                  {z.label}
+                </button>
+              );
+            })}
+
+            {/* 배치된 선수 */}
+            {[...placement.entries()].map(([label, mid]) => {
+              const p = SLOT_POS[label];
+              if (!p) return null;
+              const isDragging = dragging(mid);
+              const x = isDragging ? drag!.x : xAdj(p.x, p.y);
+              const y = isDragging ? drag!.y : p.y;
+              const targeted = drag && drag.id !== mid && drag.hover === label; // 교체 대상
+              return (
+                <div
+                  key={mid}
+                  onPointerDown={startDrag(mid, "pitch")}
+                  onPointerMove={moveDrag}
+                  onPointerUp={endDrag}
+                  onPointerCancel={() => setDrag(null)}
+                  className={`group absolute -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none active:cursor-grabbing ${
+                    isDragging
+                      ? "z-40 scale-110 opacity-95"
+                      : targeted
+                        ? "z-30 scale-110"
+                        : "z-20 transition-transform duration-150 hover:scale-105"
+                  }`}
+                  style={{ left: `${x}%`, top: `${y}%` }}
+                  title={`${nameOf(mid)} (${label})`}
+                >
+                  {!isDragging && (
+                    <button
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => removeMember(mid)}
+                      className="absolute -right-1 -top-1 z-30 flex h-4 w-4 items-center justify-center rounded-full bg-[#ff5666] text-[10px] font-bold text-white opacity-60 shadow transition-opacity hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-80"
+                      aria-label="후보로 내리기"
+                      title="후보로 내리기"
+                    >
+                      −
+                    </button>
+                  )}
+                  <PlayerJersey number={numberOf.get(mid) ?? 0} name={nameOf(mid)} slot={label} gk={label === "GK"} />
                 </div>
-              ))}
-            </div>
+              );
+            })}
+
+            {/* 후보에서 끌어오는 중인 선수 */}
+            {drag && drag.from === "bench" && drag.moved && (
+              <div
+                className="pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-1/2 scale-110 opacity-95"
+                style={{ left: `${drag.x}%`, top: `${drag.y}%` }}
+              >
+                <PlayerJersey
+                  number={numberOf.get(drag.id) ?? 0}
+                  name={nameOf(drag.id)}
+                  slot={drag.hover ?? groupOf(drag.id)}
+                  gk={drag.hover === "GK"}
+                />
+              </div>
+            )}
           </div>
 
           {/* 범례 */}
-          <div className="mx-auto mt-2 grid max-w-xl grid-cols-4 rounded-sm border border-white/10 bg-black/55 px-4 py-2 text-center text-xs font-black backdrop-blur sm:text-sm">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs">
             {LEGEND.map(({ group, label }) => (
-              <span key={group} className="text-white/80">
-                <b className={POS_TEXT[group]}>{group}</b> {label}
+              <span key={group} className="flex items-center gap-1.5 text-gray-500">
+                <b className="font-extrabold" style={{ color: POS_HEX[group] }}>
+                  {group}
+                </b>
+                {label}
               </span>
             ))}
           </div>
         </div>
 
-        {/* 후보 명단 */}
+        {/* ── 후보 명단 사이드바 ── */}
         <aside
-          onDragOver={allowDrop("bench")}
-          onDrop={onDropBench}
-          className={`retro-panel relative z-20 h-fit rounded-sm p-3 xl:mt-10 ${
-            dragOver === "bench" ? "ring-2 ring-rose-400" : ""
+          ref={benchRef}
+          className={`h-fit rounded-xl border p-3 transition-colors xl:sticky xl:top-4 ${
+            drag?.overBench && drag.from === "pitch"
+              ? "border-[#ff5666]/60 bg-[#ff5666]/10"
+              : "border-white/10 bg-[#0F131A]"
           }`}
         >
-          <h3 className="border-b border-slate-400/40 pb-2.5 text-center text-lg font-black text-white">후보 명단</h3>
+          <div className="mb-2 flex items-center justify-between border-b border-white/10 pb-2">
+            <h3 className="text-sm font-bold text-gray-100">후보 명단</h3>
+            <span className="text-xs text-gray-500">{bench.length}명</span>
+          </div>
           {pickingZone && (
-            <p className="mt-2 rounded-sm border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-center text-[10px] font-black text-yellow-300">
-              {pickingZone} 자리에 넣을 선수 선택
+            <p className="mb-2 rounded-md bg-[#31ef76]/10 px-2 py-1.5 text-[11px] font-semibold text-[#31ef76]">
+              {pickingZone} 자리에 넣을 선수를 선택하세요
             </p>
           )}
-          <div className="mt-3 space-y-2.5">
-            {bench.length === 0 ? (
-              <p className="py-3 text-center text-xs text-slate-500">대기 중인 선수가 없습니다</p>
-            ) : (
-              bench.map((id) => {
+          {bench.length === 0 ? (
+            <p className="py-4 text-center text-xs text-gray-600">대기 중인 선수가 없습니다</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-1">
+              {bench.map((id) => {
                 const g = groupOf(id);
                 return (
-                  <button
+                  <div
                     key={id}
-                    draggable
-                    onDragStart={onDragStart(id)}
-                    onClick={() => placeFromBench(id)}
-                    className="flex w-full cursor-grab items-center gap-3 rounded-sm border border-slate-400/35 bg-black/30 p-2.5 text-left hover:bg-white/5 active:cursor-grabbing"
-                    title="필드로 드래그하거나 클릭해서 넣기"
+                    onPointerDown={startDrag(id, "bench")}
+                    onPointerMove={moveDrag}
+                    onPointerUp={endDrag}
+                    onPointerCancel={() => setDrag(null)}
+                    className={`flex cursor-grab touch-none items-center gap-2.5 rounded-lg border border-white/5 bg-white/5 px-2.5 py-2 transition active:cursor-grabbing ${
+                      drag?.id === id && drag.moved ? "opacity-40" : "hover:bg-white/10"
+                    }`}
+                    title="경기장으로 드래그하거나 탭해서 배치"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-slate-400/50 bg-gradient-to-b from-[#1b2c57] to-[#040817] text-lg font-black text-white">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#1A202A] text-sm font-extrabold text-gray-200">
                       {numberOf.get(id)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-black text-white">{nameOf(id)}</div>
-                      <div className={`text-xs font-black ${POS_TEXT[g]}`}>{g}</div>
-                    </div>
-                  </button>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-xs font-bold text-gray-200">{nameOf(id)}</span>
+                      <span className="block text-[10px] font-extrabold" style={{ color: POS_HEX[g] }}>
+                        {g}
+                      </span>
+                    </span>
+                  </div>
                 );
-              })
-            )}
-          </div>
-          <p className="mt-3 border-t border-white/10 pt-2 text-[10px] leading-relaxed text-slate-500">
-            선수를 여기로 드롭하면 후보로 내려갑니다
+              })}
+            </div>
+          )}
+          <p className="mt-2.5 border-t border-white/10 pt-2 text-[10px] leading-relaxed text-gray-600">
+            선수를 이곳으로 드래그하면 후보로 내려갑니다
           </p>
         </aside>
       </div>

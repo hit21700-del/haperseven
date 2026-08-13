@@ -22,8 +22,8 @@ export function StatsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">통계</h1>
-          <p className="text-sm text-slate-400">{periodLabel(period)} 누적</p>
+          <h1 className="text-2xl font-bold text-gray-900">통계</h1>
+          <p className="text-sm text-gray-500">{periodLabel(period)} 누적</p>
         </div>
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
@@ -42,7 +42,7 @@ export function StatsPage() {
                 <button
                   key={k}
                   onClick={() => setSortKey(k)}
-                  className={`rounded-sm px-3 py-1 font-black ${sortKey === k ? "chrome-button text-white" : "silver-button text-slate-900"}`}
+                  className={`px-3 py-1 font-semibold ${sortKey === k ? "rounded-lg bg-brand-600 text-white hover:bg-brand-700" : "rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}
                 >
                   {label}
                 </button>
@@ -66,7 +66,7 @@ export function StatsPage() {
           <tbody>
             {sorted.map((a, i) => (
               <TR key={a.memberId}>
-                <TD className="font-bold text-blue-300">{i + 1}</TD>
+                <TD className="font-bold text-brand-600">{i + 1}</TD>
                 <TD className="font-medium">{a.name}</TD>
                 <TD>{a.attendCount}</TD>
                 <TD>{a.goals}</TD>
@@ -76,7 +76,7 @@ export function StatsPage() {
             ))}
             {sorted.length === 0 && (
               <TR>
-                <TD className="text-slate-500">해당 기간 기록이 없습니다.</TD>
+                <TD className="text-gray-400">해당 기간 기록이 없습니다.</TD>
               </TR>
             )}
           </tbody>

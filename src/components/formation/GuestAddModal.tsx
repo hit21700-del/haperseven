@@ -109,7 +109,7 @@ export function GuestAddModal({
           </Select>
         </FormRow>
       </div>
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-gray-500">
         ※ 용병은 <b>회원 명단에 저장되지 않고</b> 이번 포메이션 참여 인원으로만 추가됩니다. (회비 0원 / 참석시)
       </p>
     </Modal>

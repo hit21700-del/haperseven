@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -13,11 +13,10 @@ body {
 
 body {
   margin: 0;
-  color: #f6f8ff;
-  background:
-    radial-gradient(circle at 58% 0%, rgba(36, 74, 171, 0.26), transparent 34%),
-    linear-gradient(135deg, #030817 0%, #07132d 48%, #020611 100%);
-  font-family: Arial, "Noto Sans KR", sans-serif;
+  color: #111827;
+  background-color: #f6f7fb;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
 }
 
 button,
@@ -32,111 +31,72 @@ input[type="number"]::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* ── 2008/09 브로드캐스트 레트로 스킨 ─────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   포메이션(FC24 전술 화면) 전용 스타일
+   ══════════════════════════════════════════════════════════ */
 
-.retro-panel {
-  position: relative;
-  border: 1px solid rgba(184, 205, 255, 0.68);
-  background: linear-gradient(180deg, rgba(13, 31, 76, 0.97), rgba(3, 10, 28, 0.97));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.48),
-    inset 0 0 0 3px rgba(13, 24, 47, 0.92),
-    inset 0 0 0 4px rgba(131, 151, 184, 0.42),
-    0 16px 42px rgba(0, 0, 0, 0.38);
+/* 다크 셀렉트/인풋 */
+.fm-select,
+.fm-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #1a202a;
+  color: #e5e7eb;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
 }
 
-.retro-panel::before,
-.retro-panel::after {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  pointer-events: none;
+.fm-select:focus,
+.fm-input:focus {
+  border-color: rgba(49, 239, 118, 0.45);
 }
 
-.retro-panel::before {
-  top: 4px;
-  left: 4px;
-  border-top: 2px solid rgba(255, 255, 255, 0.65);
-  border-left: 2px solid rgba(255, 255, 255, 0.65);
-}
-
-.retro-panel::after {
-  right: 4px;
-  bottom: 4px;
-  border-right: 2px solid rgba(77, 116, 196, 0.85);
-  border-bottom: 2px solid rgba(77, 116, 196, 0.85);
-}
-
-.chrome-button {
-  border: 1px solid rgba(191, 211, 255, 0.85);
-  color: white;
-  background: linear-gradient(180deg, #194cd6 0%, #082a8b 48%, #03175b 50%, #0b43c8 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.82),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.75),
-    0 0 0 2px rgba(0, 0, 0, 0.6),
-    0 0 15px rgba(31, 91, 255, 0.38);
-}
-
-.chrome-button:hover {
-  filter: brightness(1.14);
-}
-
-.silver-button {
-  border: 1px solid #c9d0dc;
-  color: #111827;
-  background: linear-gradient(180deg, #ffffff, #cbd2dc 47%, #f5f7fa 50%, #aeb7c5);
-  box-shadow:
-    inset 0 1px 0 white,
-    inset 0 -1px 0 rgba(0, 0, 0, 0.32),
-    0 0 0 2px rgba(0, 0, 0, 0.45);
-}
-
-.silver-button:hover {
-  filter: brightness(1.05);
-}
-
-.pitch-grid {
+/* 잔디: 어두운 그린 + 가로 스트라이프 */
+.fm-pitch {
   background-image:
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.025) 0,
-      rgba(255, 255, 255, 0.025) 34px,
-      rgba(0, 0, 0, 0.04) 34px,
-      rgba(0, 0, 0, 0.04) 68px
+      rgba(255, 255, 255, 0.03) 0,
+      rgba(255, 255, 255, 0.03) 9.09%,
+      rgba(0, 0, 0, 0.05) 9.09%,
+      rgba(0, 0, 0, 0.05) 18.18%
     ),
-    linear-gradient(180deg, rgba(47, 88, 44, 0.97), rgba(18, 53, 26, 0.99));
+    linear-gradient(180deg, #14351f 0%, #0e2818 55%, #0a1f12 100%);
 }
 
-.jersey {
+/* 유니폼 (필드 플레이어: 다크 네이비) */
+.fm-jersey {
   position: relative;
-  width: 72px;
-  height: 67px;
+  width: 64px;
+  height: 58px;
   clip-path: polygon(29% 0, 42% 8%, 58% 8%, 71% 0, 100% 18%, 84% 39%, 76% 32%, 76% 100%, 24% 100%, 24% 32%, 16% 39%, 0 18%);
   background:
-    linear-gradient(90deg, transparent 0 47%, rgba(255, 255, 255, 0.13) 48% 52%, transparent 53%),
-    linear-gradient(180deg, #132c74 0%, #07173e 62%, #020817 100%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  filter: drop-shadow(0 8px 7px rgba(0, 0, 0, 0.55));
+    linear-gradient(90deg, transparent 0 46%, rgba(255, 255, 255, 0.09) 47% 53%, transparent 54%),
+    linear-gradient(180deg, #1e2a3f 0%, #131c2c 60%, #0b1220 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.5));
 }
 
-.jersey::before {
+.fm-jersey::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 35%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 35%);
 }
 
-.jersey-gk {
+/* 골키퍼 유니폼 (노랑) */
+.fm-jersey-gk {
   background:
-    linear-gradient(90deg, transparent 0 47%, rgba(255, 255, 255, 0.15) 48% 52%, transparent 53%),
-    linear-gradient(180deg, #2da348 0%, #0f5727 65%, #062313 100%);
+    linear-gradient(90deg, transparent 0 46%, rgba(0, 0, 0, 0.1) 47% 53%, transparent 54%),
+    linear-gradient(180deg, #ffc928 0%, #dfa50f 60%, #a87a06 100%);
+  border-color: rgba(0, 0, 0, 0.45);
 }
 
-@media (max-width: 1024px) {
-  .jersey {
-    width: 58px;
-    height: 54px;
+@media (max-width: 640px) {
+  .fm-jersey {
+    width: 52px;
+    height: 47px;
   }
 }
