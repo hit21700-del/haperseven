@@ -1,7 +1,7 @@
 import React from "react";
 
 const baseInput =
-  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500";
+  "w-full rounded-lg border border-[#D8DCE5] bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#635BFF] focus:outline-none focus:ring-[3px] focus:ring-[#635BFF]/10";
 
 export function Label({ children }: { children: React.ReactNode }) {
   return <label className="mb-1 block text-xs font-medium text-gray-600">{children}</label>;

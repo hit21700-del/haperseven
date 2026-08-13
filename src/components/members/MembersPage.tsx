@@ -58,7 +58,7 @@ export function MembersPage() {
       {/* 헤더 */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">회원 관리</h1>
           <p className="mt-0.5 text-sm text-gray-500">팀의 모든 회원을 관리하고 정보를 확인하세요.</p>
         </div>
         <div className="flex flex-wrap gap-2">

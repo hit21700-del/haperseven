@@ -307,7 +307,7 @@ export function PitchEditor({
   const dragging = (id: string) => drag?.id === id && drag.moved;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#12161D] p-4 sm:p-5">
+    <div className="rounded-2xl border border-white/[0.08] bg-[#0B1117] p-4 sm:p-5">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_230px]">
         {/* ── 필드 영역 ── */}
         <div className="min-w-0">
@@ -315,7 +315,7 @@ export function PitchEditor({
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold tracking-tight text-gray-100">{formationName}</span>
-              <span className="text-xs font-semibold text-[#31ef76]">{lineup.quarter}쿼터</span>
+              <span className="text-xs font-semibold text-[#20E878]">{lineup.quarter}쿼터</span>
             </div>
             <div className="text-sm text-gray-500">
               출전 <b className="text-gray-100">{onPitchIds.size}</b>/{template.playerCount} · 후보{" "}
@@ -326,10 +326,10 @@ export function PitchEditor({
           {/* 경기장 */}
           <div
             ref={pitchRef}
-            className="relative h-[560px] touch-none select-none overflow-hidden rounded-xl bg-[#0B0F14] sm:h-[640px]"
+            className="relative h-[560px] touch-none select-none overflow-hidden rounded-xl bg-[#0B1117] sm:h-[640px]"
           >
             {/* 스타디움 분위기 (어두운 외곽 + 아주 약한 그린 톤) */}
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_50%_0%,rgba(49,239,118,.06),transparent_70%)]" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_50%_0%,rgba(32,232,120,.05),transparent_70%)]" />
             {/* 잔디 (약한 원근 사다리꼴) */}
             <div className="fm-pitch absolute inset-x-0 bottom-2 top-3 [clip-path:polygon(9%_0,91%_0,100%_100%,0_100%)]">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,transparent,rgba(0,0,0,.4)_85%)]" />
@@ -347,7 +347,7 @@ export function PitchEditor({
                   onClick={() => setPickingZone(pickingZone === z.label ? null : z.label)}
                   className={`absolute z-10 flex h-7 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md text-[9px] font-bold transition ${
                     active
-                      ? "bg-[#31ef76] text-[#062313]"
+                      ? "bg-[#20E878] text-[#062313]"
                       : "border border-dashed border-white/15 bg-black/25 text-white/35 hover:bg-black/40 hover:text-white/60"
                   }`}
                   style={{ left: `${xAdj(p.x, p.y)}%`, top: `${p.y}%` }}
@@ -434,7 +434,7 @@ export function PitchEditor({
           className={`h-fit rounded-xl border p-3 transition-colors xl:sticky xl:top-4 ${
             drag?.overBench && drag.from === "pitch"
               ? "border-[#ff5666]/60 bg-[#ff5666]/10"
-              : "border-white/10 bg-[#0F131A]"
+              : "border-white/[0.08] bg-[#12181F]"
           }`}
         >
           <div className="mb-2 flex items-center justify-between border-b border-white/10 pb-2">
@@ -442,7 +442,7 @@ export function PitchEditor({
             <span className="text-xs text-gray-500">{bench.length}명</span>
           </div>
           {pickingZone && (
-            <p className="mb-2 rounded-md bg-[#31ef76]/10 px-2 py-1.5 text-[11px] font-semibold text-[#31ef76]">
+            <p className="mb-2 rounded-md bg-[#20E878]/10 px-2 py-1.5 text-[11px] font-semibold text-[#20E878]">
               {pickingZone} 자리에 넣을 선수를 선택하세요
             </p>
           )}

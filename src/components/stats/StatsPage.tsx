@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Card, SectionTitle } from "@/components/ui/Card";
@@ -22,7 +22,7 @@ export function StatsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">통계</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">통계</h1>
           <p className="text-sm text-gray-500">{periodLabel(period)} 누적</p>
         </div>
         <PeriodFilter value={period} onChange={setPeriod} />

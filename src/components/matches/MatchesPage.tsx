@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState } from "react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Card } from "@/components/ui/Card";
@@ -47,7 +47,7 @@ export function MatchesPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-gray-900">경기 관리</h1>
+        <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">경기 관리</h1>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => exportMatchStatsToExcel(matches, members)}>
             ⬆ 스탯 엑셀 내보내기

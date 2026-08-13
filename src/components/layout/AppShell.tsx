@@ -33,7 +33,6 @@ const APP_VERSION = "v2.1.0";
 export function AppShell() {
   const { ready, resetToSample } = useAppStore();
   const [tab, setTab] = useState<TabKey>("dashboard");
-  const isDark = tab === "formation";
 
   if (!ready) {
     return <div className="flex h-screen items-center justify-center text-gray-400">불러오는 중...</div>;
@@ -60,7 +59,7 @@ export function AppShell() {
     <NavContext.Provider value={setTab}>
       <div className="flex min-h-screen flex-col md:flex-row">
         {/* 좌측 사이드바 (라이트 고정) */}
-        <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-[#EAECF0] bg-white p-4 md:flex">
+        <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-[#EAECF2] bg-white p-4 md:flex">
           {/* 로고 */}
           <div className="mb-5 flex items-center gap-3 border-b border-gray-100 pb-5">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white">
@@ -93,7 +92,7 @@ export function AppShell() {
                 onClick={() => setTab(key)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-sm transition ${
                   tab === key
-                    ? "bg-[#F0EEFF] font-semibold text-[#5546E8]"
+                    ? "bg-[#EEEBFF] font-semibold text-[#5B4CF0]"
                     : "font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800"
                 }`}
               >
@@ -141,7 +140,7 @@ export function AppShell() {
                 key={key}
                 onClick={() => setTab(key)}
                 className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                  tab === key ? "bg-[#F0EEFF] text-[#5546E8]" : "text-gray-500"
+                  tab === key ? "bg-[#EEEBFF] text-[#5B4CF0]" : "text-gray-500"
                 }`}
               >
                 <Icon size={14} />
@@ -151,9 +150,9 @@ export function AppShell() {
           </nav>
         </header>
 
-        {/* 본문 — 포메이션 탭은 다크 전술 화면 */}
-        <main className={`min-w-0 flex-1 px-4 py-6 sm:px-6 xl:px-10 ${isDark ? "bg-[#0B0F14]" : "bg-[#F6F7FB]"}`}>
-          <div className="mx-auto max-w-[1500px]">{renderPage()}</div>
+        {/* 본문 — 전 페이지 동일한 밝은 배경/여백 */}
+        <main className="min-w-0 flex-1 bg-[#F5F6FA]">
+          <div className="mx-auto w-full max-w-[1500px] px-6 py-7 lg:px-8">{renderPage()}</div>
         </main>
       </div>
     </NavContext.Provider>

@@ -2,7 +2,7 @@
 import React from "react";
 import type { FormationPlan } from "@/types/formation";
 
-/** 규칙 위반/경고/배정 사유 표시 */
+/** 규칙 위반/경고/배정 사유 표시 (라이트 카드) */
 export function FormationWarnings({ plan }: { plan: FormationPlan }) {
   const hasWarnings = plan.warnings.length > 0;
   const hasViolations = plan.ruleViolations.length > 0;
@@ -10,9 +10,9 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
   return (
     <div className="space-y-3">
       {hasViolations && (
-        <div className="rounded-xl border border-rose-400/20 bg-rose-500/10 p-4 text-rose-300">
-          <h3 className="mb-1 text-sm font-semibold text-rose-300">⚠ 규칙 위반</h3>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-rose-300">
+        <div className="rounded-[14px] border border-red-200 bg-red-50 p-4 text-red-600">
+          <h3 className="mb-1 text-sm font-semibold">⚠ 규칙 위반</h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm">
             {plan.ruleViolations.map((v, i) => (
               <li key={i}>{v.message}</li>
             ))}
@@ -21,9 +21,9 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {hasWarnings && (
-        <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-amber-300">
-          <h3 className="mb-1 text-sm font-semibold text-amber-300">경고 / 충돌</h3>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-amber-300">
+        <div className="rounded-[14px] border border-amber-200 bg-amber-50 p-4 text-amber-700">
+          <h3 className="mb-1 text-sm font-semibold">경고 / 충돌</h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm">
             {plan.warnings.map((w, i) => (
               <li key={i}>{w}</li>
             ))}
@@ -32,9 +32,9 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {plan.reasons.length > 0 && (
-        <div className="rounded-xl border border-sky-400/20 bg-sky-500/10 p-4 text-sky-300">
-          <h3 className="mb-1 text-sm font-semibold text-sky-300">자동 배정 사유</h3>
-          <ul className="list-disc space-y-0.5 pl-5 text-sm text-sky-300">
+        <div className="rounded-[14px] border border-sky-200 bg-sky-50 p-4 text-sky-700">
+          <h3 className="mb-1 text-sm font-semibold">자동 배정 사유</h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm">
             {plan.reasons.map((r, i) => (
               <li key={i}>{r}</li>
             ))}
@@ -43,8 +43,8 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {!hasWarnings && !hasViolations && (
-        <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-emerald-300">
-          <p className="text-sm text-emerald-300">✅ 규칙 위반이나 경고가 없습니다.</p>
+        <div className="rounded-[14px] border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-sm text-emerald-700">✅ 규칙 위반이나 경고가 없습니다.</p>
         </div>
       )}
     </div>

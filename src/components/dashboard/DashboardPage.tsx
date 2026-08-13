@@ -114,7 +114,7 @@ export function DashboardPage() {
       {/* 헤더 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">대시보드</h1>
           <p className="mt-0.5 text-sm text-gray-500">{periodLabel(period)} 기준</p>
         </div>
         <PeriodFilter value={period} onChange={setPeriod} />

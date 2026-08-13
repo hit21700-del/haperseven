@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useMemo, useState, useEffect } from "react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Card, StatCard, SectionTitle } from "@/components/ui/Card";
@@ -131,7 +131,7 @@ export function PaymentsPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">회비 관리</h1>
+          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">회비 관리</h1>
           <p className="mt-0.5 text-sm text-gray-500">{periodLabel(period)} 기준 · {FEE_DEADLINE_NOTICE}</p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -4,6 +4,22 @@
 
 :root {
   color-scheme: light;
+
+  /* ── HAPER SEVEN 디자인 토큰 ── */
+  --brand: #5b4cf0;
+  --brand-hover: #4c3ee5;
+
+  --app-bg: #f5f6fa;
+  --surface: #ffffff;
+  --border: #e4e7ec;
+
+  --text-primary: #101828;
+  --text-secondary: #667085;
+
+  /* 전술 보드 전용 */
+  --tactical-bg: #0b1117;
+  --pitch-green: #17542e;
+  --tactical-green: #20e878;
 }
 
 html,
@@ -13,8 +29,8 @@ body {
 
 body {
   margin: 0;
-  color: #111827;
-  background-color: #f6f7fb;
+  color: var(--text-primary);
+  background-color: var(--app-bg);
   font-family:
     -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
 }
@@ -50,20 +66,20 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .fm-select:focus,
 .fm-input:focus {
-  border-color: rgba(49, 239, 118, 0.45);
+  border-color: rgba(32, 232, 120, 0.45);
 }
 
-/* 잔디: 어두운 그린 + 가로 스트라이프 */
+/* 잔디: 다크 그린 + 아주 약한 가로 스트라이프 */
 .fm-pitch {
   background-image:
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.03) 0,
-      rgba(255, 255, 255, 0.03) 9.09%,
-      rgba(0, 0, 0, 0.05) 9.09%,
-      rgba(0, 0, 0, 0.05) 18.18%
+      rgba(255, 255, 255, 0.025) 0,
+      rgba(255, 255, 255, 0.025) 9.09%,
+      rgba(0, 0, 0, 0.04) 9.09%,
+      rgba(0, 0, 0, 0.04) 18.18%
     ),
-    linear-gradient(180deg, #14351f 0%, #0e2818 55%, #0a1f12 100%);
+    linear-gradient(180deg, #1b5e34 0%, #17542e 55%, #124023 100%);
 }
 
 /* 유니폼 (필드 플레이어: 다크 네이비) */

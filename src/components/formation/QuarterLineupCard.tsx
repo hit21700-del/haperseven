@@ -56,13 +56,13 @@ export function QuarterLineupCard({
   const overfilled = (pos: "GK" | "DF" | "MF" | "FW") => counts[pos] > template.positions[pos];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#12161D] p-4">
+    <div className="rounded-[14px] border border-[#E4E7EC] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-bold text-gray-100">{lineup.quarter}쿼터</h3>
+        <h3 className="font-bold text-gray-900">{lineup.quarter}쿼터</h3>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 text-xs">
             {(["GK", "DF", "MF", "FW"] as const).map((p) => (
-              <span key={p} className={overfilled(p) ? "font-bold text-[#ff5666]" : "text-gray-500"}>
+              <span key={p} className={overfilled(p) ? "font-bold text-red-500" : "text-gray-400"}>
                 {p} {counts[p]}/{template.positions[p]}
               </span>
             ))}
@@ -74,7 +74,7 @@ export function QuarterLineupCard({
                 const from = Number(e.target.value);
                 if (from) onCopyFrom(from);
               }}
-              className="fm-select !w-auto !px-2 !py-1 text-xs"
+              className="rounded-lg border border-[#D8DCE5] bg-white px-2 py-1 text-xs text-gray-600 focus:border-[#635BFF] focus:outline-none"
               title="다른 쿼터 포메이션을 이 쿼터로 복사"
             >
               <option value="">↺ 불러오기</option>
@@ -92,15 +92,15 @@ export function QuarterLineupCard({
         {attendeeIds.map((id) => {
           const cur = stateOf(id);
           return (
-            <div key={id} className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-white/5">
+            <div key={id} className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-gray-50">
               <span className="flex items-center gap-2">
                 {cur === "REST" ? <Badge tone="gray">휴식</Badge> : <PositionBadge position={cur} />}
-                <span className={cur === "REST" ? "text-gray-600" : "font-semibold text-gray-200"}>{nameOf(id)}</span>
+                <span className={cur === "REST" ? "text-gray-400" : "font-semibold text-gray-800"}>{nameOf(id)}</span>
               </span>
               <select
                 value={cur}
                 onChange={(e) => changePlayer(id, e.target.value as Position | "REST")}
-                className="fm-select !w-auto !px-1.5 !py-0.5 text-xs"
+                className="rounded-lg border border-[#D8DCE5] bg-white px-1.5 py-0.5 text-xs text-gray-700 focus:border-[#635BFF] focus:outline-none"
               >
                 {POS_OPTIONS.map((o) => (
                   <option key={o} value={o}>
