@@ -1,5 +1,6 @@
 ﻿"use client";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { toPng } from "html-to-image";
 import { useAppStore } from "@/lib/store/AppStore";
 import { MemberTypeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -43,6 +44,10 @@ export function FormationPage() {
   const [viewMode, setViewMode] = useState<"pitch" | "list">("pitch");
   // 필드뷰에서 편집 중인 쿼터(1~4)
   const [activeQuarter, setActiveQuarter] = useState(1);
+  // 이미지 저장(캡처) 진행 상태
+  const [exporting, setExporting] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
 
   const match = matches.find((m) => m.id === matchId) ?? null;
   const template = formationTemplates.find((t) => t.id === templateId) ?? formationTemplates[0];
@@ -141,6 +146,45 @@ export function FormationPage() {
     if (!match || !plan) return;
     upsertMatch({ ...match, formationPlan: plan });
     alert("이 경기에 포메이션을 저장했습니다.");
+  };
+
+  // 쿼터별 보드 4장 + 선수별 출전 요약 1장 = 총 5장의 PNG 저장
+  const exportImages = async () => {
+    if (!plan || exporting) return;
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const download = (dataUrl: string, filename: string) => {
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = filename;
+      a.click();
+    };
+    const prevQuarter = activeQuarter;
+    const prevView = viewMode;
+    setViewMode("pitch");
+    setExporting(true);
+    try {
+      await wait(120);
+      for (const q of plan.quarters) {
+        setActiveQuarter(q.quarter);
+        await wait(300); // 렌더 완료 대기
+        if (!boardRef.current) continue;
+        const url = await toPng(boardRef.current, { pixelRatio: 2, backgroundColor: "#0B1117" });
+        download(url, `하퍼세븐_포메이션_${q.quarter}쿼터.png`);
+        await wait(150);
+      }
+      if (summaryRef.current) {
+        const url = await toPng(summaryRef.current, { pixelRatio: 2, backgroundColor: "#FFFFFF" });
+        download(url, `하퍼세븐_포메이션_출전요약.png`);
+      }
+      alert("이미지 5장을 저장했습니다. (1~4쿼터 + 출전 요약)\n브라우저가 여러 파일 다운로드 허용을 물으면 '허용'을 눌러주세요.");
+    } catch (e) {
+      alert("이미지 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error(e);
+    } finally {
+      setActiveQuarter(prevQuarter);
+      setViewMode(prevView);
+      setExporting(false);
+    }
   };
 
   return (
@@ -293,6 +337,9 @@ export function FormationPage() {
                   <Button variant="secondary" onClick={() => exportFormationToExcel(plan, allMembers)}>
                     엑셀
                   </Button>
+                  <Button variant="secondary" onClick={exportImages} disabled={exporting}>
+                    {exporting ? "저장 중…" : "📸 이미지 저장"}
+                  </Button>
                   <Button onClick={savePlan}>경기에 저장</Button>
                 </div>
               </div>
@@ -337,19 +384,21 @@ export function FormationPage() {
                     </select>
                   </div>
 
-                  {/* 선택된 쿼터 필드 에디터 */}
-                  {plan.quarters
-                    .filter((q) => q.quarter === activeQuarter)
-                    .map((q) => (
-                      <PitchEditor
-                        key={q.quarter}
-                        lineup={q}
-                        template={template}
-                        members={allMembers}
-                        attendeeIds={attendeeIds}
-                        onChange={editQuarter}
-                      />
-                    ))}
+                  {/* 선택된 쿼터 필드 에디터 (이미지 저장 시 캡처 대상) */}
+                  <div ref={boardRef} data-export={exporting ? "" : undefined}>
+                    {plan.quarters
+                      .filter((q) => q.quarter === activeQuarter)
+                      .map((q) => (
+                        <PitchEditor
+                          key={q.quarter}
+                          lineup={q}
+                          template={template}
+                          members={allMembers}
+                          attendeeIds={attendeeIds}
+                          onChange={editQuarter}
+                        />
+                      ))}
+                  </div>
                   <p className="text-center text-sm text-gray-400">
                     ※ 드래그 또는 클릭으로 선수의 위치를 변경할 수 있습니다. 모바일에서는{" "}
                     <b className="text-red-500">−</b> / 빈 자리 클릭 후 선수 선택으로도 됩니다.
@@ -372,10 +421,12 @@ export function FormationPage() {
                 </div>
               )}
 
-              <Card className="!rounded-[14px] !border-[#E4E7EC]">
-                <h2 className="mb-3 text-base font-bold text-gray-900">선수별 출전 요약</h2>
-                <PlayerQuarterSummaryTable summary={plan.summary} members={allMembers} minGuaranteed={DEFAULT_BASE_RULES.minGuaranteedQuarters} />
-              </Card>
+              <div ref={summaryRef}>
+                <Card className="!rounded-[14px] !border-[#E4E7EC]">
+                  <h2 className="mb-3 text-base font-bold text-gray-900">선수별 출전 요약</h2>
+                  <PlayerQuarterSummaryTable summary={plan.summary} members={allMembers} minGuaranteed={DEFAULT_BASE_RULES.minGuaranteedQuarters} />
+                </Card>
+              </div>
 
               <FormationWarnings plan={plan} />
             </>

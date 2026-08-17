@@ -82,11 +82,16 @@ input[type="number"]::-webkit-inner-spin-button {
     linear-gradient(180deg, #1b5e34 0%, #17542e 55%, #124023 100%);
 }
 
+/* 이미지 저장 중에는 편집용 UI 숨김 */
+[data-export] .export-hide {
+  display: none !important;
+}
+
 /* 유니폼 (필드 플레이어: 다크 네이비) */
 .fm-jersey {
   position: relative;
-  width: 64px;
-  height: 58px;
+  width: 74px;
+  height: 66px;
   clip-path: polygon(29% 0, 42% 8%, 58% 8%, 71% 0, 100% 18%, 84% 39%, 76% 32%, 76% 100%, 24% 100%, 24% 32%, 16% 39%, 0 18%);
   background:
     linear-gradient(90deg, transparent 0 46%, rgba(255, 255, 255, 0.09) 47% 53%, transparent 54%),
@@ -112,7 +117,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 @media (max-width: 640px) {
   .fm-jersey {
-    width: 52px;
-    height: 47px;
+    width: 58px;
+    height: 52px;
   }
 }

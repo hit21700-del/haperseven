@@ -28,7 +28,7 @@ const SLOT_POS: Record<string, { x: number; y: number }> = {
   LM: { x: 12, y: 43 }, LCM: { x: 31, y: 43 }, CM: { x: 50, y: 43 }, RCM: { x: 69, y: 43 }, RM: { x: 88, y: 43 },
   LWB: { x: 12, y: 60 }, LDM: { x: 31, y: 60 }, CDM: { x: 50, y: 60 }, RDM: { x: 69, y: 60 }, RWB: { x: 88, y: 60 },
   LB: { x: 13, y: 77 }, LCB: { x: 31.5, y: 77 }, CB: { x: 50, y: 77 }, RCB: { x: 68.5, y: 77 }, RB: { x: 87, y: 77 },
-  GK: { x: 50, y: 92 },
+  GK: { x: 50, y: 93 },
 };
 
 /** 사다리꼴 원근(위가 좁음)에 맞춰 x 좌표 보정 */
@@ -75,27 +75,23 @@ function PlayerJersey({
   gk?: boolean;
 }) {
   const group = gk ? "GK" : ((detailToGroup(slot) ?? "MF") as Group);
-  const textCls = gk ? "text-[#241a00]" : "text-white";
   return (
     <div className="flex flex-col items-center">
       <div className={`fm-jersey ${gk ? "fm-jersey-gk" : ""}`}>
         <span
-          className={`absolute inset-x-0 top-[10px] z-10 text-center text-base font-extrabold leading-none ${textCls} ${
-            gk ? "" : "drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
+          className={`absolute inset-0 z-10 flex items-center justify-center pt-1 text-[22px] font-extrabold leading-none ${
+            gk ? "text-[#241a00]" : "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
           }`}
         >
           {number}
         </span>
-        <span
-          className={`absolute inset-x-0 bottom-[6px] z-10 truncate px-1.5 text-center text-[9px] font-bold ${textCls} ${
-            gk ? "" : "drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
-          }`}
-        >
-          {name}
-        </span>
       </div>
+      {/* 이름표 — 캡처 공유 시에도 읽히도록 크게 */}
+      <span className="z-10 -mt-1.5 whitespace-nowrap rounded-md border border-white/10 bg-[#04070B]/90 px-2 py-0.5 text-[13px] font-bold leading-tight text-white shadow-[0_2px_6px_rgba(0,0,0,.5)] sm:text-sm">
+        {name}
+      </span>
       <span
-        className="-mt-0.5 text-[10px] font-extrabold drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
+        className="mt-0.5 text-[11px] font-extrabold drop-shadow-[0_1px_1px_rgba(0,0,0,.9)]"
         style={{ color: POS_HEX[group] }}
       >
         {slot}
@@ -326,7 +322,7 @@ export function PitchEditor({
           {/* 경기장 */}
           <div
             ref={pitchRef}
-            className="relative h-[560px] touch-none select-none overflow-hidden rounded-xl bg-[#0B1117] sm:h-[640px]"
+            className="relative h-[640px] touch-none select-none overflow-hidden rounded-xl bg-[#0B1117] sm:h-[720px]"
           >
             {/* 스타디움 분위기 (어두운 외곽 + 아주 약한 그린 톤) */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_at_50%_0%,rgba(32,232,120,.05),transparent_70%)]" />
@@ -345,7 +341,7 @@ export function PitchEditor({
                 <button
                   key={z.label}
                   onClick={() => setPickingZone(pickingZone === z.label ? null : z.label)}
-                  className={`absolute z-10 flex h-7 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md text-[9px] font-bold transition ${
+                  className={`export-hide absolute z-10 flex h-7 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md text-[9px] font-bold transition ${
                     active
                       ? "bg-[#20E878] text-[#062313]"
                       : "border border-dashed border-white/15 bg-black/25 text-white/35 hover:bg-black/40 hover:text-white/60"
@@ -387,7 +383,7 @@ export function PitchEditor({
                     <button
                       onPointerDown={(e) => e.stopPropagation()}
                       onClick={() => removeMember(mid)}
-                      className="absolute -right-1 -top-1 z-30 flex h-4 w-4 items-center justify-center rounded-full bg-[#ff5666] text-[10px] font-bold text-white opacity-60 shadow transition-opacity hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-80"
+                      className="export-hide absolute -right-1 -top-1 z-30 flex h-5 w-5 items-center justify-center rounded-full bg-[#ff5666] text-xs font-bold text-white opacity-60 shadow transition-opacity hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-80"
                       aria-label="후보로 내리기"
                       title="후보로 내리기"
                     >
@@ -442,7 +438,7 @@ export function PitchEditor({
             <span className="text-xs text-gray-500">{bench.length}명</span>
           </div>
           {pickingZone && (
-            <p className="mb-2 rounded-md bg-[#20E878]/10 px-2 py-1.5 text-[11px] font-semibold text-[#20E878]">
+            <p className="export-hide mb-2 rounded-md bg-[#20E878]/10 px-2 py-1.5 text-[11px] font-semibold text-[#20E878]">
               {pickingZone} 자리에 넣을 선수를 선택하세요
             </p>
           )}
@@ -464,12 +460,12 @@ export function PitchEditor({
                     }`}
                     title="경기장으로 드래그하거나 탭해서 배치"
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[#1A202A] text-sm font-extrabold text-gray-200">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#1A202A] text-base font-extrabold text-gray-200">
                       {numberOf.get(id)}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-xs font-bold text-gray-200">{nameOf(id)}</span>
-                      <span className="block text-[10px] font-extrabold" style={{ color: POS_HEX[g] }}>
+                      <span className="block truncate text-sm font-bold text-gray-100">{nameOf(id)}</span>
+                      <span className="block text-[11px] font-extrabold" style={{ color: POS_HEX[g] }}>
                         {g}
                       </span>
                     </span>
@@ -478,7 +474,7 @@ export function PitchEditor({
               })}
             </div>
           )}
-          <p className="mt-2.5 border-t border-white/10 pt-2 text-[10px] leading-relaxed text-gray-600">
+          <p className="export-hide mt-2.5 border-t border-white/10 pt-2 text-[10px] leading-relaxed text-gray-600">
             선수를 이곳으로 드래그하면 후보로 내려갑니다
           </p>
         </aside>
