@@ -87,7 +87,7 @@ function PlayerJersey({
         </span>
       </div>
       {/* 이름표 — 캡처 공유 시에도 읽히도록 크게 */}
-      <span className="z-10 -mt-1.5 whitespace-nowrap rounded-md border border-white/10 bg-[#04070B]/90 px-2 py-0.5 text-[13px] font-bold leading-tight text-white shadow-[0_2px_6px_rgba(0,0,0,.5)] sm:text-sm">
+      <span className="z-10 -mt-1.5 whitespace-nowrap rounded-md border border-white/10 bg-[#04070B]/90 px-2.5 py-0.5 text-[15px] font-bold leading-tight text-white shadow-[0_2px_6px_rgba(0,0,0,.5)] sm:text-base">
         {name}
       </span>
       <span

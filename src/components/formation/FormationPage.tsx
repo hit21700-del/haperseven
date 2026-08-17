@@ -1,6 +1,6 @@
 ﻿"use client";
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { toPng } from "html-to-image";
+import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store/AppStore";
 import { MemberTypeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -148,37 +148,89 @@ export function FormationPage() {
     alert("이 경기에 포메이션을 저장했습니다.");
   };
 
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  /** 1~4쿼터 전술 보드 + 선수별 출전 요약을 순서대로 PNG Blob 5장으로 캡처 */
+  const captureBoards = async (): Promise<{ name: string; blob: Blob }[]> => {
+    if (!plan) return [];
+    const out: { name: string; blob: Blob }[] = [];
+    await wait(120);
+    for (const q of plan.quarters) {
+      setActiveQuarter(q.quarter);
+      await wait(300); // 렌더 완료 대기
+      if (!boardRef.current) continue;
+      const blob = await toBlob(boardRef.current, { pixelRatio: 2, backgroundColor: "#0B1117" });
+      if (blob) out.push({ name: `하퍼세븐_포메이션_${q.quarter}쿼터.png`, blob });
+    }
+    if (summaryRef.current) {
+      const blob = await toBlob(summaryRef.current, { pixelRatio: 2, backgroundColor: "#FFFFFF" });
+      if (blob) out.push({ name: `하퍼세븐_포메이션_출전요약.png`, blob });
+    }
+    return out;
+  };
+
+  const downloadAll = (captures: { name: string; blob: Blob }[]) => {
+    captures.forEach(({ name, blob }) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    });
+  };
+
   // 쿼터별 보드 4장 + 선수별 출전 요약 1장 = 총 5장의 PNG 저장
   const exportImages = async () => {
     if (!plan || exporting) return;
-    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-    const download = (dataUrl: string, filename: string) => {
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = filename;
-      a.click();
-    };
     const prevQuarter = activeQuarter;
     const prevView = viewMode;
     setViewMode("pitch");
     setExporting(true);
     try {
-      await wait(120);
-      for (const q of plan.quarters) {
-        setActiveQuarter(q.quarter);
-        await wait(300); // 렌더 완료 대기
-        if (!boardRef.current) continue;
-        const url = await toPng(boardRef.current, { pixelRatio: 2, backgroundColor: "#0B1117" });
-        download(url, `하퍼세븐_포메이션_${q.quarter}쿼터.png`);
-        await wait(150);
-      }
-      if (summaryRef.current) {
-        const url = await toPng(summaryRef.current, { pixelRatio: 2, backgroundColor: "#FFFFFF" });
-        download(url, `하퍼세븐_포메이션_출전요약.png`);
-      }
+      const captures = await captureBoards();
+      downloadAll(captures);
       alert("이미지 5장을 저장했습니다. (1~4쿼터 + 출전 요약)\n브라우저가 여러 파일 다운로드 허용을 물으면 '허용'을 눌러주세요.");
     } catch (e) {
       alert("이미지 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error(e);
+    } finally {
+      setActiveQuarter(prevQuarter);
+      setViewMode(prevView);
+      setExporting(false);
+    }
+  };
+
+  // 모바일 공유 시트로 카톡 등에 공유 (1~4쿼터 → 출전 요약 순서). 미지원 환경은 다운로드로 폴백
+  const shareImages = async () => {
+    if (!plan || exporting) return;
+    const prevQuarter = activeQuarter;
+    const prevView = viewMode;
+    setViewMode("pitch");
+    setExporting(true);
+    try {
+      const captures = await captureBoards();
+      const files = captures.map(({ name, blob }) => new File([blob], name, { type: "image/png" }));
+      const canShareFiles =
+        typeof navigator !== "undefined" && !!navigator.canShare && navigator.canShare({ files });
+      if (canShareFiles) {
+        try {
+          await navigator.share({ files, title: "하퍼세븐 포메이션" });
+        } catch (e) {
+          // 사용자가 공유 시트를 닫은 경우(AbortError)는 조용히 무시
+          if (!(e instanceof DOMException && e.name === "AbortError")) {
+            downloadAll(captures);
+            alert("공유가 지원되지 않아 이미지 5장을 저장했습니다. 저장된 사진을 카톡에 첨부해주세요.");
+          }
+        }
+      } else {
+        downloadAll(captures);
+        alert(
+          "이 브라우저(PC 등)에서는 카톡 공유 시트를 열 수 없어 이미지 5장을 저장했습니다.\n휴대폰에서 열면 카톡으로 바로 공유됩니다.",
+        );
+      }
+    } catch (e) {
+      alert("이미지 생성 중 오류가 발생했습니다. 다시 시도해주세요.");
       console.error(e);
     } finally {
       setActiveQuarter(prevQuarter);
@@ -338,7 +390,10 @@ export function FormationPage() {
                     엑셀
                   </Button>
                   <Button variant="secondary" onClick={exportImages} disabled={exporting}>
-                    {exporting ? "저장 중…" : "📸 이미지 저장"}
+                    {exporting ? "처리 중…" : "📸 이미지 저장"}
+                  </Button>
+                  <Button variant="secondary" onClick={shareImages} disabled={exporting}>
+                    📤 카톡 공유
                   </Button>
                   <Button onClick={savePlan}>경기에 저장</Button>
                 </div>
