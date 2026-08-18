@@ -22,7 +22,6 @@ import type { FormationPlan, FormationTemplate, QuarterLineup } from "@/types/fo
 import type { Member, TeamColor } from "@/types/member";
 import type { AttendanceRecord } from "@/types/match";
 import type { ChatFormationRule } from "@/types/chat";
-import { exportFormationToExcel } from "@/lib/excel/excelExporter";
 import { FEATURES } from "@/lib/config";
 
 export function FormationPage() {
@@ -385,9 +384,6 @@ export function FormationPage() {
                   </div>
                   <Button variant="secondary" onClick={() => generate()}>
                     다시 실행
-                  </Button>
-                  <Button variant="secondary" onClick={() => exportFormationToExcel(plan, allMembers)}>
-                    엑셀
                   </Button>
                   <Button variant="secondary" onClick={exportImages} disabled={exporting}>
                     {exporting ? "처리 중…" : "📸 이미지 저장"}
