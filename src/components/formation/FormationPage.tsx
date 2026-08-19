@@ -73,6 +73,15 @@ export function FormationPage() {
   );
   const attendeeIds = attendees.map((m) => m.id);
 
+  // 선택된 경기의 참석자(참석+지각) — 원탭으로 참여 인원에 반영
+  const matchAttendeeIds = useMemo(() => {
+    if (!match) return [];
+    return match.attendance
+      .filter((a) => a.status === "ATTEND" || a.status === "LATE")
+      .map((a) => a.memberId)
+      .filter((id) => activeMembers.some((m) => m.id === id));
+  }, [match, activeMembers]);
+
   // 경기를 바꾸면: 저장된 포메이션이 있으면 그 명단을 복원, 없으면 참여 인원을 '비워서' 시작
   // (자동 선택하지 않고, 사용자가 '참여 인원 선택'으로 직접 고른다)
   useEffect(() => {
@@ -320,6 +329,16 @@ export function FormationPage() {
               <span className="ml-2 text-sm font-normal text-gray-400">· 기준 정원 {template?.playerCount ?? "-"}명</span>
             </span>
             <div className="flex flex-wrap gap-2">
+              {match && matchAttendeeIds.length > 0 && (
+                <Button
+                  variant="secondary"
+                  className="!border-brand-200 !bg-brand-50 !text-brand-600 hover:!bg-brand-100"
+                  onClick={() => setSelectedIds(matchAttendeeIds)}
+                  title="경기 화면에서 체크한 참석/지각 인원을 그대로 불러옵니다"
+                >
+                  📋 이 경기 참석자 {matchAttendeeIds.length}명 불러오기
+                </Button>
+              )}
               <Button variant="secondary" onClick={() => setPickerOpen(true)}>
                 참여 인원 선택
               </Button>
