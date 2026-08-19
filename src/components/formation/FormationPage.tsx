@@ -1,5 +1,6 @@
 ﻿"use client";
 import React, { useMemo, useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { toBlob } from "html-to-image";
 import { useAppStore } from "@/lib/store/AppStore";
 import { MemberTypeBadge } from "@/components/ui/Badge";
@@ -28,6 +29,13 @@ export function FormationPage() {
   const { members, matches, formationTemplates, upsertFormationTemplate, upsertMatch, upsertMember } = useAppStore();
 
   const [matchId, setMatchId] = useState<string>(matches[0]?.id ?? "");
+  const searchParams = useSearchParams();
+
+  // /formation?match=<id> 딥링크: 해당 경기를 자동 선택 (경기 화면의 "포메이션 편집" 연결)
+  useEffect(() => {
+    const fromUrl = searchParams.get("match");
+    if (fromUrl && matches.some((m) => m.id === fromUrl)) setMatchId(fromUrl);
+  }, [searchParams, matches]);
   const [templateId, setTemplateId] = useState<string>(formationTemplates[0]?.id ?? "");
   const [chatRules, setChatRules] = useState<ChatFormationRule[]>([]);
   const [plan, setPlan] = useState<FormationPlan | null>(null);

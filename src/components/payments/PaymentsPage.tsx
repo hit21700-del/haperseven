@@ -40,7 +40,7 @@ function halfStatusOf(monthly: Record<number, PaymentStatus>, half: 1 | 2): Paym
 
 export function PaymentsPage() {
   const { members, matches, paymentEntries, setPaymentEntries, upsertMember, refunds, setRefunds } = useAppStore();
-  const [period, setPeriod] = useState<Period>({ type: "year", year: 2025 });
+  const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
   const [onlyUnpaid, setOnlyUnpaid] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);

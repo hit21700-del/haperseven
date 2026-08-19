@@ -6,7 +6,7 @@ import { PeriodFilter } from "@/components/common/PeriodFilter";
 import { useNav } from "@/components/layout/NavContext";
 import type { Period } from "@/lib/stats/period";
 import { periodLabel } from "@/lib/stats/period";
-import { formatWon } from "@/lib/utils/format";
+import { formatWon, currentYear } from "@/lib/utils/format";
 import { summarizeAll, unpaidMembers, totals } from "@/lib/payments/paymentService";
 import { aggregate, topN, recentMatchSummary, type PlayerAggregate } from "@/lib/stats/statsService";
 import { readJSON, STORAGE_KEYS } from "@/lib/repository/storage";
@@ -84,7 +84,7 @@ const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm";
 export function DashboardPage() {
   const { members, matches, paymentEntries } = useAppStore();
   const go = useNav();
-  const [period, setPeriod] = useState<Period>({ type: "year", year: 2025 });
+  const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
 
   const summaries = useMemo(
     () => summarizeAll(members, paymentEntries, matches, period),

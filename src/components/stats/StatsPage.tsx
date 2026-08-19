@@ -7,12 +7,13 @@ import { PeriodFilter } from "@/components/common/PeriodFilter";
 import type { Period } from "@/lib/stats/period";
 import { periodLabel } from "@/lib/stats/period";
 import { aggregate } from "@/lib/stats/statsService";
+import { currentYear } from "@/lib/utils/format";
 
 type SortKey = "attendCount" | "goals" | "assists";
 
 export function StatsPage() {
   const { members, matches } = useAppStore();
-  const [period, setPeriod] = useState<Period>({ type: "year", year: 2025 });
+  const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
   const [sortKey, setSortKey] = useState<SortKey>("goals");
 
   const aggs = useMemo(() => aggregate(members, matches, period), [members, matches, period]);

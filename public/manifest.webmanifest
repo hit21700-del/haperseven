@@ -1,0 +1,13 @@
+{
+  "name": "하퍼세븐 | 축구팀 관리",
+  "short_name": "하퍼세븐",
+  "description": "축구팀 하퍼세븐 회원/회비/경기/포메이션 관리",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F6FA",
+  "theme_color": "#5B4CF0",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
