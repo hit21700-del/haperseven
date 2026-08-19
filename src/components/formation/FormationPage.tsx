@@ -1,7 +1,7 @@
 ﻿"use client";
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { toBlob } from "html-to-image";
+import dynamic from "next/dynamic";
 import { useAppStore } from "@/lib/store/AppStore";
 import { MemberTypeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,7 +12,6 @@ import { QuarterLineupCard } from "./QuarterLineupCard";
 import { PitchEditor } from "./PitchEditor";
 import { PlayerQuarterSummaryTable } from "./PlayerQuarterSummaryTable";
 import { FormationWarnings } from "./FormationWarnings";
-import { FormationChatPanel } from "./FormationChatPanel";
 import { ParticipantPickerModal } from "./ParticipantPickerModal";
 import { GuestAddModal } from "./GuestAddModal";
 import { TeamEditModal } from "./TeamEditModal";
@@ -24,6 +23,11 @@ import type { Member, TeamColor } from "@/types/member";
 import type { AttendanceRecord } from "@/types/match";
 import type { ChatFormationRule } from "@/types/chat";
 import { FEATURES } from "@/lib/config";
+
+// AI 채팅 패널은 기능 플래그가 켜졌을 때만 별도 청크로 로드
+const FormationChatPanel = dynamic(() => import("./FormationChatPanel").then((m) => m.FormationChatPanel), {
+  ssr: false,
+});
 
 export function FormationPage() {
   const { members, matches, formationTemplates, upsertFormationTemplate, upsertMatch, upsertMember } = useAppStore();
@@ -169,6 +173,7 @@ export function FormationPage() {
   /** 1~4쿼터 전술 보드 + 선수별 출전 요약을 순서대로 PNG Blob 5장으로 캡처 */
   const captureBoards = async (): Promise<{ name: string; blob: Blob }[]> => {
     if (!plan) return [];
+    const { toBlob } = await import("html-to-image"); // 캡처 시점에만 로드
     const out: { name: string; blob: Blob }[] = [];
     await wait(120);
     for (const q of plan.quarters) {

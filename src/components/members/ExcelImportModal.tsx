@@ -4,7 +4,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Field";
 import type { Member } from "@/types/member";
-import { parseWorkbook, type ParsedWorkbook } from "@/lib/excel/excelParser";
+import type { ParsedWorkbook } from "@/lib/excel/excelParser";
 
 /** 엑셀 회원 import 모달 (시트 선택 + 미리보기) */
 export function ExcelImportModal({
@@ -25,6 +25,7 @@ export function ExcelImportModal({
     setFileError("");
     try {
       const buf = await file.arrayBuffer();
+      const { parseWorkbook } = await import("@/lib/excel/excelParser");
       const result = parseWorkbook(buf);
       if (result.sheetNames.length === 0) {
         setFileError(result.errors.join(" ") || "엑셀을 읽지 못했습니다.");

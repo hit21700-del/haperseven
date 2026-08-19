@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { FormRow, TextInput } from "@/components/ui/Field";
 import { MatchEditor } from "./MatchEditor";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { Match, MatchType } from "@/types/match";
 import { newMatchId } from "@/lib/repository/matchRepository";
 import { matchResult } from "@/lib/stats/statsService";
@@ -24,6 +26,7 @@ export function MatchesPage() {
   const { matches, members, upsertMatch, removeMatch } = useAppStore();
   const [selectedId, setSelectedId] = useState<string | null>(matches[0]?.id ?? null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Match | null>(null);
   const [draft, setDraft] = useState(EMPTY_DRAFT);
 
   const selected = matches.find((m) => m.id === selectedId) ?? null;
@@ -62,15 +65,18 @@ export function MatchesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">경기 관리</h1>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={handleExportStats}>
-            ⬆ 스탯 엑셀 내보내기
-          </Button>
-          <Button onClick={() => setCreateOpen(true)}>＋ 경기 생성</Button>
-        </div>
-      </div>
+      <PageHeader
+        title="경기 관리"
+        description="일정 등록부터 출석·라인업·결과 입력까지 한 곳에서 관리합니다."
+        action={
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleExportStats}>
+              ⬆ 스탯 엑셀 내보내기
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>＋ 경기 생성</Button>
+          </div>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* 경기 목록 */}
@@ -130,12 +136,7 @@ export function MatchesPage() {
                     </span>
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm("경기를 삭제할까요?")) {
-                        removeMatch(m.id);
-                        if (active) setSelectedId(null);
-                      }
-                    }}
+                    onClick={() => setDeleteTarget(m)}
                     className="absolute right-2.5 top-2.5 rounded px-1.5 py-0.5 text-xs text-red-400 hover:bg-red-50 hover:text-red-600"
                     aria-label={`${name} 삭제`}
                   >
@@ -242,6 +243,30 @@ export function MatchesPage() {
           </FormRow>
         </div>
       </Modal>
+
+      {/* 경기 삭제 확인 */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="경기 삭제"
+        message={
+          deleteTarget && (
+            <>
+              <b>
+                {deleteTarget.date} {deleteTarget.opponent ? `vs ${deleteTarget.opponent}` : deleteTarget.title ?? "경기"}
+              </b>
+              를 삭제할까요? 출석·스탯·라인업 기록이 함께 삭제됩니다.
+            </>
+          )
+        }
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeMatch(deleteTarget.id);
+            if (selectedId === deleteTarget.id) setSelectedId(null);
+          }
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

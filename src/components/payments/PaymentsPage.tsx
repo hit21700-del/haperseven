@@ -10,7 +10,7 @@ import type { Period } from "@/lib/stats/period";
 import { monthsInPeriod, periodLabel } from "@/lib/stats/period";
 import { summarizeAll, totals } from "@/lib/payments/paymentService";
 import { ACCOUNT_INFO, REFUND_POLICY, FEE_DEADLINE_NOTICE, calcRefundAmount } from "@/lib/constants/feePolicy";
-import { exportPaymentsToExcel } from "@/lib/excel/excelExporter";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { formatWon, currentYear } from "@/lib/utils/format";
 import type { PaymentStatus } from "@/types/member";
 import type { RefundRecord } from "@/types/payment";
@@ -114,7 +114,8 @@ export function PaymentsPage() {
 
   const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? id;
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    const { exportPaymentsToExcel } = await import("@/lib/excel/excelExporter"); // 클릭 시점에만 xlsx 로드
     exportPaymentsToExcel(
       summaries.map((s) => ({
         name: s.member.name,
@@ -129,18 +130,18 @@ export function PaymentsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">회비 관리</h1>
-          <p className="mt-0.5 text-sm text-gray-500">{periodLabel(period)} 기준 · {FEE_DEADLINE_NOTICE}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <PeriodFilter value={period} onChange={setPeriod} />
-          <Button variant="secondary" onClick={handleExport}>
-            엑셀 내보내기
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="회비 관리"
+        description={`${periodLabel(period)} 기준 · ${FEE_DEADLINE_NOTICE}`}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <PeriodFilter value={period} onChange={setPeriod} />
+            <Button variant="secondary" onClick={handleExport}>
+              엑셀 내보내기
+            </Button>
+          </div>
+        }
+      />
 
       {/* 계좌 정보 + 합계 */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-5">

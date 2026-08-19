@@ -6,15 +6,16 @@ import { Table, THead, TH, TD, TR } from "@/components/ui/Table";
 import { MemberTypeBadge, PositionBadge, Badge, TeamBadge } from "@/components/ui/Badge";
 import { TextInput, Select } from "@/components/ui/Field";
 import { StatIconCard } from "@/components/ui/StatIconCard";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { MemberFormModal } from "./MemberFormModal";
 import { ExcelImportModal } from "./ExcelImportModal";
 import type { Member } from "@/types/member";
 import { ALL_MEMBER_TYPES } from "@/types/member";
-import { exportMembersToExcel } from "@/lib/excel/excelExporter";
-import { formatWon } from "@/lib/utils/format";
+import { aggregate } from "@/lib/stats/statsService";
+import { formatWon, currentYear } from "@/lib/utils/format";
 
 export function MembersPage() {
-  const { members, upsertMember, removeMember, setMembers } = useAppStore();
+  const { members, matches, upsertMember, removeMember, setMembers } = useAppStore();
   const [editing, setEditing] = useState<Member | undefined>(undefined);
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -37,6 +38,12 @@ export function MembersPage() {
   const curPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((curPage - 1) * pageSize, curPage * pageSize);
 
+  // 올해(시즌) 회원별 출석/득점 집계 → memberId 키 Map
+  const seasonStats = useMemo(() => {
+    const aggs = aggregate(members, matches, { type: "year", year: currentYear() });
+    return new Map(aggs.map((a) => [a.memberId, a]));
+  }, [members, matches]);
+
   const jeongCount = members.filter((m) => m.memberType.startsWith("정회원")).length;
   const stepCount = members.filter((m) => m.memberType === "스텝").length;
 
@@ -52,25 +59,29 @@ export function MembersPage() {
     setEditing(m);
     setFormOpen(true);
   };
+  const handleExport = async () => {
+    const mod = await import("@/lib/excel/excelExporter");
+    mod.exportMembersToExcel(members);
+  };
 
   return (
     <div className="space-y-5">
       {/* 헤더 */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-[26px] font-bold tracking-[-0.03em] text-slate-950">회원 관리</h1>
-          <p className="mt-0.5 text-sm text-gray-500">팀의 모든 회원을 관리하고 정보를 확인하세요.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => setImportOpen(true)}>
-            📥 엑셀 가져오기
-          </Button>
-          <Button variant="secondary" onClick={() => exportMembersToExcel(members)}>
-            📤 엑셀 내보내기
-          </Button>
-          <Button onClick={openAdd}>👤 회원 추가</Button>
-        </div>
-      </div>
+      <PageHeader
+        title="회원 관리"
+        description="팀의 모든 회원을 관리하고 정보를 확인하세요."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              📥 엑셀 가져오기
+            </Button>
+            <Button variant="secondary" onClick={handleExport}>
+              📤 엑셀 내보내기
+            </Button>
+            <Button onClick={openAdd}>👤 회원 추가</Button>
+          </div>
+        }
+      />
 
       {/* 검색/필터 + 지표 카드 */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
@@ -107,70 +118,134 @@ export function MembersPage() {
       {/* 테이블 */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-2 text-sm text-gray-500">총 회원 수 {filtered.length}명</div>
-        <Table>
-          <THead>
-            <TR>
-              <TH>번호</TH>
-              <TH>이름</TH>
-              <TH>구분</TH>
-              <TH>팀</TH>
-              <TH>나이</TH>
-              <TH>포지션</TH>
-              <TH>GK</TH>
-              <TH>회비</TH>
-              <TH>관리</TH>
-            </TR>
-          </THead>
-          <tbody>
-            {pageRows.map((m) => (
-              <TR key={m.id} className={!m.isActive ? "text-gray-400" : ""}>
-                <TD className="text-gray-400">{m.no ?? "-"}</TD>
-                <TD className="font-semibold text-gray-700">{m.name}</TD>
-                <TD>
-                  <MemberTypeBadge type={m.memberType} />
-                </TD>
-                <TD>
-                  <TeamBadge team={m.team} coach={m.isCoach} />
-                </TD>
-                <TD>{m.age ?? "-"}</TD>
-                <TD>
-                  <div className="flex gap-1">
-                    {m.positions.map((p) => (
-                      <PositionBadge key={p} position={p} />
-                    ))}
-                  </div>
-                </TD>
-                <TD>
-                  {m.fixedGK ? <Badge tone="purple">고정GK</Badge> : m.canPlayGK ? <Badge tone="blue">가능</Badge> : "-"}
-                </TD>
-                <TD className="font-medium">{formatWon(m.feeAmount)}</TD>
-                <TD>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => openEdit(m)}
-                      className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
-                    >
-                      ✎ 수정
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`${m.name} 회원을 삭제할까요?`)) removeMember(m.id);
-                      }}
-                      className="rounded-lg bg-red-50 px-2.5 py-1 text-xs text-red-500 hover:bg-red-100"
-                    >
-                      🗑 삭제
-                    </button>
-                  </div>
-                </TD>
-              </TR>
-            ))}
-            {pageRows.length === 0 && (
+
+        {/* 데스크톱: 테이블 */}
+        <div className="hidden md:block">
+          <Table>
+            <THead>
               <TR>
-                <TD className="text-gray-400">조건에 맞는 회원이 없습니다.</TD>
+                <TH>번호</TH>
+                <TH>이름</TH>
+                <TH>구분</TH>
+                <TH>팀</TH>
+                <TH>나이</TH>
+                <TH>포지션</TH>
+                <TH>GK</TH>
+                <TH>출석</TH>
+                <TH>득점</TH>
+                <TH>회비</TH>
+                <TH>관리</TH>
               </TR>
-            )}
-          </tbody>
-        </Table>
+            </THead>
+            <tbody>
+              {pageRows.map((m) => {
+                const stat = seasonStats.get(m.id);
+                const attend = stat?.attendCount ?? 0;
+                const goals = stat?.goals ?? 0;
+                return (
+                  <TR key={m.id} className={!m.isActive ? "text-gray-400" : ""}>
+                    <TD className="text-gray-400">{m.no ?? "-"}</TD>
+                    <TD className="font-semibold text-gray-700">{m.name}</TD>
+                    <TD>
+                      <MemberTypeBadge type={m.memberType} />
+                    </TD>
+                    <TD>
+                      <TeamBadge team={m.team} coach={m.isCoach} />
+                    </TD>
+                    <TD>{m.age ?? "-"}</TD>
+                    <TD>
+                      <div className="flex gap-1">
+                        {m.positions.map((p) => (
+                          <PositionBadge key={p} position={p} />
+                        ))}
+                      </div>
+                    </TD>
+                    <TD>
+                      {m.fixedGK ? <Badge tone="purple">고정GK</Badge> : m.canPlayGK ? <Badge tone="blue">가능</Badge> : "-"}
+                    </TD>
+                    <TD>{attend > 0 ? `${attend}회` : <span className="text-gray-400">-</span>}</TD>
+                    <TD>{goals > 0 ? `${goals}골` : <span className="text-gray-400">-</span>}</TD>
+                    <TD className="font-medium">{formatWon(m.feeAmount)}</TD>
+                    <TD>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => openEdit(m)}
+                          className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                        >
+                          ✎ 수정
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`${m.name} 회원을 삭제할까요?`)) removeMember(m.id);
+                          }}
+                          className="rounded-lg bg-red-50 px-2.5 py-1 text-xs text-red-500 hover:bg-red-100"
+                        >
+                          🗑 삭제
+                        </button>
+                      </div>
+                    </TD>
+                  </TR>
+                );
+              })}
+              {pageRows.length === 0 && (
+                <TR>
+                  <TD className="text-gray-400">조건에 맞는 회원이 없습니다.</TD>
+                </TR>
+              )}
+            </tbody>
+          </Table>
+        </div>
+
+        {/* 모바일: 카드 리스트 */}
+        <div className="space-y-2 md:hidden">
+          {pageRows.map((m) => {
+            const stat = seasonStats.get(m.id);
+            const attend = stat?.attendCount ?? 0;
+            const goals = stat?.goals ?? 0;
+            return (
+              <div
+                key={m.id}
+                className={`flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm ${
+                  !m.isActive ? "opacity-60" : ""
+                }`}
+              >
+                <div className="min-w-0 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-bold text-gray-800">{m.name}</span>
+                    <MemberTypeBadge type={m.memberType} />
+                    <TeamBadge team={m.team} coach={m.isCoach} />
+                  </div>
+                  {m.positions.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {m.positions.map((p) => (
+                        <PositionBadge key={p} position={p} />
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-3 text-xs text-gray-500">
+                    <span>
+                      출석 {attend > 0 ? <span className="font-semibold text-gray-700">{attend}회</span> : <span className="text-gray-400">-</span>}
+                    </span>
+                    <span>
+                      득점 {goals > 0 ? <span className="font-semibold text-gray-700">{goals}골</span> : <span className="text-gray-400">-</span>}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openEdit(m)}
+                  className="shrink-0 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                >
+                  ✎ 수정
+                </button>
+              </div>
+            );
+          })}
+          {pageRows.length === 0 && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 text-center text-sm text-gray-400">
+              조건에 맞는 회원이 없습니다.
+            </div>
+          )}
+        </div>
 
         {/* 페이지네이션 */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">

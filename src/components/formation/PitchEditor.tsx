@@ -4,15 +4,7 @@ import type { QuarterLineup, FormationTemplate } from "@/types/formation";
 import type { Member, Position } from "@/types/member";
 import { ELEVEN_GRID, gridZones, detailToGroup, type Group } from "@/lib/formation/positions";
 
-/* ────────────────────────────────────────────────────────────
-   포지션 컬러 (FC24 팔레트)
-   ──────────────────────────────────────────────────────────── */
-const POS_HEX: Record<Group, string> = {
-  FW: "#ff5666",
-  MF: "#31ef76",
-  DF: "#45a1ff",
-  GK: "#ffc928",
-};
+import { POS_HEX } from "@/lib/constants/positionColors";
 
 const LEGEND: { group: Group; label: string }[] = [
   { group: "FW", label: "공격수" },
