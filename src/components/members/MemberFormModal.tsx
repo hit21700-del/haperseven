@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useId, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FormRow, TextInput, Select, Textarea } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 import type { Member, MemberType, Position } from "@/types/member";
 import { ALL_MEMBER_TYPES } from "@/types/member";
 import { getFeeRule } from "@/lib/constants/feePolicy";
@@ -27,6 +28,8 @@ function emptyMember(): Member {
   };
 }
 
+type FieldErrors = { name?: string };
+
 export function MemberFormModal({
   open,
   initial,
@@ -38,11 +41,17 @@ export function MemberFormModal({
   onClose: () => void;
   onSave: (m: Member) => void;
 }) {
+  const toast = useToast();
+  const nameId = useId();
   const [draft, setDraft] = useState<Member>(initial ?? emptyMember());
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   // 모달이 열릴 때 initial 로 리셋
   React.useEffect(() => {
-    if (open) setDraft(initial ?? emptyMember());
+    if (open) {
+      setDraft(initial ?? emptyMember());
+      setErrors({});
+    }
   }, [open, initial]);
 
   const set = <K extends keyof Member>(key: K, value: Member[K]) => setDraft((d) => ({ ...d, [key]: value }));
@@ -67,12 +76,16 @@ export function MemberFormModal({
   };
 
   const handleSave = () => {
-    if (!draft.name.trim()) {
-      alert("이름을 입력해주세요.");
+    const next: FieldErrors = {};
+    if (!draft.name.trim()) next.name = "이름을 입력하세요.";
+    setErrors(next);
+    if (next.name) {
+      document.getElementById(nameId)?.focus();
       return;
     }
     const age = draft.birthYear ? currentYear() - draft.birthYear + 1 : draft.age;
     onSave({ ...draft, age });
+    toast(initial ? "회원 정보를 저장했습니다." : `${draft.name.trim()} 회원을 추가했습니다.`);
     onClose();
   };
 
@@ -91,8 +104,18 @@ export function MemberFormModal({
       }
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <FormRow label="이름 *">
-          <TextInput value={draft.name} onChange={(e) => set("name", e.target.value)} placeholder="홍길동" />
+        <FormRow label="이름 *" error={errors.name}>
+          <TextInput
+            id={nameId}
+            value={draft.name}
+            onChange={(e) => {
+              set("name", e.target.value);
+              if (errors.name) setErrors((er) => ({ ...er, name: undefined }));
+            }}
+            placeholder="홍길동"
+            aria-invalid={errors.name ? true : undefined}
+            aria-required="true"
+          />
         </FormRow>
         <FormRow label="회원 구분">
           <Select value={draft.memberType} onChange={(e) => onTypeChange(e.target.value as MemberType)}>
@@ -138,20 +161,22 @@ export function MemberFormModal({
         <div className="sm:col-span-2">
           <FormRow label="가능 포지션 (복수 선택)">
             <div className="flex flex-wrap gap-2">
-              {FIELD_POS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => togglePosition(p)}
-                  className={`rounded-lg border px-3 py-1 text-sm font-semibold ${
-                    draft.positions.includes(p)
-                      ? "border-brand-500 bg-brand-50 text-brand-600"
-                      : "border-gray-200 text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+              {FIELD_POS.map((p) => {
+                const selected = draft.positions.includes(p);
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => togglePosition(p)}
+                    aria-pressed={selected}
+                    className={`min-h-8 rounded-lg border px-3 py-1 text-sm font-semibold ${
+                      selected ? "border-brand-500 bg-brand-50 text-brand-600" : "border-line text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
             </div>
           </FormRow>
         </div>
@@ -189,7 +214,7 @@ export function MemberFormModal({
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={!!draft.isCoach} onChange={(e) => set("isCoach", e.target.checked)} />
-            ⭐ 감독
+            감독
           </label>
         </div>
 

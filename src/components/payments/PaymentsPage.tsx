@@ -1,15 +1,18 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
+import { ChevronDown, Copy, Download, Landmark, ListChecks, Plus, Receipt, RotateCcw } from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Card, StatCard, SectionTitle } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Table, THead, TH, TD, TR } from "@/components/ui/Table";
-import { PaymentStatusBadge, MemberTypeBadge } from "@/components/ui/Badge";
+import { Badge, PaymentStatusBadge, MemberTypeBadge } from "@/components/ui/Badge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { useToast } from "@/components/ui/Toast";
 import { PeriodFilter } from "@/components/common/PeriodFilter";
 import type { Period } from "@/lib/stats/period";
 import { monthsInPeriod, periodLabel } from "@/lib/stats/period";
 import { summarizeAll, totals } from "@/lib/payments/paymentService";
-import { ACCOUNT_INFO, REFUND_POLICY, FEE_DEADLINE_NOTICE, calcRefundAmount } from "@/lib/constants/feePolicy";
+import { ACCOUNT_INFO, REFUND_POLICY, FEE_DEADLINE_NOTICE } from "@/lib/constants/feePolicy";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatWon, currentYear } from "@/lib/utils/format";
 import type { PaymentStatus } from "@/types/member";
@@ -20,13 +23,15 @@ import { readJSON, writeJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 
 const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
 
-// 반기(6개월) 상태 표시 배지 스타일/라벨
+// 반기(6개월) 상태 표시 배지 스타일/라벨 — 12px 텍스트 AA 대비(-700) + 클릭 어포던스용 ring/hover
 const HALF_BADGE: Record<PaymentStatus, { label: string; cls: string }> = {
-  PAID: { label: "납부", cls: "bg-emerald-50 text-emerald-600" },
-  UNPAID: { label: "미납", cls: "bg-red-50 text-red-500" },
-  EXEMPT: { label: "면제", cls: "bg-gray-100 text-gray-500" },
-  UNKNOWN: { label: "－", cls: "bg-gray-50 text-gray-400" },
+  PAID: { label: "납부", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100" },
+  UNPAID: { label: "미납", cls: "bg-red-50 text-red-700 ring-red-200 hover:bg-red-100" },
+  EXEMPT: { label: "면제", cls: "bg-gray-100 text-gray-700 ring-gray-300 hover:bg-gray-200" },
+  UNKNOWN: { label: "－", cls: "bg-gray-50 text-gray-500 ring-gray-200 hover:bg-gray-100" },
 };
+
+const HALF_LABEL: Record<1 | 2, string> = { 1: "상반기", 2: "하반기" };
 
 /** 반기의 대표 상태: 미납 표시가 하나라도 있으면 미납, 납부 표시가 있으면 납부, 전부 면제면 면제 */
 function halfStatusOf(monthly: Record<number, PaymentStatus>, half: 1 | 2): PaymentStatus {
@@ -40,6 +45,7 @@ function halfStatusOf(monthly: Record<number, PaymentStatus>, half: 1 | 2): Paym
 
 export function PaymentsPage() {
   const { members, matches, paymentEntries, setPaymentEntries, upsertMember, refunds, setRefunds } = useAppStore();
+  const toast = useToast();
   const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
   const [onlyUnpaid, setOnlyUnpaid] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
@@ -109,10 +115,25 @@ export function PaymentsPage() {
     );
   };
 
-  const addRefund = (r: RefundRecord) => setRefunds([...refunds, r]);
-  const removeRefund = (id: string) => setRefunds(refunds.filter((x) => x.id !== id));
+  const addRefund = (r: RefundRecord) => {
+    setRefunds([...refunds, r]);
+    toast("환불 내역을 추가했습니다.");
+  };
+  const removeRefund = (id: string) => {
+    setRefunds(refunds.filter((x) => x.id !== id));
+    toast("환불 내역을 삭제했습니다.", "info");
+  };
 
   const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? id;
+
+  const copyAccount = async () => {
+    try {
+      await navigator.clipboard.writeText(ACCOUNT_INFO.number);
+      toast("계좌번호를 복사했습니다.");
+    } catch {
+      toast("복사에 실패했습니다. 계좌번호를 직접 선택해 복사해 주세요.", "error");
+    }
+  };
 
   const handleExport = async () => {
     const { exportPaymentsToExcel } = await import("@/lib/excel/excelExporter"); // 클릭 시점에만 xlsx 로드
@@ -126,6 +147,26 @@ export function PaymentsPage() {
         status: s.status,
       })),
     );
+    toast("엑셀 파일을 내보냈습니다.");
+  };
+
+  /** 상/하반기 상태 버튼 — 표와 모바일 카드에서 동일하게 사용 */
+  const renderHalfButton = (memberId: string, monthly: Record<number, PaymentStatus>, half: 1 | 2) => {
+    const st = halfStatusOf(monthly, half);
+    const badge = HALF_BADGE[st];
+    const current = st === "UNKNOWN" ? "미정" : badge.label;
+    return (
+      <button
+        type="button"
+        title={`${HALF_LABEL[half]} 상태 변경 (클릭: 납부→미납→면제→해제)`}
+        aria-label={`${HALF_LABEL[half]} 납부 상태 변경 (현재: ${current})`}
+        onClick={() => cycleStatus(memberId, half === 1 ? 1 : 7)}
+        className={`inline-flex min-h-8 min-w-16 items-center justify-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition-colors ${badge.cls}`}
+      >
+        {badge.label}
+        <ChevronDown size={12} aria-hidden="true" />
+      </button>
+    );
   };
 
   return (
@@ -137,6 +178,7 @@ export function PaymentsPage() {
           <div className="flex flex-wrap gap-2">
             <PeriodFilter value={period} onChange={setPeriod} />
             <Button variant="secondary" onClick={handleExport}>
+              <Download size={16} aria-hidden="true" />
               엑셀 내보내기
             </Button>
           </div>
@@ -144,35 +186,47 @@ export function PaymentsPage() {
       />
 
       {/* 계좌 정보 + 합계 */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FEE500] text-lg font-extrabold text-[#3A1D1D]">
-              B
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+        <Card className="col-span-2 md:col-span-1">
+          <div className="flex items-start gap-3">
+            <div
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-gray-900"
+              aria-hidden="true"
+            >
+              <Landmark size={20} />
             </div>
-            <div className="min-w-0">
-              <div className="text-xs text-gray-500">입금 계좌</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-medium text-gray-500">입금 계좌</div>
               <div className="text-sm font-bold text-gray-900">{ACCOUNT_INFO.bank}</div>
-              <div className="truncate text-lg font-extrabold text-brand-600">{ACCOUNT_INFO.number}</div>
+              <div className="mt-1 flex items-center gap-1">
+                <div className="break-all text-2xl font-bold leading-none tabular-nums text-brand-600">
+                  {ACCOUNT_INFO.number}
+                </div>
+                <IconButton aria-label="계좌번호 복사" title="계좌번호 복사" onClick={copyAccount} className="shrink-0">
+                  <Copy size={16} aria-hidden="true" />
+                </IconButton>
+              </div>
               <div className="text-xs text-gray-500">예금주: {ACCOUNT_INFO.holder}</div>
             </div>
           </div>
         </Card>
         <Card>
-          <div className="text-[13px] text-gray-600">현재 총 회비 (잔고)</div>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={balanceInput}
-            onChange={(e) => setBalanceInput(e.target.value)}
-            onBlur={commitBalance}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
-            title="현재 팀 잔고 직접 입력 (엔터로 저장)"
-            className="mt-1 w-full rounded-sm border border-transparent bg-transparent text-[24px] font-extrabold leading-none text-brand-600 hover:border-gray-200 focus:border-brand-400 focus:outline-none"
-          />
-          <div className="mt-1 text-xs text-gray-400">클릭해서 수정 가능</div>
+          <label className="block">
+            <span className="block text-xs font-medium text-gray-500">현재 총 회비 (잔고)</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={balanceInput}
+              onChange={(e) => setBalanceInput(e.target.value)}
+              onBlur={commitBalance}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              }}
+              title="현재 팀 잔고 직접 입력 (엔터로 저장)"
+              className="mt-2 w-full whitespace-nowrap rounded-sm border border-transparent bg-transparent text-2xl font-bold leading-none tabular-nums text-brand-600 hover:border-line focus:border-brand-400 focus:outline-none"
+            />
+          </label>
+          <div className="mt-2 text-xs text-gray-500">클릭해서 수정 가능</div>
         </Card>
         <StatCard label="회비 합계 (청구 기준)" value={formatWon(t.totalExpected)} />
         <StatCard label="총 납부" value={formatWon(t.totalPaid)} tone="green" sub={`납부율 ${t.paymentRate}%`} />
@@ -181,79 +235,149 @@ export function PaymentsPage() {
 
       <Card>
         <SectionTitle
+          icon={<Receipt size={16} />}
           action={
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 text-sm text-gray-600">
                 <input type="checkbox" checked={onlyUnpaid} onChange={(e) => setOnlyUnpaid(e.target.checked)} />
                 미납자만 보기
               </label>
-              <Button onClick={() => setBulkOpen(true)}>☑ 일괄 등록</Button>
+              <Button onClick={() => setBulkOpen(true)}>
+                <ListChecks size={16} aria-hidden="true" />
+                일괄 등록
+              </Button>
             </div>
           }
         >
           회원별 납부 현황
         </SectionTitle>
-        <Table>
-          <THead>
-            <TR>
-              <TH>이름</TH>
-              <TH>구분</TH>
-              <TH>회비</TH>
-              <TH>납부</TH>
-              <TH>미납</TH>
-              <TH>상태</TH>
-              <TH className="text-center">상반기 (1~6월)</TH>
-              <TH className="text-center">하반기 (7~12월)</TH>
-            </TR>
-          </THead>
-          <tbody>
-            {visible.map((s) => (
-              <TR key={s.member.id}>
-                <TD className="font-medium">{s.member.name}</TD>
-                <TD>
-                  <MemberTypeBadge type={s.member.memberType} />
-                </TD>
-                <TD>{formatWon(s.expected)}</TD>
-                <TD>
-                  <EditablePaid value={s.paid} onCommit={(v) => setPaidAmount(s.member.id, v)} />
-                </TD>
-                <TD className={s.unpaid > 0 ? "font-semibold text-red-500" : ""}>{formatWon(s.unpaid)}</TD>
-                <TD>
-                  <PaymentStatusBadge status={s.status} />
-                </TD>
-                {([1, 2] as const).map((half) => {
-                  const st = halfStatusOf(s.member.monthlyPaymentStatus, half);
-                  const badge = HALF_BADGE[st];
-                  return (
-                    <TD key={half} className="text-center">
-                      <button
-                        title={`${half === 1 ? "상반기" : "하반기"} 상태 변경 (클릭: 납부→미납→면제→해제)`}
-                        onClick={() => cycleStatus(s.member.id, half === 1 ? 1 : 7)}
-                        className={`min-w-14 rounded-full px-3 py-1 text-xs font-semibold transition hover:opacity-80 ${badge.cls}`}
-                      >
-                        {badge.label}
-                      </button>
-                    </TD>
-                  );
-                })}
-              </TR>
-            ))}
-          </tbody>
-        </Table>
-        <p className="mt-2 text-xs text-gray-400">
-          ※ 회비는 <b className="text-gray-600">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
-          <b className="text-emerald-600">납부</b> → <b className="text-red-500">미납</b> →{" "}
-          <b className="text-gray-600">면제</b> → 해제 순으로 바뀌고, <b className="text-gray-600">납부 금액</b> 칸은 직접
+
+        {visible.length === 0 ? (
+          <EmptyState
+            compact
+            icon={<Receipt size={18} />}
+            title={onlyUnpaid ? "미납자가 없습니다." : "표시할 회원이 없습니다."}
+            description={onlyUnpaid ? "모든 회원이 회비를 납부했습니다." : "회원을 먼저 등록해 주세요."}
+          />
+        ) : (
+          <>
+            {/* 데스크톱: 표 */}
+            <div className="hidden md:block">
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>이름</TH>
+                    <TH>구분</TH>
+                    <TH>회비</TH>
+                    <TH>납부</TH>
+                    <TH>미납</TH>
+                    <TH>상태</TH>
+                    <TH className="text-center">상반기 (1~6월)</TH>
+                    <TH className="text-center">하반기 (7~12월)</TH>
+                  </TR>
+                </THead>
+                <tbody>
+                  {visible.map((s) => (
+                    <TR key={s.member.id}>
+                      <TD className="font-medium">{s.member.name}</TD>
+                      <TD>
+                        <MemberTypeBadge type={s.member.memberType} />
+                      </TD>
+                      <TD className="tabular-nums">{formatWon(s.expected)}</TD>
+                      <TD>
+                        <EditablePaid value={s.paid} onCommit={(v) => setPaidAmount(s.member.id, v)} />
+                      </TD>
+                      <TD className={`tabular-nums ${s.unpaid > 0 ? "font-semibold text-red-600" : ""}`}>
+                        {formatWon(s.unpaid)}
+                      </TD>
+                      <TD>
+                        <PaymentStatusBadge status={s.status} />
+                      </TD>
+                      {([1, 2] as const).map((half) => (
+                        <TD key={half} className="text-center">
+                          {renderHalfButton(s.member.id, s.member.monthlyPaymentStatus, half)}
+                        </TD>
+                      ))}
+                    </TR>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+
+            {/* 모바일: 카드 리스트 */}
+            <div className="space-y-2 md:hidden">
+              {visible.map((s) => (
+                <div key={s.member.id} className="rounded-xl border border-line bg-white p-3 shadow-sm">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-bold text-gray-800">{s.member.name}</span>
+                    <MemberTypeBadge type={s.member.memberType} />
+                    <span className="ml-auto">
+                      <PaymentStatusBadge status={s.status} />
+                    </span>
+                  </div>
+                  <dl className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <dt className="text-gray-500">회비</dt>
+                      <dd className="mt-0.5 font-semibold tabular-nums text-gray-700">{formatWon(s.expected)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-500">납부</dt>
+                      <dd className="mt-0.5 font-semibold tabular-nums text-emerald-700">{formatWon(s.paid)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-gray-500">미납</dt>
+                      <dd className={`mt-0.5 font-semibold tabular-nums ${s.unpaid > 0 ? "text-red-600" : "text-gray-700"}`}>
+                        {formatWon(s.unpaid)}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                    {([1, 2] as const).map((half) => (
+                      <div key={half} className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500">{HALF_LABEL[half]}</span>
+                        {renderHalfButton(s.member.id, s.member.monthlyPaymentStatus, half)}
+                      </div>
+                    ))}
+                    <label className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
+                      납부액
+                      <EditablePaid value={s.paid} onCommit={(v) => setPaidAmount(s.member.id, v)} />
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <p className="mt-2 text-xs text-gray-500">
+          ※ 회비는 <b className="text-gray-700">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
+          <b className="text-emerald-700">납부</b> → <b className="text-red-600">미납</b> →{" "}
+          <b className="text-gray-700">면제</b> → 해제 순으로 바뀌고, <b className="text-gray-700">납부 금액</b> 칸은 직접
           입력(엔터로 저장)도 가능합니다.
         </p>
       </Card>
 
       {/* 환불 관리 */}
       <Card>
-        <SectionTitle action={<Button onClick={() => setRefundOpen(true)}>환불 추가</Button>}>환불 관리</SectionTitle>
+        <SectionTitle
+          icon={<RotateCcw size={16} />}
+          action={
+            <Button onClick={() => setRefundOpen(true)}>
+              <Plus size={16} aria-hidden="true" />
+              환불 추가
+            </Button>
+          }
+        >
+          환불 관리
+        </SectionTitle>
         <p className="mb-2 text-xs text-gray-500">{REFUND_POLICY.description}</p>
         {refunds.length === 0 ? (
-          <p className="text-sm text-gray-400">환불 내역이 없습니다.</p>
+          <EmptyState
+            compact
+            icon={<RotateCcw size={18} />}
+            title="환불 내역이 없습니다."
+            description="환불 추가 버튼으로 새 환불을 등록할 수 있습니다."
+          />
         ) : (
           <Table>
             <THead>
@@ -272,12 +396,12 @@ export function PaymentsPage() {
                 <TR key={r.id}>
                   <TD>{nameOf(r.memberId)}</TD>
                   <TD>{r.months}개월</TD>
-                  <TD>{formatWon(r.amount)}</TD>
+                  <TD className="tabular-nums">{formatWon(r.amount)}</TD>
                   <TD>{r.reason}</TD>
                   <TD>{r.date}</TD>
-                  <TD>{r.approved ? "✅" : "대기"}</TD>
+                  <TD>{r.approved ? <Badge tone="green">승인</Badge> : <Badge tone="yellow">대기</Badge>}</TD>
                   <TD>
-                    <Button variant="ghost" className="px-2 py-1 text-red-500" onClick={() => removeRefund(r.id)}>
+                    <Button variant="ghost" className="min-h-8 px-2 py-1 text-red-600" onClick={() => removeRefund(r.id)}>
                       삭제
                     </Button>
                   </TD>
@@ -318,7 +442,8 @@ function EditablePaid({ value, onCommit }: { value: number; onCommit: (v: number
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
       title="실제 납부 금액 입력 (엔터로 저장)"
-      className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm font-bold text-gray-900 focus:border-brand-500 focus:outline-none"
+      aria-label="실제 납부 금액"
+      className="w-24 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm font-bold tabular-nums text-gray-900 focus:border-brand-500 focus:outline-none"
     />
   );
 }

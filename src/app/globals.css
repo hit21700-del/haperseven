@@ -5,18 +5,14 @@
 :root {
   color-scheme: light;
 
-  /* ── HAPER SEVEN 디자인 토큰 ── */
+  /* ── HAPER SEVEN 디자인 토큰 (tailwind.config.ts 의 brand/app/line/pitch 와 동일 값) ── */
   --brand: #5b4cf0;
   --brand-hover: #4c3ee5;
-
   --app-bg: #f5f6fa;
   --surface: #ffffff;
   --border: #e4e7ec;
-
   --text-primary: #101828;
   --text-secondary: #667085;
-
-  /* 전술 보드 전용 */
   --tactical-bg: #0b1117;
   --pitch-green: #17542e;
   --tactical-green: #20e878;
@@ -32,12 +28,26 @@ body {
   color: var(--text-primary);
   background-color: var(--app-bg);
   font-family:
-    -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
+    -apple-system, BlinkMacSystemFont, "Pretendard Variable", "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* 한글 어절 중간 줄바꿈 방지 + 긴 토큰은 강제 개행 */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  /* 데이터 도구: 숫자 폭 고정 */
+  font-variant-numeric: tabular-nums;
 }
 
 button,
-select {
+select,
+input,
+textarea {
   font: inherit;
+}
+
+/* 키보드 포커스 링 — 브라우저 기본 대신 브랜드색 2px (마우스 클릭 시엔 표시 안 함) */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 /* 숫자 입력 스피너 정리 */
@@ -45,6 +55,18 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* 감소 모션 설정 존중 — 전환/애니메이션 사실상 제거 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -60,13 +82,22 @@ input[type="number"]::-webkit-inner-spin-button {
   background-color: #1a202a;
   color: #e5e7eb;
   padding: 0.55rem 0.75rem;
-  font-size: 0.875rem;
-  outline: none;
+  font-size: 1rem; /* 모바일 입력 줌 방지 */
+}
+@media (min-width: 640px) {
+  .fm-select,
+  .fm-input {
+    font-size: 0.875rem;
+  }
+}
+.fm-select:focus-visible,
+.fm-input:focus-visible {
+  outline-color: var(--tactical-green);
 }
 
-.fm-select:focus,
-.fm-input:focus {
-  border-color: rgba(32, 232, 120, 0.45);
+/* 이미지 저장 중에는 편집용 UI 숨김 */
+[data-export] .export-hide {
+  display: none !important;
 }
 
 /* 잔디: 다크 그린 + 아주 약한 가로 스트라이프 */
@@ -80,11 +111,6 @@ input[type="number"]::-webkit-inner-spin-button {
       rgba(0, 0, 0, 0.04) 18.18%
     ),
     linear-gradient(180deg, #1b5e34 0%, #17542e 55%, #124023 100%);
-}
-
-/* 이미지 저장 중에는 편집용 UI 숨김 */
-[data-export] .export-hide {
-  display: none !important;
 }
 
 /* 유니폼 (필드 플레이어: 다크 네이비) */

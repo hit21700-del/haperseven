@@ -13,6 +13,7 @@ export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p:
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Select
+        aria-label="기간 유형"
         value={value.type}
         onChange={(e) => onChange({ ...value, type: e.target.value as PeriodType })}
         className="w-28"
@@ -25,6 +26,7 @@ export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p:
 
       {value.type !== "range" && (
         <Select
+          aria-label="연도"
           value={value.year}
           onChange={(e) => onChange({ ...value, year: Number(e.target.value) })}
           className="w-28"
@@ -39,6 +41,7 @@ export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p:
 
       {value.type === "month" && (
         <Select
+          aria-label="월"
           value={value.month ?? 1}
           onChange={(e) => onChange({ ...value, month: Number(e.target.value) })}
           className="w-24"
@@ -53,6 +56,7 @@ export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p:
 
       {value.type === "quarter" && (
         <Select
+          aria-label="분기"
           value={value.quarter ?? 1}
           onChange={(e) => onChange({ ...value, quarter: Number(e.target.value) })}
           className="w-24"
@@ -69,13 +73,17 @@ export function PeriodFilter({ value, onChange }: { value: Period; onChange: (p:
         <div className="flex items-center gap-1">
           <TextInput
             type="date"
+            aria-label="시작일"
             value={value.from ?? ""}
             onChange={(e) => onChange({ ...value, from: e.target.value })}
             className="w-40"
           />
-          <span className="text-gray-500">~</span>
+          <span className="text-gray-500" aria-hidden="true">
+            ~
+          </span>
           <TextInput
             type="date"
+            aria-label="종료일"
             value={value.to ?? ""}
             onChange={(e) => onChange({ ...value, to: e.target.value })}
             className="w-40"

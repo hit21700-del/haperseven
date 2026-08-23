@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/Field";
@@ -74,7 +75,7 @@ export function ParticipantPickerModal({
         <div className="flex flex-col">
           <div className="mb-2 flex items-center gap-2">
             <TextInput placeholder="이름 검색" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <button onClick={toggleAllFiltered} className="whitespace-nowrap text-xs text-brand-600 hover:underline">
+            <button type="button" onClick={toggleAllFiltered} className="whitespace-nowrap text-xs text-brand-600 hover:underline">
               {allFilteredChecked ? "전체 해제" : "전체 선택"}
             </button>
           </div>
@@ -89,7 +90,7 @@ export function ParticipantPickerModal({
                 <MemberTypeBadge type={m.memberType} />
               </label>
             ))}
-            {filtered.length === 0 && <div className="px-3 py-4 text-sm text-gray-400">검색 결과가 없습니다.</div>}
+            {filtered.length === 0 && <div className="px-3 py-4 text-sm text-gray-500">검색 결과가 없습니다.</div>}
           </div>
         </div>
 
@@ -98,17 +99,22 @@ export function ParticipantPickerModal({
           <div className="mb-2 text-sm font-medium text-gray-600">선택 {pickedMembers.length}</div>
           <div className="max-h-72 min-h-[6rem] flex-1 overflow-y-auto rounded-lg border border-gray-100 p-2">
             {pickedMembers.length === 0 ? (
-              <div className="px-1 py-2 text-sm text-gray-400">왼쪽에서 참여 인원을 선택하세요.</div>
+              <div className="px-1 py-2 text-sm text-gray-500">왼쪽에서 참여 인원을 선택하세요.</div>
             ) : (
               <div className="flex flex-wrap gap-1">
                 {pickedMembers.map((m) => (
                   <span
                     key={m.id}
-                    className="flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 px-2 py-1 text-xs text-brand-600"
+                    className="flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 py-0.5 pl-2.5 pr-0.5 text-xs text-brand-600"
                   >
                     {m.name}
-                    <button onClick={() => toggle(m.id)} className="text-brand-500 hover:text-red-500" aria-label="제외">
-                      ✕
+                    <button
+                      type="button"
+                      onClick={() => toggle(m.id)}
+                      className="inline-grid h-7 w-7 place-items-center rounded-full text-brand-500 hover:bg-brand-100 hover:text-red-600"
+                      aria-label={`${m.name} 제외`}
+                    >
+                      <X size={12} aria-hidden="true" />
                     </button>
                   </span>
                 ))}

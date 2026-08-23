@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
+import { Card } from "@/components/ui/Card";
 import { PositionBadge, Badge } from "@/components/ui/Badge";
+import { Select } from "@/components/ui/Field";
 import type { QuarterLineup, FormationTemplate } from "@/types/formation";
 import type { Member, Position } from "@/types/member";
 
@@ -56,26 +58,27 @@ export function QuarterLineupCard({
   const overfilled = (pos: "GK" | "DF" | "MF" | "FW") => counts[pos] > template.positions[pos];
 
   return (
-    <div className="rounded-[14px] border border-[#E4E7EC] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
+    <Card className="!p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="font-bold text-gray-900">{lineup.quarter}쿼터</h3>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 text-xs">
             {(["GK", "DF", "MF", "FW"] as const).map((p) => (
-              <span key={p} className={overfilled(p) ? "font-bold text-red-500" : "text-gray-400"}>
+              <span key={p} className={overfilled(p) ? "font-bold text-red-600" : "text-gray-500"}>
                 {p} {counts[p]}/{template.positions[p]}
               </span>
             ))}
           </div>
           {onCopyFrom && (copyQuarters?.length ?? 0) > 0 && (
-            <select
+            <Select
               value=""
               onChange={(e) => {
                 const from = Number(e.target.value);
                 if (from) onCopyFrom(from);
               }}
-              className="rounded-lg border border-[#D8DCE5] bg-white px-2 py-1 text-xs text-gray-600 focus:border-[#635BFF] focus:outline-none"
+              className="w-auto !px-2 !py-1 !text-xs text-gray-600"
               title="다른 쿼터 포메이션을 이 쿼터로 복사"
+              aria-label={`${lineup.quarter}쿼터로 다른 쿼터 포메이션 불러오기`}
             >
               <option value="">↺ 불러오기</option>
               {copyQuarters!.map((q) => (
@@ -83,7 +86,7 @@ export function QuarterLineupCard({
                   {q}쿼터
                 </option>
               ))}
-            </select>
+            </Select>
           )}
         </div>
       </div>
@@ -95,23 +98,25 @@ export function QuarterLineupCard({
             <div key={id} className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-gray-50">
               <span className="flex items-center gap-2">
                 {cur === "REST" ? <Badge tone="gray">휴식</Badge> : <PositionBadge position={cur} />}
-                <span className={cur === "REST" ? "text-gray-400" : "font-semibold text-gray-800"}>{nameOf(id)}</span>
+                <span className={cur === "REST" ? "text-gray-500" : "font-semibold text-gray-800"}>{nameOf(id)}</span>
               </span>
-              <select
+              <Select
                 value={cur}
                 onChange={(e) => changePlayer(id, e.target.value as Position | "REST")}
-                className="rounded-lg border border-[#D8DCE5] bg-white px-1.5 py-0.5 text-xs text-gray-700 focus:border-[#635BFF] focus:outline-none"
+                className="w-auto !px-1.5 !py-0.5 !text-xs"
+                aria-label={`${nameOf(id)} ${lineup.quarter}쿼터 포지션`}
               >
                 {POS_OPTIONS.map((o) => (
                   <option key={o} value={o}>
                     {o === "REST" ? "휴식" : o}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           );
         })}
+        {attendeeIds.length === 0 && <p className="px-1 py-2 text-sm text-gray-500">참여 인원이 없습니다.</p>}
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,8 +1,25 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  CalendarDays,
+  CheckSquare,
+  ChevronRight,
+  Flag,
+  Footprints,
+  Goal,
+  LayoutGrid,
+  MapPin,
+  Medal,
+  Plus,
+  Receipt,
+  Trophy,
+} from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Badge, MemberTypeBadge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, SectionTitle } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PeriodFilter } from "@/components/common/PeriodFilter";
 import { useNav } from "@/components/layout/NavContext";
@@ -21,34 +38,22 @@ import {
 import { readJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 import type { Match } from "@/types/match";
 
-const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm";
-
 const RESULT_CHIP: Record<"W" | "D" | "L", string> = {
-  W: "bg-emerald-500 text-white",
-  D: "bg-gray-300 text-gray-700",
-  L: "bg-red-400 text-white",
+  W: "bg-emerald-700 text-white",
+  D: "bg-gray-200 text-gray-700",
+  L: "bg-red-600 text-white",
 };
 const RESULT_LABEL: Record<"W" | "D" | "L", string> = { W: "승", D: "무", L: "패" };
-
-function CardHead({ icon, title, action }: { icon: string; title: string; action?: React.ReactNode }) {
-  return (
-    <div className="mb-3 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-sm text-brand-600">{icon}</span>
-        <h2 className="text-base font-bold text-gray-900">{title}</h2>
-      </div>
-      {action}
-    </div>
-  );
-}
 
 function FooterLink({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="mt-3 flex w-full items-center justify-center gap-1 border-t border-gray-100 pt-3 text-xs font-semibold text-brand-600 hover:text-brand-700"
     >
-      {children} ›
+      {children}
+      <ChevronRight size={14} aria-hidden="true" />
     </button>
   );
 }
@@ -114,16 +119,17 @@ export function DashboardPage() {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {(
           [
-            ["＋", "경기 등록", () => go("matches")],
-            ["✓", "출석 입력", () => go("matches")],
-            ["⚽", "라인업 작성", () => go("formation")],
-            ["🏁", "결과 입력", () => go("matches")],
-          ] as [string, string, () => void][]
+            [<Plus size={16} aria-hidden="true" />, "경기 등록", () => go("matches")],
+            [<CheckSquare size={16} aria-hidden="true" />, "출석 입력", () => go("matches")],
+            [<LayoutGrid size={16} aria-hidden="true" />, "라인업 작성", () => go("formation")],
+            [<Flag size={16} aria-hidden="true" />, "결과 입력", () => go("matches")],
+          ] as [React.ReactNode, string, () => void][]
         ).map(([icon, label, onClick]) => (
           <button
             key={label}
+            type="button"
             onClick={onClick}
-            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
+            className="flex items-center justify-center gap-2 rounded-xl border border-line bg-white px-3 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
           >
             <span className="text-brand-600">{icon}</span>
             {label}
@@ -133,94 +139,105 @@ export function DashboardPage() {
 
       {/* 다음 경기 + 시즌 기록 */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className={`${cardCls} lg:col-span-2`}>
-          <CardHead
-            icon="📅"
-            title="다음 경기"
+        <Card className="lg:col-span-2">
+          <SectionTitle
+            icon={<CalendarDays size={14} />}
             action={
               next && (
                 <Badge tone={dday <= 3 ? "red" : "blue"}>{dday === 0 ? "오늘" : dday === 1 ? "내일" : `D-${dday}`}</Badge>
               )
             }
-          />
+          >
+            다음 경기
+          </SectionTitle>
           {next ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="text-xl font-bold text-gray-900">{matchName(next)}</div>
                   <div className="mt-1 text-sm text-gray-500">
-                    {next.date} {next.time && `· ${next.time}`} {next.location && `· 📍 ${next.location}`}
-                    {next.matchType === "SCRIMMAGE" && (
-                      <Badge tone="purple">자체전</Badge>
-                    )}
+                    {next.date} {next.time && `· ${next.time}`}{" "}
+                    {next.location && (
+                      <span className="inline-flex items-center gap-1">
+                        · <MapPin size={14} aria-hidden="true" /> {next.location}
+                      </span>
+                    )}{" "}
+                    {next.matchType === "SCRIMMAGE" && <Badge tone="purple">자체전</Badge>}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-brand-600">
+                  <div className="whitespace-nowrap text-2xl font-bold text-brand-600">
                     {nextAttend}
-                    <span className="text-base font-medium text-gray-400">/{activeCount}</span>
+                    <span className="text-base font-medium text-gray-500">/{activeCount}명</span>
                   </div>
-                  <div className="text-xs text-gray-400">참석 · 미체크 {nextUnchecked}명</div>
+                  <div className="text-xs text-gray-500">참석 · 미체크 {nextUnchecked}명</div>
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
                 <button
+                  type="button"
                   onClick={() => go("matches")}
-                  className="flex-1 rounded-lg border border-gray-200 bg-white py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-white py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                 >
-                  ✓ 출석 입력
+                  <CheckSquare size={14} aria-hidden="true" />
+                  출석 입력
                 </button>
                 <button
+                  type="button"
                   onClick={() => router.push(`/formation?match=${next.id}`)}
-                  className="flex-1 rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
                 >
-                  ⚽ 라인업 짜기
+                  <LayoutGrid size={14} aria-hidden="true" />
+                  라인업 짜기
                 </button>
               </div>
             </>
           ) : (
-            <div className="py-6 text-center">
-              <p className="text-sm text-gray-400">예정된 경기가 없습니다.</p>
-              <button
-                onClick={() => go("matches")}
-                className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
-              >
-                ＋ 경기 등록
-              </button>
-            </div>
+            <EmptyState
+              compact
+              icon={<CalendarDays size={18} />}
+              title="예정된 경기가 없습니다"
+              description="경기를 등록하면 참석 현황과 D-day가 표시됩니다."
+              action={
+                <Button onClick={() => go("matches")}>
+                  <Plus size={16} aria-hidden="true" />
+                  경기 등록
+                </Button>
+              }
+            />
           )}
-        </div>
+        </Card>
 
-        <div className={cardCls}>
-          <CardHead icon="🏆" title="시즌 기록" />
+        <Card>
+          <SectionTitle icon={<Trophy size={14} />}>시즌 기록</SectionTitle>
           {record.games > 0 ? (
             <>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">{record.games}</div>
-                  <div className="text-xs text-gray-400">경기</div>
+                  <div className="whitespace-nowrap text-2xl font-bold text-gray-900">{record.games}</div>
+                  <div className="text-xs text-gray-500">경기</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    <span className="text-emerald-600">{record.win}</span>
-                    <span className="mx-0.5 text-gray-300">-</span>
+                  <div className="whitespace-nowrap text-2xl font-bold text-gray-900">
+                    <span className="text-emerald-700">{record.win}</span>
+                    <span className="mx-0.5 text-gray-500">-</span>
                     <span className="text-gray-500">{record.draw}</span>
-                    <span className="mx-0.5 text-gray-300">-</span>
-                    <span className="text-red-500">{record.loss}</span>
+                    <span className="mx-0.5 text-gray-500">-</span>
+                    <span className="text-red-600">{record.loss}</span>
                   </div>
-                  <div className="text-xs text-gray-400">승-무-패</div>
+                  <div className="text-xs text-gray-500">승-무-패</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="whitespace-nowrap text-2xl font-bold text-gray-900">
                     {record.goalsFor}
-                    <span className="mx-0.5 text-sm text-gray-300">:</span>
+                    <span className="mx-0.5 text-sm text-gray-500">:</span>
                     {record.goalsAgainst}
                   </div>
-                  <div className="text-xs text-gray-400">득실</div>
+                  <div className="text-xs text-gray-500">득실</div>
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-center gap-1.5">
-                <span className="mr-1 text-xs text-gray-400">최근</span>
+                <span className="mr-1 text-xs text-gray-500">최근</span>
                 {record.recent.map((r, i) => (
                   <span
                     key={i}
@@ -232,29 +249,36 @@ export function DashboardPage() {
               </div>
             </>
           ) : (
-            <p className="py-6 text-center text-sm text-gray-400">
-              경기 결과(스코어)를 입력하면
-              <br />
-              승무패가 집계됩니다.
-            </p>
+            <EmptyState
+              compact
+              title="아직 팀 기록이 없습니다"
+              description="경기 결과(스코어)를 입력하면 승무패가 집계됩니다."
+            />
           )}
           {topMom.length > 0 && (
             <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-sm">
-              <span className="text-amber-700">🏅 최다 MOM</span>
-              <span className="font-bold text-amber-700">
+              <span className="inline-flex items-center gap-1 text-amber-700">
+                <Medal size={14} aria-hidden="true" />
+                최다 MOM
+              </span>
+              <span className="whitespace-nowrap font-bold text-amber-700">
                 {topMom[0].name} {topMom[0].momCount}회
               </span>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {/* 최근 경기 + 회비 요약 */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className={cardCls}>
-          <CardHead icon="⚽" title="최근 경기" />
+        <Card>
+          <SectionTitle icon={<Goal size={14} />}>최근 경기</SectionTitle>
           {recentMatches.length === 0 ? (
-            <p className="py-6 text-center text-sm text-gray-400">경기 기록이 없습니다.</p>
+            <EmptyState
+              compact
+              title="아직 경기 기록이 없습니다"
+              description="경기를 등록하고 결과를 입력하면 최근 3경기가 표시됩니다."
+            />
           ) : (
             <ul className="space-y-1">
               {recentMatches.map((m) => {
@@ -264,6 +288,7 @@ export function DashboardPage() {
                 return (
                   <li key={m.id}>
                     <button
+                      type="button"
                       onClick={() => go("matches")}
                       className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm hover:bg-gray-50"
                     >
@@ -274,22 +299,25 @@ export function DashboardPage() {
                           {RESULT_LABEL[r]}
                         </span>
                       ) : (
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-sm">
-                          ⚽
+                        <span
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500"
+                          aria-hidden="true"
+                        >
+                          <Goal size={16} />
                         </span>
                       )}
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-semibold text-gray-800">{matchName(m)}</span>
-                        <span className="block text-xs text-gray-400">{m.date}</span>
+                        <span className="block text-xs text-gray-500">{m.date}</span>
                       </span>
                       <span className="shrink-0 text-right">
                         {m.score ? (
-                          <span className="text-base font-bold text-gray-900">
+                          <span className="whitespace-nowrap text-base font-bold text-gray-900">
                             {m.score.us} : {m.score.them}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400">
-                            참석 {attend} · {goals}골
+                          <span className="whitespace-nowrap text-xs text-gray-500">
+                            참석 {attend}명 · {goals}골
                           </span>
                         )}
                       </span>
@@ -300,24 +328,30 @@ export function DashboardPage() {
             </ul>
           )}
           <FooterLink onClick={() => go("matches")}>전체 경기 보기</FooterLink>
-        </div>
+        </Card>
 
-        <div className={cardCls}>
-          <CardHead icon="🧾" title="회비 현황" />
+        <Card>
+          <SectionTitle icon={<Receipt size={14} />}>회비 현황</SectionTitle>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
-              <div className={`text-2xl font-bold ${t.unpaidCount > 0 ? "text-red-500" : "text-gray-900"}`}>
+              <div
+                className={`whitespace-nowrap text-2xl font-bold ${t.unpaidCount > 0 ? "text-red-600" : "text-gray-900"}`}
+              >
                 {t.unpaidCount}명
               </div>
-              <div className="text-xs text-gray-400">미납자</div>
+              <div className="text-xs text-gray-500">미납자</div>
             </div>
             <div>
-              <div className="text-lg font-bold leading-8 text-emerald-600">{formatWon(t.totalPaid)}</div>
-              <div className="text-xs text-gray-400">총 납부</div>
+              <div className="whitespace-nowrap text-base font-bold text-emerald-700 sm:text-lg">
+                {formatWon(t.totalPaid)}
+              </div>
+              <div className="text-xs text-gray-500">총 납부</div>
             </div>
             <div>
-              <div className="text-lg font-bold leading-8 text-brand-600">{formatWon(teamBalance)}</div>
-              <div className="text-xs text-gray-400">잔고</div>
+              <div className="whitespace-nowrap text-base font-bold text-brand-600 sm:text-lg">
+                {formatWon(teamBalance)}
+              </div>
+              <div className="text-xs text-gray-500">잔고</div>
             </div>
           </div>
           {unpaid.length > 0 && (
@@ -328,20 +362,32 @@ export function DashboardPage() {
                     <span className="font-semibold text-gray-700">{s.member.name}</span>
                     <MemberTypeBadge type={s.member.memberType} />
                   </span>
-                  <span className="font-semibold text-red-500">{formatWon(s.unpaid)}</span>
+                  <span className="whitespace-nowrap font-semibold text-red-600">{formatWon(s.unpaid)}</span>
                 </li>
               ))}
             </ul>
           )}
           <FooterLink onClick={() => go("payments")}>회비 관리 열기</FooterLink>
-        </div>
+        </Card>
       </div>
 
       {/* TOP 5 랭킹 */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <RankCard icon="📅" title="최다 출석 TOP 5" rows={topAttend} unit={(a) => `${a.attendCount}회`} go={go} />
-        <RankCard icon="⚽" title="최다 득점 TOP 5" rows={topGoals} unit={(a) => `${a.goals}골`} go={go} />
-        <RankCard icon="👟" title="최다 어시스트 TOP 5" rows={topAssists} unit={(a) => `${a.assists}A`} go={go} />
+        <RankCard
+          icon={<CalendarDays size={14} />}
+          title="최다 출석 TOP 5"
+          rows={topAttend}
+          unit={(a) => `${a.attendCount}회`}
+          go={go}
+        />
+        <RankCard icon={<Goal size={14} />} title="최다 득점 TOP 5" rows={topGoals} unit={(a) => `${a.goals}골`} go={go} />
+        <RankCard
+          icon={<Footprints size={14} />}
+          title="최다 도움 TOP 5"
+          rows={topAssists}
+          unit={(a) => `${a.assists}개`}
+          go={go}
+        />
       </div>
     </div>
   );
@@ -354,35 +400,35 @@ function RankCard({
   unit,
   go,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   rows: PlayerAggregate[];
   unit: (a: PlayerAggregate) => string;
   go: (t: "stats") => void;
 }) {
   return (
-    <div className={cardCls}>
-      <CardHead icon={icon} title={title} />
+    <Card>
+      <SectionTitle icon={icon}>{title}</SectionTitle>
       {rows.length === 0 ? (
-        <p className="py-6 text-center text-sm text-gray-400">데이터 없음</p>
+        <EmptyState compact title="아직 기록이 없습니다" description="경기에서 출석·득점을 입력하면 집계됩니다." />
       ) : (
         <ol className="space-y-1.5">
           {rows.map((a, i) => (
             <li key={a.memberId} className="flex items-center gap-2 text-sm">
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                  i < 3 ? "bg-brand-50 text-brand-600" : "bg-gray-100 text-gray-400"
+                  i < 3 ? "bg-brand-50 text-brand-600" : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {i + 1}
               </span>
               <span className="flex-1 truncate font-medium text-gray-700">{a.name}</span>
-              <span className="w-12 text-right font-semibold text-gray-800">{unit(a)}</span>
+              <span className="w-12 whitespace-nowrap text-right font-semibold text-gray-800">{unit(a)}</span>
             </li>
           ))}
         </ol>
       )}
       <FooterLink onClick={() => go("stats")}>전체 통계 보기</FooterLink>
-    </div>
+    </Card>
   );
 }

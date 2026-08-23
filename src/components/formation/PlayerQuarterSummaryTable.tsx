@@ -37,16 +37,16 @@ export function PlayerQuarterSummaryTable({
           return (
             <TR key={s.memberId}>
               <TD className="font-medium text-gray-900">{nameOf(s.memberId)}</TD>
-              <TD className="text-xs text-gray-400">{typeOf(s.memberId)}</TD>
-              <TD className={under ? "font-semibold text-red-500" : "font-semibold"}>{s.totalQuarters}</TD>
+              <TD className="text-xs text-gray-500">{typeOf(s.memberId)}</TD>
+              <TD className={under ? "font-semibold text-red-600" : "font-semibold"}>{s.totalQuarters}</TD>
               <TD>{s.fieldQuarters}</TD>
               <TD>{s.gkQuarters}</TD>
               <TD>{s.restQuarters}</TD>
               <TD>
                 {under ? (
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-500">{minGuaranteed}쿼터 미만</span>
+                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">{minGuaranteed}쿼터 미만</span>
                 ) : (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">충족</span>
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">충족</span>
                 )}
               </TD>
             </TR>
@@ -54,7 +54,9 @@ export function PlayerQuarterSummaryTable({
         })}
         {sorted.length === 0 && (
           <TR>
-            <TD className="text-gray-400">배정 결과가 없습니다.</TD>
+            <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
+              배정 결과가 없습니다.
+            </td>
           </TR>
         )}
       </tbody>

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FormRow, TextInput, Select } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 import type { Member, Position } from "@/types/member";
 import { detailToGroup } from "@/lib/formation/positions";
 
@@ -22,6 +23,7 @@ export function GuestAddModal({
   onClose: () => void;
   onAdd: (m: Member) => void;
 }) {
+  const toast = useToast();
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [primary, setPrimary] = useState("CM");
@@ -36,7 +38,7 @@ export function GuestAddModal({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert("이름을 입력하세요.");
+      toast("이름을 입력하세요.", "error");
       return;
     }
     const detail = [primary, secondary].filter((p) => p && p !== "");
@@ -72,19 +74,19 @@ export function GuestAddModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="용병 추가 (일회용)"
+      title="용병 추가"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             취소
           </Button>
-          <Button onClick={handleSave}>추가</Button>
+          <Button onClick={handleSave}>용병 추가</Button>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <FormRow label="이름 *">
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="용병 이름" />
+          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="용병 이름을 입력하세요" />
         </FormRow>
         <FormRow label="나이">
           <TextInput type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="예: 28" />
@@ -110,7 +112,7 @@ export function GuestAddModal({
         </FormRow>
       </div>
       <p className="mt-3 text-xs text-gray-500">
-        ※ 용병은 <b>회원 명단에 저장되지 않고</b> 이번 포메이션 참여 인원으로만 추가됩니다. (회비 0원 / 참석시)
+        ※ 일회용 용병은 <b>회원 명단에 저장되지 않고</b> 이번 포메이션 참여 인원으로만 추가됩니다. (회비 0원 / 참석시)
       </p>
     </Modal>
   );

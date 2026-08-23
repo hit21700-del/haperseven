@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
+import { Star } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { TextInput } from "@/components/ui/Field";
 import { MemberTypeBadge } from "@/components/ui/Badge";
 import type { Member, TeamColor } from "@/types/member";
@@ -33,9 +35,11 @@ export function TeamEditModal({
 
   const TeamBtn = ({ m, team, label, cls }: { m: Member; team?: TeamColor; label: string; cls: string }) => (
     <button
+      type="button"
       onClick={() => setTeam(m, team)}
+      aria-pressed={m.team === team}
       className={`rounded-md px-2 py-1 text-xs font-medium transition ${
-        m.team === team ? cls : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+        m.team === team ? cls : "bg-gray-100 text-gray-500 hover:bg-gray-200"
       }`}
     >
       {label}
@@ -43,32 +47,28 @@ export function TeamEditModal({
   );
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title="자체전 팀 편집"
-      footer={
-        <button onClick={onClose} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-          닫기
-        </button>
-      }
-    >
-      <div className="mb-3 flex items-center gap-3 text-sm">
-        <span className="rounded-full border border-gray-300 bg-white px-3 py-1 font-semibold text-gray-800">🤍 화이트 {whiteCount}명</span>
-        <span className="rounded-full bg-gray-900 px-3 py-1 font-semibold text-white">🖤 블랙 {blackCount}명</span>
-        <span className="text-xs text-gray-500">⭐ = 감독</span>
+    <Modal open={open} onClose={onClose} title="자체전 팀 편집" footer={<Button onClick={onClose}>닫기</Button>}>
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+        <span className="rounded-full border border-gray-300 bg-white px-3 py-1 font-semibold text-gray-800">화이트 {whiteCount}명</span>
+        <span className="rounded-full bg-gray-900 px-3 py-1 font-semibold text-white">블랙 {blackCount}명</span>
+        <span className="flex items-center gap-1 text-xs text-gray-500">
+          <Star size={12} className="fill-amber-300 text-amber-600" aria-hidden="true" /> = 감독
+        </span>
       </div>
-      <TextInput placeholder="이름 검색" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-2" />
+      <TextInput placeholder="이름을 검색하세요" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-2" aria-label="이름 검색" />
 
       <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-100">
         {list.map((m) => (
           <div key={m.id} className="flex items-center gap-2 border-b border-gray-100 px-3 py-2 text-sm last:border-b-0">
             <button
+              type="button"
               onClick={() => toggleCoach(m)}
+              aria-pressed={m.isCoach}
+              aria-label="감독 지정"
               title="감독 지정/해제"
-              className={`text-base ${m.isCoach ? "text-amber-400" : "text-gray-300 hover:text-amber-300"}`}
+              className="inline-grid h-8 w-8 place-items-center rounded-md hover:bg-gray-100"
             >
-              ★
+              <Star size={16} className={m.isCoach ? "fill-amber-300 text-amber-600" : "text-gray-400"} aria-hidden="true" />
             </button>
             <span className="w-16 font-semibold text-gray-900">{m.name}</span>
             <MemberTypeBadge type={m.memberType} />
@@ -79,10 +79,10 @@ export function TeamEditModal({
             </div>
           </div>
         ))}
-        {list.length === 0 && <div className="px-3 py-6 text-center text-sm text-gray-400">검색 결과가 없습니다.</div>}
+        {list.length === 0 && <div className="px-3 py-6 text-center text-sm text-gray-500">검색 결과가 없습니다.</div>}
       </div>
       <p className="mt-2 text-xs text-gray-500">
-        ※ 변경은 즉시 저장됩니다. 명단에 없던 <b>박성재</b> 등은 자동 추가돼 있습니다(회원 관리에서 구분·포지션 보완).
+        ※ 변경은 즉시 저장됩니다. 명단에 없던 <b>박성재</b> 등은 자동 추가돼 있습니다. (회원 관리에서 구분·포지션 보완)
       </p>
     </Modal>
   );

@@ -1,7 +1,9 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { CalendarDays, Footprints, Goal, Medal } from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Table, THead, TH, TD, TR } from "@/components/ui/Table";
 import { PeriodFilter } from "@/components/common/PeriodFilter";
@@ -13,9 +15,9 @@ import { currentYear } from "@/lib/utils/format";
 type SortKey = "attendCount" | "goals" | "assists" | "momCount";
 
 const RESULT_CHIP: Record<"W" | "D" | "L", { label: string; cls: string }> = {
-  W: { label: "승", cls: "bg-emerald-500 text-white" },
-  D: { label: "무", cls: "bg-gray-300 text-gray-700" },
-  L: { label: "패", cls: "bg-red-400 text-white" },
+  W: { label: "승", cls: "bg-emerald-700 text-white" },
+  D: { label: "무", cls: "bg-gray-200 text-gray-700" },
+  L: { label: "패", cls: "bg-red-600 text-white" },
 };
 
 /** 랭킹 카드 — 상위 3명 (1위 강조, 2·3위 작은 행) */
@@ -26,7 +28,7 @@ function RankingCard({
   valueKey,
   unit,
 }: {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   entries: PlayerAggregate[];
   valueKey: SortKey;
@@ -34,18 +36,20 @@ function RankingCard({
 }) {
   const [first, ...rest] = entries;
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="text-[13px] font-medium text-gray-500">
-        <span className="mr-1">{icon}</span>
+    <Card>
+      <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500">
+        <span className="flex shrink-0 items-center text-brand-600" aria-hidden="true">
+          {icon}
+        </span>
         {title}
       </div>
       {first ? (
         <>
           <div className="mt-2 flex items-baseline justify-between gap-2">
             <div className="min-w-0 truncate text-lg font-bold text-gray-900">{first.name}</div>
-            <div className="shrink-0 text-lg font-bold text-brand-600">
+            <div className="shrink-0 whitespace-nowrap text-lg font-bold text-brand-600">
               {first[valueKey]}
-              <span className="ml-0.5 text-xs font-medium text-gray-400">{unit}</span>
+              <span className="ml-0.5 text-xs font-medium text-gray-500">{unit}</span>
             </div>
           </div>
           {rest.length > 0 && (
@@ -53,10 +57,10 @@ function RankingCard({
               {rest.map((a, i) => (
                 <div key={a.memberId} className="flex items-center justify-between gap-2 text-xs">
                   <div className="min-w-0 truncate text-gray-500">
-                    <span className="mr-1 font-semibold text-gray-400">{i + 2}</span>
+                    <span className="mr-1 font-semibold text-gray-500">{i + 2}</span>
                     {a.name}
                   </div>
-                  <div className="shrink-0 font-semibold text-gray-700">
+                  <div className="shrink-0 whitespace-nowrap font-semibold text-gray-700">
                     {a[valueKey]}
                     {unit}
                   </div>
@@ -66,9 +70,9 @@ function RankingCard({
           )}
         </>
       ) : (
-        <div className="mt-2 text-sm text-gray-400">기록 없음</div>
+        <EmptyState compact title="아직 기록이 없습니다" description="경기에서 출석·득점을 입력하면 집계됩니다." />
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -76,7 +80,7 @@ function RecordStat({ label, value, cls = "text-gray-900" }: { label: string; va
   return (
     <div className="rounded-lg bg-gray-50 px-3 py-2 text-center">
       <div className="text-[11px] font-medium text-gray-500">{label}</div>
-      <div className={`mt-0.5 text-base font-bold ${cls}`}>{value}</div>
+      <div className={`mt-0.5 whitespace-nowrap text-base font-bold ${cls}`}>{value}</div>
     </div>
   );
 }
@@ -93,10 +97,10 @@ export function StatsPage() {
   const rankings = useMemo(
     () =>
       [
-        { icon: "⚽", title: "득점왕", key: "goals" as SortKey, unit: "골" },
-        { icon: "👟", title: "도움왕", key: "assists" as SortKey, unit: "개" },
-        { icon: "📅", title: "출석왕", key: "attendCount" as SortKey, unit: "회" },
-        { icon: "🏅", title: "MOM왕", key: "momCount" as SortKey, unit: "회" },
+        { icon: <Goal size={14} />, title: "득점왕", key: "goals" as SortKey, unit: "골" },
+        { icon: <Footprints size={14} />, title: "도움왕", key: "assists" as SortKey, unit: "개" },
+        { icon: <CalendarDays size={14} />, title: "출석왕", key: "attendCount" as SortKey, unit: "회" },
+        { icon: <Medal size={14} />, title: "MOM왕", key: "momCount" as SortKey, unit: "회" },
       ].map((r) => ({ ...r, entries: topN(aggs, r.key, 3) })),
     [aggs],
   );
@@ -125,14 +129,14 @@ export function StatsPage() {
                 label="승-무-패"
                 value={
                   <>
-                    <span className="text-emerald-600">{record.win}</span>
-                    <span className="text-gray-400"> - {record.draw} - </span>
-                    <span className="text-red-500">{record.loss}</span>
+                    <span className="text-emerald-700">{record.win}</span>
+                    <span className="text-gray-500"> - {record.draw} - </span>
+                    <span className="text-red-600">{record.loss}</span>
                   </>
                 }
               />
-              <RecordStat label="득점" value={record.goalsFor} cls="text-emerald-600" />
-              <RecordStat label="실점" value={record.goalsAgainst} cls="text-red-500" />
+              <RecordStat label="득점" value={record.goalsFor} cls="text-emerald-700" />
+              <RecordStat label="실점" value={record.goalsAgainst} cls="text-red-600" />
               <RecordStat label="경기당 득점" value={(record.goalsFor / record.games).toFixed(1)} cls="text-brand-600" />
             </div>
             <div className="flex items-center gap-2">
@@ -150,7 +154,11 @@ export function StatsPage() {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-400">경기 결과(스코어)를 입력하면 팀 기록이 집계됩니다</p>
+          <EmptyState
+            compact
+            title="아직 팀 기록이 없습니다"
+            description="경기 결과(스코어)를 입력하면 승무패가 집계됩니다."
+          />
         )}
       </Card>
 
@@ -161,15 +169,17 @@ export function StatsPage() {
               {(
                 [
                   ["goals", "득점순"],
-                  ["assists", "어시순"],
+                  ["assists", "도움순"],
                   ["attendCount", "출석순"],
                   ["momCount", "MOM순"],
                 ] as [SortKey, string][]
               ).map(([k, label]) => (
                 <button
                   key={k}
+                  type="button"
                   onClick={() => setSortKey(k)}
-                  className={`px-3 py-1 font-semibold ${sortKey === k ? "rounded-lg bg-brand-600 text-white hover:bg-brand-700" : "rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}
+                  aria-pressed={sortKey === k}
+                  className={`px-3 py-1 font-semibold ${sortKey === k ? "rounded-lg bg-brand-600 text-white hover:bg-brand-700" : "rounded-lg border border-line bg-white text-gray-700 hover:bg-gray-50"}`}
                 >
                   {label}
                 </button>
@@ -186,7 +196,7 @@ export function StatsPage() {
               <TH>이름</TH>
               <TH>출석</TH>
               <TH>득점</TH>
-              <TH>어시스트</TH>
+              <TH>도움</TH>
               <TH>MOM</TH>
               <TH>공격포인트</TH>
             </TR>
@@ -205,7 +215,14 @@ export function StatsPage() {
             ))}
             {sorted.length === 0 && (
               <TR>
-                <TD className="text-gray-400">해당 기간 기록이 없습니다.</TD>
+                {/* ui/Table 의 TD 는 colSpan 을 받지 않으므로 빈 행만 raw td 사용 */}
+                <td colSpan={7} className="px-4 py-3 text-gray-700">
+                  <EmptyState
+                    compact
+                    title="해당 기간 기록이 없습니다"
+                    description="기간을 바꾸거나 경기에서 출석·득점을 입력하면 집계됩니다."
+                  />
+                </td>
               </TR>
             )}
           </tbody>

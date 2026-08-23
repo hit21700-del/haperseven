@@ -1,8 +1,10 @@
 "use client";
 import React from "react";
+import { Medal, CalendarDays, ClipboardCheck } from "lucide-react";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Table, THead, TH, TD, TR } from "@/components/ui/Table";
 import { MemberTypeBadge, Badge } from "@/components/ui/Badge";
+import { IconButton } from "@/components/ui/Button";
 import { TextInput, Select, FormRow } from "@/components/ui/Field";
 import { useRouter } from "next/navigation";
 import type { Match, AttendanceStatus, AttendanceRecord, MatchStat, MatchStatus } from "@/types/match";
@@ -17,8 +19,8 @@ const CHIP_CLASS: Record<string, string> = {
   ATTEND: "border-emerald-300 bg-emerald-50 text-emerald-700",
   LATE: "border-amber-300 bg-amber-50 text-amber-700",
   ABSENT: "border-gray-300 bg-gray-100 text-gray-500",
-  INJURED: "border-red-300 bg-red-50 text-red-500",
-  NONE: "border-gray-200 bg-white text-gray-400",
+  INJURED: "border-red-300 bg-red-50 text-red-600",
+  NONE: "border-line bg-white text-gray-500",
 };
 
 const MATCH_STATUS_OPTIONS: { value: MatchStatus | ""; label: string }[] = [
@@ -27,6 +29,20 @@ const MATCH_STATUS_OPTIONS: { value: MatchStatus | ""; label: string }[] = [
   { value: "DONE", label: "완료" },
   { value: "CANCELED", label: "취소" },
 ];
+
+/** MOM 토글 버튼 — 선택 시 색·채움으로 구분 (opacity 만으로 구분하지 않음) */
+function MomButton({ name, selected, onToggle, title }: { name: string; selected: boolean; onToggle: () => void; title?: string }) {
+  return (
+    <IconButton
+      onClick={onToggle}
+      aria-pressed={selected}
+      aria-label={`${name} MOM ${selected ? "해제" : "지정"}`}
+      title={title}
+    >
+      <Medal size={20} className={selected ? "text-amber-600 fill-amber-200" : "text-gray-400"} aria-hidden="true" />
+    </IconButton>
+  );
+}
 
 /** 경기 정보/출석/스탯 편집기 */
 export function MatchEditor({
@@ -112,12 +128,14 @@ export function MatchEditor({
       {/* 경기 정보 + 결과 */}
       <Card>
         <SectionTitle
+          icon={<CalendarDays size={15} aria-hidden="true" />}
           action={
             <button
+              type="button"
               onClick={() => router.push(`/formation?match=${match.id}`)}
-              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              className="inline-flex min-h-8 items-center rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
             >
-              {match.formationPlan ? `⚽ 라인업 보기/수정 (${lineupCount}명)` : "⚽ 라인업 작성"}
+              {match.formationPlan ? `라인업 보기/수정 (${lineupCount}명)` : "라인업 작성"}
             </button>
           }
         >
@@ -159,17 +177,19 @@ export function MatchEditor({
               <TextInput
                 type="number"
                 min={0}
-                className="w-20 text-center text-lg font-bold"
+                className="w-20 text-center text-lg font-bold tabular-nums"
                 value={match.score?.us ?? ""}
                 onChange={(e) => setScore("us", e.target.value)}
                 placeholder="-"
                 aria-label={isScrimmage ? "화이트 득점" : "하퍼세븐 득점"}
               />
-              <span className="text-lg font-bold text-gray-400">:</span>
+              <span className="text-lg font-bold text-gray-500" aria-hidden="true">
+                :
+              </span>
               <TextInput
                 type="number"
                 min={0}
-                className="w-20 text-center text-lg font-bold"
+                className="w-20 text-center text-lg font-bold tabular-nums"
                 value={match.score?.them ?? ""}
                 onChange={(e) => setScore("them", e.target.value)}
                 placeholder="-"
@@ -201,15 +221,15 @@ export function MatchEditor({
 
       {/* 출석 · 스탯 */}
       <Card>
-        <SectionTitle>
+        <SectionTitle icon={<ClipboardCheck size={15} aria-hidden="true" />}>
           출석 · 스탯 입력 <span className="ml-2 text-sm font-normal text-gray-500">(참석 {attendCount}명)</span>
         </SectionTitle>
 
         {/* 모바일: 이름 칩 토글 (탭할 때마다 미체크→참석→지각→불참→부상 순환) */}
         <div className="md:hidden">
-          <p className="mb-2 text-xs text-gray-400">
-            이름을 탭하면 <b className="text-emerald-600">참석</b> → <b className="text-amber-600">지각</b> →{" "}
-            <b className="text-gray-500">불참</b> → <b className="text-red-500">부상</b> 순으로 바뀝니다.
+          <p className="mb-2 text-xs text-gray-500">
+            이름을 탭하면 <b className="text-emerald-700">참석</b> → <b className="text-amber-700">지각</b> →{" "}
+            <b className="text-gray-600">불참</b> → <b className="text-red-600">부상</b> 순으로 바뀝니다.
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {activeMembers.map((m) => {
@@ -217,17 +237,19 @@ export function MatchEditor({
               return (
                 <button
                   key={m.id}
+                  type="button"
                   onClick={() => cycleAttendance(m.id)}
-                  className={`rounded-lg border px-2 py-2 text-center text-sm font-semibold ${CHIP_CLASS[st ?? "NONE"]}`}
+                  aria-label={`${m.name} 출석 상태: ${st ? STATUS_LABEL[st] : "미체크"}. 탭하여 변경`}
+                  className={`min-h-10 rounded-lg border px-2 py-2 text-center text-sm font-semibold ${CHIP_CLASS[st ?? "NONE"]}`}
                 >
                   {m.name}
-                  <span className="block text-[10px] font-medium opacity-80">{st ? STATUS_LABEL[st] : "미체크"}</span>
+                  <span className="block text-[10px] font-medium">{st ? STATUS_LABEL[st] : "미체크"}</span>
                 </button>
               );
             })}
           </div>
           <div className="mt-4 space-y-2">
-            <div className="text-xs font-medium text-gray-600">득점 / 도움 / MOM (참석자)</div>
+            <div className="text-xs font-medium text-gray-600">골 / 도움 / MOM (참석자)</div>
             {activeMembers
               .filter((m) => {
                 const st = attOf(m.id)?.status;
@@ -238,36 +260,29 @@ export function MatchEditor({
                 return (
                   <div key={m.id} className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1.5">
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800">{m.name}</span>
-                    <label className="flex items-center gap-1 text-xs text-gray-500">
-                      ⚽
+                    <label className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500">골</span>
                       <TextInput
                         type="number"
                         min={0}
-                        className="w-14 !px-1.5 !py-1 text-center"
+                        className="w-14 !px-1.5 !py-1 text-center tabular-nums"
                         value={stat?.goals ?? 0}
                         onChange={(e) => setStat(m.id, { goals: Number(e.target.value) })}
-                        aria-label={`${m.name} 득점`}
+                        aria-label={`${m.name} 골`}
                       />
                     </label>
-                    <label className="flex items-center gap-1 text-xs text-gray-500">
-                      👟
+                    <label className="flex items-center gap-1">
+                      <span className="text-xs text-gray-500">도움</span>
                       <TextInput
                         type="number"
                         min={0}
-                        className="w-14 !px-1.5 !py-1 text-center"
+                        className="w-14 !px-1.5 !py-1 text-center tabular-nums"
                         value={stat?.assists ?? 0}
                         onChange={(e) => setStat(m.id, { assists: Number(e.target.value) })}
                         aria-label={`${m.name} 도움`}
                       />
                     </label>
-                    <button
-                      onClick={() => toggleMom(m.id)}
-                      className={`text-lg ${stat?.mom ? "" : "opacity-25 grayscale"}`}
-                      title="MOM"
-                      aria-label={`${m.name} MOM ${stat?.mom ? "해제" : "지정"}`}
-                    >
-                      🏅
-                    </button>
+                    <MomButton name={m.name} selected={!!stat?.mom} onToggle={() => toggleMom(m.id)} title="MOM (경기당 1명)" />
                   </div>
                 );
               })}
@@ -283,7 +298,7 @@ export function MatchEditor({
                 <TH>구분</TH>
                 <TH>출석</TH>
                 <TH>득점</TH>
-                <TH>어시</TH>
+                <TH>도움</TH>
                 <TH>MOM</TH>
                 <TH>메모</TH>
               </TR>
@@ -303,6 +318,7 @@ export function MatchEditor({
                         value={att?.status ?? ""}
                         onChange={(e) => setAttendance(m.id, (e.target.value || null) as AttendanceStatus | null)}
                         className="w-24"
+                        aria-label={`${m.name} 출석 상태`}
                       >
                         <option value="">미체크</option>
                         {STATUSES.map((s) => (
@@ -318,7 +334,7 @@ export function MatchEditor({
                         min={0}
                         value={stat?.goals ?? 0}
                         onChange={(e) => setStat(m.id, { goals: Number(e.target.value) })}
-                        className="w-16"
+                        className="w-16 tabular-nums"
                         aria-label={`${m.name} 득점`}
                       />
                     </TD>
@@ -328,19 +344,12 @@ export function MatchEditor({
                         min={0}
                         value={stat?.assists ?? 0}
                         onChange={(e) => setStat(m.id, { assists: Number(e.target.value) })}
-                        className="w-16"
+                        className="w-16 tabular-nums"
                         aria-label={`${m.name} 도움`}
                       />
                     </TD>
                     <TD>
-                      <button
-                        onClick={() => toggleMom(m.id)}
-                        className={`text-lg ${stat?.mom ? "" : "opacity-25 grayscale hover:opacity-60"}`}
-                        title="MOM (경기당 1명)"
-                        aria-label={`${m.name} MOM ${stat?.mom ? "해제" : "지정"}`}
-                      >
-                        🏅
-                      </button>
+                      <MomButton name={m.name} selected={!!stat?.mom} onToggle={() => toggleMom(m.id)} title="MOM (경기당 1명)" />
                     </TD>
                     <TD>
                       <TextInput
@@ -348,6 +357,7 @@ export function MatchEditor({
                         onChange={(e) => setMemo(m.id, e.target.value)}
                         placeholder="메모"
                         className="w-32"
+                        aria-label={`${m.name} 메모`}
                       />
                     </TD>
                   </TR>

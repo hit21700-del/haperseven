@@ -1,8 +1,10 @@
 "use client";
 import React, { useState } from "react";
+import { TriangleAlert } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Field";
+import { FormRow, Select } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 import type { Member } from "@/types/member";
 import type { ParsedWorkbook } from "@/lib/excel/excelParser";
 
@@ -16,6 +18,7 @@ export function ExcelImportModal({
   onClose: () => void;
   onImport: (members: Member[], mode: "replace" | "merge") => void;
 }) {
+  const toast = useToast();
   const [parsed, setParsed] = useState<ParsedWorkbook | null>(null);
   const [sheet, setSheet] = useState<string>("");
   const [mode, setMode] = useState<"replace" | "merge">("replace");
@@ -42,10 +45,11 @@ export function ExcelImportModal({
 
   const handleImport = () => {
     if (members.length === 0) {
-      alert("가져올 회원이 없습니다.");
+      toast("가져올 회원이 없습니다. 파일과 시트를 확인하세요.", "error");
       return;
     }
     onImport(members, mode);
+    toast(`${members.length}명의 회원을 가져왔습니다.`);
     setParsed(null);
     setSheet("");
     onClose();
@@ -76,17 +80,22 @@ export function ExcelImportModal({
           <input
             type="file"
             accept=".xlsx,.xls"
+            aria-label="엑셀 파일 선택"
+            aria-invalid={fileError ? true : undefined}
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:font-semibold file:text-white"
           />
-          {fileError && <p className="mt-2 text-sm text-red-500">{fileError}</p>}
+          {fileError && (
+            <p role="alert" className="mt-2 text-sm text-red-600">
+              {fileError}
+            </p>
+          )}
         </div>
 
         {parsed && (
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">시트 선택</label>
+              <FormRow label="시트 선택">
                 <Select value={sheet} onChange={(e) => setSheet(e.target.value)}>
                   {parsed.sheetNames.map((s) => (
                     <option key={s} value={s}>
@@ -94,25 +103,27 @@ export function ExcelImportModal({
                     </option>
                   ))}
                 </Select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-600">가져오기 방식</label>
+              </FormRow>
+              <FormRow label="가져오기 방식">
                 <Select value={mode} onChange={(e) => setMode(e.target.value as "replace" | "merge")}>
                   <option value="replace">기존 명단 대체</option>
                   <option value="merge">기존 명단에 추가</option>
                 </Select>
-              </div>
+              </FormRow>
             </div>
 
             {parsed.errors.length > 0 && (
-              <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
+              <div role="alert" className="space-y-0.5 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
                 {parsed.errors.map((e, i) => (
-                  <div key={i}>⚠ {e}</div>
+                  <div key={i} className="flex items-start gap-1">
+                    <TriangleAlert size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
+                    <span>{e}</span>
+                  </div>
                 ))}
               </div>
             )}
 
-            <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-100 text-sm">
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-line text-sm">
               <table className="w-full">
                 <thead className="sticky top-0 bg-gray-50 text-xs text-gray-600">
                   <tr>
@@ -126,14 +137,14 @@ export function ExcelImportModal({
                     <tr key={m.id} className="border-t border-gray-100">
                       <td className="px-2 py-1">{m.name}</td>
                       <td className="px-2 py-1">{m.memberType}</td>
-                      <td className="px-2 py-1 text-right">{m.feeAmount.toLocaleString()}</td>
+                      <td className="px-2 py-1 text-right tabular-nums">{m.feeAmount.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-400">
-              ※ 나이/포지션/GK 가능 여부는 엑셀에 없으므로 가져온 뒤 회원 수정에서 입력하세요.
+            <p className="text-xs text-gray-500">
+              나이/포지션/GK 가능 여부는 엑셀에 없으므로 가져온 뒤 회원 수정에서 입력하세요.
             </p>
           </>
         )}

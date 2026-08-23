@@ -1,7 +1,11 @@
 "use client";
 import React, { useMemo, useState } from "react";
+import { Upload, Download, UserPlus, Pencil, Trash2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Table, THead, TH, TD, TR } from "@/components/ui/Table";
 import { MemberTypeBadge, PositionBadge, Badge, TeamBadge } from "@/components/ui/Badge";
 import { TextInput, Select } from "@/components/ui/Field";
@@ -14,11 +18,14 @@ import { ALL_MEMBER_TYPES } from "@/types/member";
 import { aggregate } from "@/lib/stats/statsService";
 import { formatWon, currentYear } from "@/lib/utils/format";
 
+const TABLE_COLS = 11;
+
 export function MembersPage() {
   const { members, matches, upsertMember, removeMember, setMembers } = useAppStore();
   const [editing, setEditing] = useState<Member | undefined>(undefined);
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<string>("전체");
   const [page, setPage] = useState(1);
@@ -63,6 +70,25 @@ export function MembersPage() {
     const mod = await import("@/lib/excel/excelExporter");
     mod.exportMembersToExcel(members);
   };
+  const clearFilters = () => {
+    setSearch("");
+    setFilterType("전체");
+    setPage(1);
+  };
+
+  const emptyState = (
+    <EmptyState
+      compact
+      icon={<Search size={18} aria-hidden="true" />}
+      title={search ? `'${search}'에 맞는 회원이 없습니다` : "조건에 맞는 회원이 없습니다"}
+      description="검색어나 구분 필터를 바꿔 보세요."
+      action={
+        <Button variant="secondary" onClick={clearFilters}>
+          필터 지우기
+        </Button>
+      }
+    />
+  );
 
   return (
     <div className="space-y-5">
@@ -73,21 +99,30 @@ export function MembersPage() {
         action={
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setImportOpen(true)}>
-              📥 엑셀 가져오기
+              <Upload size={16} aria-hidden="true" />
+              엑셀 가져오기
             </Button>
             <Button variant="secondary" onClick={handleExport}>
-              📤 엑셀 내보내기
+              <Download size={16} aria-hidden="true" />
+              엑셀 내보내기
             </Button>
-            <Button onClick={openAdd}>👤 회원 추가</Button>
+            <Button onClick={openAdd}>
+              <UserPlus size={16} aria-hidden="true" />
+              회원 추가
+            </Button>
           </div>
         }
       />
 
-      {/* 검색/필터 + 지표 카드 */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm xl:col-span-1">
+      {/* 지표 카드 + 검색/필터 */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatIconCard icon="👥" iconBg="bg-brand-50" iconColor="text-brand-600" label="전체 회원" value={`${members.length}명`} sub="팀의 모든 등록 회원" />
+        <StatIconCard icon="🛡" iconBg="bg-sky-50" iconColor="text-sky-600" label="정회원" value={`${jeongCount}명`} sub="월 회비 납부 회원" />
+        <StatIconCard icon="🧑" iconBg="bg-red-50" iconColor="text-red-600" label="스텝" value={`${stepCount}명`} sub="코칭 및 운영 스텝" />
+        <Card className="!p-4">
           <TextInput
             placeholder="이름 검색"
+            aria-label="이름 검색"
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -96,6 +131,7 @@ export function MembersPage() {
             className="mb-2"
           />
           <Select
+            aria-label="회원 구분 필터"
             value={filterType}
             onChange={(e) => {
               setFilterType(e.target.value);
@@ -109,14 +145,11 @@ export function MembersPage() {
               </option>
             ))}
           </Select>
-        </div>
-        <StatIconCard icon="👥" iconBg="bg-brand-50" iconColor="text-brand-600" label="전체 회원" value={`${members.length}명`} sub="팀의 모든 등록 회원" />
-        <StatIconCard icon="🛡" iconBg="bg-sky-50" iconColor="text-sky-600" label="정회원" value={`${jeongCount}명`} sub="월 회비 납부 회원" />
-        <StatIconCard icon="🧑" iconBg="bg-red-50" iconColor="text-red-500" label="스텝" value={`${stepCount}명`} sub="코칭 및 운영 스텝" />
+        </Card>
       </div>
 
       {/* 테이블 */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <Card>
         <div className="mb-2 text-sm text-gray-500">총 회원 수 {filtered.length}명</div>
 
         {/* 데스크톱: 테이블 */}
@@ -143,8 +176,8 @@ export function MembersPage() {
                 const attend = stat?.attendCount ?? 0;
                 const goals = stat?.goals ?? 0;
                 return (
-                  <TR key={m.id} className={!m.isActive ? "text-gray-400" : ""}>
-                    <TD className="text-gray-400">{m.no ?? "-"}</TD>
+                  <TR key={m.id} className={!m.isActive ? "text-gray-500" : ""}>
+                    <TD className="text-gray-500">{m.no ?? "-"}</TD>
                     <TD className="font-semibold text-gray-700">{m.name}</TD>
                     <TD>
                       <MemberTypeBadge type={m.memberType} />
@@ -163,24 +196,26 @@ export function MembersPage() {
                     <TD>
                       {m.fixedGK ? <Badge tone="purple">고정GK</Badge> : m.canPlayGK ? <Badge tone="blue">가능</Badge> : "-"}
                     </TD>
-                    <TD>{attend > 0 ? `${attend}회` : <span className="text-gray-400">-</span>}</TD>
-                    <TD>{goals > 0 ? `${goals}골` : <span className="text-gray-400">-</span>}</TD>
+                    <TD>{attend > 0 ? `${attend}회` : <span className="text-gray-500">-</span>}</TD>
+                    <TD>{goals > 0 ? `${goals}골` : <span className="text-gray-500">-</span>}</TD>
                     <TD className="font-medium">{formatWon(m.feeAmount)}</TD>
                     <TD>
                       <div className="flex gap-1">
                         <button
+                          type="button"
                           onClick={() => openEdit(m)}
-                          className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                          className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
                         >
-                          ✎ 수정
+                          <Pencil size={13} aria-hidden="true" />
+                          수정
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`${m.name} 회원을 삭제할까요?`)) removeMember(m.id);
-                          }}
-                          className="rounded-lg bg-red-50 px-2.5 py-1 text-xs text-red-500 hover:bg-red-100"
+                          type="button"
+                          onClick={() => setDeleteTarget(m)}
+                          className="inline-flex min-h-8 items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs text-red-600 hover:bg-red-100"
                         >
-                          🗑 삭제
+                          <Trash2 size={13} aria-hidden="true" />
+                          삭제
                         </button>
                       </div>
                     </TD>
@@ -188,9 +223,11 @@ export function MembersPage() {
                 );
               })}
               {pageRows.length === 0 && (
-                <TR>
-                  <TD className="text-gray-400">조건에 맞는 회원이 없습니다.</TD>
-                </TR>
+                <tr>
+                  <td colSpan={TABLE_COLS} className="px-4 py-3">
+                    {emptyState}
+                  </td>
+                </tr>
               )}
             </tbody>
           </Table>
@@ -203,11 +240,9 @@ export function MembersPage() {
             const attend = stat?.attendCount ?? 0;
             const goals = stat?.goals ?? 0;
             return (
-              <div
+              <Card
                 key={m.id}
-                className={`flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm ${
-                  !m.isActive ? "opacity-60" : ""
-                }`}
+                className={`flex items-center justify-between gap-3 !p-3 ${!m.isActive ? "opacity-60" : ""}`}
               >
                 <div className="min-w-0 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -224,39 +259,40 @@ export function MembersPage() {
                   )}
                   <div className="flex gap-3 text-xs text-gray-500">
                     <span>
-                      출석 {attend > 0 ? <span className="font-semibold text-gray-700">{attend}회</span> : <span className="text-gray-400">-</span>}
+                      출석 {attend > 0 ? <span className="font-semibold text-gray-700">{attend}회</span> : <span className="text-gray-500">-</span>}
                     </span>
                     <span>
-                      득점 {goals > 0 ? <span className="font-semibold text-gray-700">{goals}골</span> : <span className="text-gray-400">-</span>}
+                      득점 {goals > 0 ? <span className="font-semibold text-gray-700">{goals}골</span> : <span className="text-gray-500">-</span>}
                     </span>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => openEdit(m)}
-                  className="shrink-0 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  aria-label={`${m.name} 수정`}
                 >
-                  ✎ 수정
+                  <Pencil size={13} aria-hidden="true" />
+                  수정
                 </button>
-              </div>
+              </Card>
             );
           })}
-          {pageRows.length === 0 && (
-            <div className="rounded-xl border border-gray-200 bg-white p-4 text-center text-sm text-gray-400">
-              조건에 맞는 회원이 없습니다.
-            </div>
-          )}
+          {pageRows.length === 0 && <Card>{emptyState}</Card>}
         </div>
 
         {/* 페이지네이션 */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <span className="text-sm text-gray-500">전체 {filtered.length}명</span>
-          <div className="flex items-center gap-1">
+          <nav className="flex items-center gap-1" aria-label="페이지 이동">
             <button
+              type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={curPage <= 1}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              aria-label="이전 페이지"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40"
             >
-              ‹
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter((p) => Math.abs(p - curPage) <= 2 || p === 1 || p === totalPages)
@@ -264,11 +300,14 @@ export function MembersPage() {
                 <React.Fragment key={p}>
                   {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-gray-500">…</span>}
                   <button
+                    type="button"
                     onClick={() => setPage(p)}
+                    aria-label={`${p}페이지`}
+                    aria-current={p === curPage ? "page" : undefined}
                     className={`flex h-8 min-w-8 items-center justify-center px-2 text-sm ${
                       p === curPage
                         ? "rounded-lg bg-brand-600 font-semibold text-white"
-                        : "rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        : "rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50"
                     }`}
                   >
                     {p}
@@ -276,14 +315,17 @@ export function MembersPage() {
                 </React.Fragment>
               ))}
             <button
+              type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={curPage >= totalPages}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              aria-label="다음 페이지"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40"
             >
-              ›
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
-          </div>
+          </nav>
           <Select
+            aria-label="페이지당 표시 개수"
             value={pageSize}
             onChange={(e) => {
               setPageSize(Number(e.target.value));
@@ -298,10 +340,29 @@ export function MembersPage() {
             ))}
           </Select>
         </div>
-      </div>
+      </Card>
 
       <MemberFormModal open={formOpen} initial={editing} onClose={() => setFormOpen(false)} onSave={upsertMember} />
       <ExcelImportModal open={importOpen} onClose={() => setImportOpen(false)} onImport={handleImport} />
+
+      {/* 회원 삭제 확인 */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="회원 삭제"
+        message={
+          deleteTarget && (
+            <>
+              <b>{deleteTarget.name}</b> 회원의 회비·출석 기록이 함께 삭제됩니다. 되돌릴 수 없습니다.
+            </>
+          )
+        }
+        confirmLabel="삭제"
+        onConfirm={() => {
+          if (deleteTarget) removeMember(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
