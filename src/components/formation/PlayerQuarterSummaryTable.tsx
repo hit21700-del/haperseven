@@ -36,17 +36,17 @@ export function PlayerQuarterSummaryTable({
           const under = s.totalQuarters < minGuaranteed;
           return (
             <TR key={s.memberId}>
-              <TD className="font-medium text-gray-900">{nameOf(s.memberId)}</TD>
-              <TD className="text-xs text-gray-500">{typeOf(s.memberId)}</TD>
-              <TD className={under ? "font-semibold text-red-600" : "font-semibold"}>{s.totalQuarters}</TD>
+              <TD className="font-medium text-fg">{nameOf(s.memberId)}</TD>
+              <TD className="text-xs text-fg-muted">{typeOf(s.memberId)}</TD>
+              <TD className={under ? "font-semibold text-red-600 dark:text-red-400" : "font-semibold"}>{s.totalQuarters}</TD>
               <TD>{s.fieldQuarters}</TD>
               <TD>{s.gkQuarters}</TD>
               <TD>{s.restQuarters}</TD>
               <TD>
                 {under ? (
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700">{minGuaranteed}쿼터 미만</span>
+                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700 dark:bg-red-500/15 dark:text-red-300">{minGuaranteed}쿼터 미만</span>
                 ) : (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">충족</span>
+                  <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs text-fg-2">충족</span>
                 )}
               </TD>
             </TR>
@@ -54,7 +54,7 @@ export function PlayerQuarterSummaryTable({
         })}
         {sorted.length === 0 && (
           <TR>
-            <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-500">
+            <td colSpan={7} className="px-4 py-6 text-center text-sm text-fg-muted">
               배정 결과가 없습니다.
             </td>
           </TR>

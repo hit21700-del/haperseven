@@ -3,10 +3,10 @@ import React from "react";
 type Variant = "primary" | "secondary" | "danger" | "ghost";
 
 const VARIANT_CLASS: Record<Variant, string> = {
-  primary: "bg-brand-600 text-white hover:bg-brand-700",
-  secondary: "border border-line bg-white text-gray-700 hover:bg-gray-50",
+  primary: "bg-brand text-brand-fg hover:bg-brand-hover",
+  secondary: "border border-line bg-surface text-fg-2 hover:bg-surface-2",
   danger: "bg-red-600 text-white hover:bg-red-700",
-  ghost: "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-800",
+  ghost: "bg-transparent text-fg-2 hover:bg-surface-3 hover:text-fg",
 };
 
 export function Button({
@@ -34,7 +34,7 @@ export function IconButton({
   return (
     <button
       type={props.type ?? "button"}
-      className={`inline-grid h-10 w-10 place-items-center rounded-lg text-gray-500 transition-colors duration-150 hover:bg-gray-100 hover:text-gray-800 active:scale-[0.97] ${className}`}
+      className={`inline-grid h-10 w-10 place-items-center rounded-lg text-fg-muted transition-colors duration-150 hover:bg-surface-3 hover:text-fg active:scale-[0.97] ${className}`}
       {...props}
     />
   );

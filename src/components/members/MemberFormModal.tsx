@@ -170,7 +170,7 @@ export function MemberFormModal({
                     onClick={() => togglePosition(p)}
                     aria-pressed={selected}
                     className={`min-h-8 rounded-lg border px-3 py-1 text-sm font-semibold ${
-                      selected ? "border-brand-500 bg-brand-50 text-brand-600" : "border-line text-gray-500 hover:bg-gray-50"
+                      selected ? "border-brand bg-brand-50 text-brand" : "border-line text-fg-muted hover:bg-surface-2"
                     }`}
                   >
                     {p}
@@ -212,18 +212,18 @@ export function MemberFormModal({
           </Select>
         </FormRow>
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-fg-2">
             <input type="checkbox" checked={!!draft.isCoach} onChange={(e) => set("isCoach", e.target.checked)} />
             감독
           </label>
         </div>
 
         <div className="flex items-center gap-4 sm:col-span-2">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-fg-2">
             <input type="checkbox" checked={draft.canPlayGK} onChange={(e) => set("canPlayGK", e.target.checked)} />
             GK 가능
           </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-fg-2">
             <input type="checkbox" checked={draft.fixedGK} onChange={(e) => set("fixedGK", e.target.checked)} />
             고정 GK
           </label>

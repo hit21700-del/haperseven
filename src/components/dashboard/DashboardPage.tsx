@@ -40,7 +40,7 @@ import type { Match } from "@/types/match";
 
 const RESULT_CHIP: Record<"W" | "D" | "L", string> = {
   W: "bg-emerald-700 text-white",
-  D: "bg-gray-200 text-gray-700",
+  D: "bg-surface-3 text-fg-2",
   L: "bg-red-600 text-white",
 };
 const RESULT_LABEL: Record<"W" | "D" | "L", string> = { W: "승", D: "무", L: "패" };
@@ -50,7 +50,7 @@ function FooterLink({ children, onClick }: { children: React.ReactNode; onClick:
     <button
       type="button"
       onClick={onClick}
-      className="mt-3 flex w-full items-center justify-center gap-1 border-t border-gray-100 pt-3 text-xs font-semibold text-brand-600 hover:text-brand-700"
+      className="mt-3 flex w-full items-center justify-center gap-1 border-t border-line-soft pt-3 text-xs font-semibold text-brand hover:text-brand-hover"
     >
       {children}
       <ChevronRight size={14} aria-hidden="true" />
@@ -129,9 +129,9 @@ export function DashboardPage() {
             key={label}
             type="button"
             onClick={onClick}
-            className="flex items-center justify-center gap-2 rounded-xl border border-line bg-white px-3 py-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-brand-300 hover:text-brand-600"
+            className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-3 py-3 text-sm font-semibold text-fg-2 shadow-sm dark:shadow-none transition hover:border-brand hover:text-brand"
           >
-            <span className="text-brand-600">{icon}</span>
+            <span className="text-brand">{icon}</span>
             {label}
           </button>
         ))}
@@ -154,8 +154,8 @@ export function DashboardPage() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-xl font-bold text-gray-900">{matchName(next)}</div>
-                  <div className="mt-1 text-sm text-gray-500">
+                  <div className="text-xl font-bold text-fg">{matchName(next)}</div>
+                  <div className="mt-1 text-sm text-fg-muted">
                     {next.date} {next.time && `· ${next.time}`}{" "}
                     {next.location && (
                       <span className="inline-flex items-center gap-1">
@@ -166,18 +166,18 @@ export function DashboardPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="whitespace-nowrap text-2xl font-bold text-brand-600">
+                  <div className="whitespace-nowrap text-2xl font-bold text-brand">
                     {nextAttend}
-                    <span className="text-base font-medium text-gray-500">/{activeCount}명</span>
+                    <span className="text-base font-medium text-fg-muted">/{activeCount}명</span>
                   </div>
-                  <div className="text-xs text-gray-500">참석 · 미체크 {nextUnchecked}명</div>
+                  <div className="text-xs text-fg-muted">참석 · 미체크 {nextUnchecked}명</div>
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
                 <button
                   type="button"
                   onClick={() => go("matches")}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-white py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface py-2 text-sm font-semibold text-fg-2 hover:bg-surface-2"
                 >
                   <CheckSquare size={14} aria-hidden="true" />
                   출석 입력
@@ -185,7 +185,7 @@ export function DashboardPage() {
                 <button
                   type="button"
                   onClick={() => router.push(`/formation?match=${next.id}`)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-600 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand py-2 text-sm font-semibold text-brand-fg hover:bg-brand-hover"
                 >
                   <LayoutGrid size={14} aria-hidden="true" />
                   라인업 짜기
@@ -214,30 +214,30 @@ export function DashboardPage() {
             <>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="whitespace-nowrap text-2xl font-bold text-gray-900">{record.games}</div>
-                  <div className="text-xs text-gray-500">경기</div>
+                  <div className="whitespace-nowrap text-2xl font-bold text-fg">{record.games}</div>
+                  <div className="text-xs text-fg-muted">경기</div>
                 </div>
                 <div>
-                  <div className="whitespace-nowrap text-2xl font-bold text-gray-900">
-                    <span className="text-emerald-700">{record.win}</span>
-                    <span className="mx-0.5 text-gray-500">-</span>
-                    <span className="text-gray-500">{record.draw}</span>
-                    <span className="mx-0.5 text-gray-500">-</span>
-                    <span className="text-red-600">{record.loss}</span>
+                  <div className="whitespace-nowrap text-2xl font-bold text-fg">
+                    <span className="text-emerald-700 dark:text-emerald-400">{record.win}</span>
+                    <span className="mx-0.5 text-fg-muted">-</span>
+                    <span className="text-fg-muted">{record.draw}</span>
+                    <span className="mx-0.5 text-fg-muted">-</span>
+                    <span className="text-red-600 dark:text-red-400">{record.loss}</span>
                   </div>
-                  <div className="text-xs text-gray-500">승-무-패</div>
+                  <div className="text-xs text-fg-muted">승-무-패</div>
                 </div>
                 <div>
-                  <div className="whitespace-nowrap text-2xl font-bold text-gray-900">
+                  <div className="whitespace-nowrap text-2xl font-bold text-fg">
                     {record.goalsFor}
-                    <span className="mx-0.5 text-sm text-gray-500">:</span>
+                    <span className="mx-0.5 text-sm text-fg-muted">:</span>
                     {record.goalsAgainst}
                   </div>
-                  <div className="text-xs text-gray-500">득실</div>
+                  <div className="text-xs text-fg-muted">득실</div>
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-center gap-1.5">
-                <span className="mr-1 text-xs text-gray-500">최근</span>
+                <span className="mr-1 text-xs text-fg-muted">최근</span>
                 {record.recent.map((r, i) => (
                   <span
                     key={i}
@@ -256,12 +256,12 @@ export function DashboardPage() {
             />
           )}
           {topMom.length > 0 && (
-            <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-sm">
-              <span className="inline-flex items-center gap-1 text-amber-700">
+            <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 dark:bg-amber-500/15 px-3 py-2 text-sm">
+              <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300">
                 <Medal size={14} aria-hidden="true" />
                 최다 MOM
               </span>
-              <span className="whitespace-nowrap font-bold text-amber-700">
+              <span className="whitespace-nowrap font-bold text-amber-700 dark:text-amber-300">
                 {topMom[0].name} {topMom[0].momCount}회
               </span>
             </div>
@@ -290,7 +290,7 @@ export function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => go("matches")}
-                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm hover:bg-gray-50"
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-sm hover:bg-surface-2"
                     >
                       {r ? (
                         <span
@@ -300,23 +300,23 @@ export function DashboardPage() {
                         </span>
                       ) : (
                         <span
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-fg-muted"
                           aria-hidden="true"
                         >
                           <Goal size={16} />
                         </span>
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-semibold text-gray-800">{matchName(m)}</span>
-                        <span className="block text-xs text-gray-500">{m.date}</span>
+                        <span className="block truncate font-semibold text-fg">{matchName(m)}</span>
+                        <span className="block text-xs text-fg-muted">{m.date}</span>
                       </span>
                       <span className="shrink-0 text-right">
                         {m.score ? (
-                          <span className="whitespace-nowrap text-base font-bold text-gray-900">
+                          <span className="whitespace-nowrap text-base font-bold text-fg">
                             {m.score.us} : {m.score.them}
                           </span>
                         ) : (
-                          <span className="whitespace-nowrap text-xs text-gray-500">
+                          <span className="whitespace-nowrap text-xs text-fg-muted">
                             참석 {attend}명 · {goals}골
                           </span>
                         )}
@@ -335,34 +335,34 @@ export function DashboardPage() {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
               <div
-                className={`whitespace-nowrap text-2xl font-bold ${t.unpaidCount > 0 ? "text-red-600" : "text-gray-900"}`}
+                className={`whitespace-nowrap text-2xl font-bold ${t.unpaidCount > 0 ? "text-red-600 dark:text-red-400" : "text-fg"}`}
               >
                 {t.unpaidCount}명
               </div>
-              <div className="text-xs text-gray-500">미납자</div>
+              <div className="text-xs text-fg-muted">미납자</div>
             </div>
             <div>
-              <div className="whitespace-nowrap text-base font-bold text-emerald-700 sm:text-lg">
+              <div className="whitespace-nowrap text-base font-bold text-emerald-700 dark:text-emerald-400 sm:text-lg">
                 {formatWon(t.totalPaid)}
               </div>
-              <div className="text-xs text-gray-500">총 납부</div>
+              <div className="text-xs text-fg-muted">총 납부</div>
             </div>
             <div>
-              <div className="whitespace-nowrap text-base font-bold text-brand-600 sm:text-lg">
+              <div className="whitespace-nowrap text-base font-bold text-brand sm:text-lg">
                 {formatWon(teamBalance)}
               </div>
-              <div className="text-xs text-gray-500">잔고</div>
+              <div className="text-xs text-fg-muted">잔고</div>
             </div>
           </div>
           {unpaid.length > 0 && (
-            <ul className="mt-3 max-h-36 space-y-0.5 overflow-y-auto border-t border-gray-100 pt-2">
+            <ul className="mt-3 max-h-36 space-y-0.5 overflow-y-auto border-t border-line-soft pt-2">
               {unpaid.map((s) => (
                 <li key={s.member.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm">
                   <span className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-700">{s.member.name}</span>
+                    <span className="font-semibold text-fg-2">{s.member.name}</span>
                     <MemberTypeBadge type={s.member.memberType} />
                   </span>
-                  <span className="whitespace-nowrap font-semibold text-red-600">{formatWon(s.unpaid)}</span>
+                  <span className="whitespace-nowrap font-semibold text-red-600 dark:text-red-400">{formatWon(s.unpaid)}</span>
                 </li>
               ))}
             </ul>
@@ -417,13 +417,13 @@ function RankCard({
             <li key={a.memberId} className="flex items-center gap-2 text-sm">
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                  i < 3 ? "bg-brand-50 text-brand-600" : "bg-gray-100 text-gray-500"
+                  i < 3 ? "bg-brand-50 text-brand" : "bg-surface-3 text-fg-muted"
                 }`}
               >
                 {i + 1}
               </span>
-              <span className="flex-1 truncate font-medium text-gray-700">{a.name}</span>
-              <span className="w-12 whitespace-nowrap text-right font-semibold text-gray-800">{unit(a)}</span>
+              <span className="flex-1 truncate font-medium text-fg-2">{a.name}</span>
+              <span className="w-12 whitespace-nowrap text-right font-semibold text-fg">{unit(a)}</span>
             </li>
           ))}
         </ol>

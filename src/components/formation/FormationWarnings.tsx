@@ -11,7 +11,7 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
   return (
     <div className="space-y-3">
       {hasViolations && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300" role="alert">
           <h3 className="mb-1 flex items-center gap-1.5 text-sm font-semibold">
             <AlertTriangle size={16} aria-hidden="true" />
             규칙 위반
@@ -25,7 +25,7 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {hasWarnings && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-700">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300">
           <h3 className="mb-1 text-sm font-semibold">경고 / 충돌</h3>
           <ul className="list-disc space-y-0.5 pl-5 text-sm">
             {plan.warnings.map((w, i) => (
@@ -36,7 +36,7 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {plan.reasons.length > 0 && (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-700">
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-300">
           <h3 className="mb-1 text-sm font-semibold">자동 배정 사유</h3>
           <ul className="list-disc space-y-0.5 pl-5 text-sm">
             {plan.reasons.map((r, i) => (
@@ -47,8 +47,8 @@ export function FormationWarnings({ plan }: { plan: FormationPlan }) {
       )}
 
       {!hasWarnings && !hasViolations && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-          <p className="flex items-center gap-1.5 text-sm text-emerald-700">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/15">
+          <p className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 size={16} aria-hidden="true" />
             규칙 위반이나 경고가 없습니다.
           </p>

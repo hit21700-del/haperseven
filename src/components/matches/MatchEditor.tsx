@@ -16,11 +16,11 @@ const STATUS_LABEL: Record<AttendanceStatus, string> = { ATTEND: "참석", LATE:
 /** 모바일 출석 칩 순환 순서: 미체크 → 참석 → 지각 → 불참 → 부상 → 미체크 */
 const CYCLE: (AttendanceStatus | null)[] = [null, "ATTEND", "LATE", "ABSENT", "INJURED"];
 const CHIP_CLASS: Record<string, string> = {
-  ATTEND: "border-emerald-300 bg-emerald-50 text-emerald-700",
-  LATE: "border-amber-300 bg-amber-50 text-amber-700",
-  ABSENT: "border-gray-300 bg-gray-100 text-gray-500",
-  INJURED: "border-red-300 bg-red-50 text-red-600",
-  NONE: "border-line bg-white text-gray-500",
+  ATTEND: "border-emerald-300 dark:border-emerald-500/40 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  LATE: "border-amber-300 dark:border-amber-500/40 bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  ABSENT: "border-line bg-surface-3 text-fg-muted",
+  INJURED: "border-red-300 dark:border-red-500/40 bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300",
+  NONE: "border-line bg-surface text-fg-muted",
 };
 
 const MATCH_STATUS_OPTIONS: { value: MatchStatus | ""; label: string }[] = [
@@ -39,7 +39,7 @@ function MomButton({ name, selected, onToggle, title }: { name: string; selected
       aria-label={`${name} MOM ${selected ? "해제" : "지정"}`}
       title={title}
     >
-      <Medal size={20} className={selected ? "text-amber-600 fill-amber-200" : "text-gray-400"} aria-hidden="true" />
+      <Medal size={20} className={selected ? "text-amber-600 fill-amber-200 dark:text-amber-400 dark:fill-amber-500/30" : "text-fg-muted"} aria-hidden="true" />
     </IconButton>
   );
 }
@@ -133,7 +133,7 @@ export function MatchEditor({
             <button
               type="button"
               onClick={() => router.push(`/formation?match=${match.id}`)}
-              className="inline-flex min-h-8 items-center rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              className="inline-flex min-h-8 items-center rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-fg-2 hover:bg-surface-2"
             >
               {match.formationPlan ? `라인업 보기/수정 (${lineupCount}명)` : "라인업 작성"}
             </button>
@@ -170,7 +170,7 @@ export function MatchEditor({
 
         <div className="mt-4 grid grid-cols-1 items-end gap-3 sm:grid-cols-2">
           <div>
-            <div className="mb-1 text-xs font-medium text-gray-600">
+            <div className="mb-1 text-xs font-medium text-fg-2">
               경기 결과 {isScrimmage ? "(화이트 : 블랙)" : "(하퍼세븐 : 상대)"}
             </div>
             <div className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export function MatchEditor({
                 placeholder="-"
                 aria-label={isScrimmage ? "화이트 득점" : "하퍼세븐 득점"}
               />
-              <span className="text-lg font-bold text-gray-500" aria-hidden="true">
+              <span className="text-lg font-bold text-fg-muted" aria-hidden="true">
                 :
               </span>
               <TextInput
@@ -222,14 +222,14 @@ export function MatchEditor({
       {/* 출석 · 스탯 */}
       <Card>
         <SectionTitle icon={<ClipboardCheck size={15} aria-hidden="true" />}>
-          출석 · 스탯 입력 <span className="ml-2 text-sm font-normal text-gray-500">(참석 {attendCount}명)</span>
+          출석 · 스탯 입력 <span className="ml-2 text-sm font-normal text-fg-muted">(참석 {attendCount}명)</span>
         </SectionTitle>
 
         {/* 모바일: 이름 칩 토글 (탭할 때마다 미체크→참석→지각→불참→부상 순환) */}
         <div className="md:hidden">
-          <p className="mb-2 text-xs text-gray-500">
-            이름을 탭하면 <b className="text-emerald-700">참석</b> → <b className="text-amber-700">지각</b> →{" "}
-            <b className="text-gray-600">불참</b> → <b className="text-red-600">부상</b> 순으로 바뀝니다.
+          <p className="mb-2 text-xs text-fg-muted">
+            이름을 탭하면 <b className="text-emerald-700 dark:text-emerald-400">참석</b> → <b className="text-amber-700 dark:text-amber-400">지각</b> →{" "}
+            <b className="text-fg-2">불참</b> → <b className="text-red-600 dark:text-red-400">부상</b> 순으로 바뀝니다.
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {activeMembers.map((m) => {
@@ -249,7 +249,7 @@ export function MatchEditor({
             })}
           </div>
           <div className="mt-4 space-y-2">
-            <div className="text-xs font-medium text-gray-600">골 / 도움 / MOM (참석자)</div>
+            <div className="text-xs font-medium text-fg-2">골 / 도움 / MOM (참석자)</div>
             {activeMembers
               .filter((m) => {
                 const st = attOf(m.id)?.status;
@@ -258,10 +258,10 @@ export function MatchEditor({
               .map((m) => {
                 const stat = statOf(m.id);
                 return (
-                  <div key={m.id} className="flex items-center gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-1.5">
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-800">{m.name}</span>
+                  <div key={m.id} className="flex items-center gap-2 rounded-lg border border-line-soft bg-surface-2 px-2.5 py-1.5">
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{m.name}</span>
                     <label className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">골</span>
+                      <span className="text-xs text-fg-muted">골</span>
                       <TextInput
                         type="number"
                         min={0}
@@ -272,7 +272,7 @@ export function MatchEditor({
                       />
                     </label>
                     <label className="flex items-center gap-1">
-                      <span className="text-xs text-gray-500">도움</span>
+                      <span className="text-xs text-fg-muted">도움</span>
                       <TextInput
                         type="number"
                         min={0}
@@ -309,7 +309,7 @@ export function MatchEditor({
                 const stat = statOf(m.id);
                 return (
                   <TR key={m.id}>
-                    <TD className="font-medium text-gray-900">{m.name}</TD>
+                    <TD className="font-medium text-fg">{m.name}</TD>
                     <TD>
                       <MemberTypeBadge type={m.memberType} />
                     </TD>

@@ -13,9 +13,9 @@ export function useToast() {
 }
 
 const ICON: Record<ToastKind, React.ReactNode> = {
-  success: <CheckCircle2 size={18} className="text-emerald-600" aria-hidden="true" />,
-  error: <AlertCircle size={18} className="text-red-600" aria-hidden="true" />,
-  info: <Info size={18} className="text-brand-600" aria-hidden="true" />,
+  success: <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />,
+  error: <AlertCircle size={18} className="text-red-600 dark:text-red-400" aria-hidden="true" />,
+  info: <Info size={18} className="text-brand" aria-hidden="true" />,
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -49,7 +49,7 @@ function ToastItem({ toast, onDone }: { toast: Toast; onDone: () => void }) {
     return () => clearTimeout(timer);
   }, [onDone, toast.kind]);
   return (
-    <div className="pointer-events-auto flex max-w-md animate-toast-in items-start gap-2.5 rounded-xl border border-line bg-white px-4 py-3 text-sm text-gray-800 shadow-lg">
+    <div className="pointer-events-auto flex max-w-md animate-toast-in items-start gap-2.5 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-fg shadow-lg">
       {ICON[toast.kind]}
       <span className="whitespace-pre-line">{toast.message}</span>
     </div>

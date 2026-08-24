@@ -60,11 +60,11 @@ export function QuarterLineupCard({
   return (
     <Card className="!p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-bold text-gray-900">{lineup.quarter}쿼터</h3>
+        <h3 className="font-bold text-fg">{lineup.quarter}쿼터</h3>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 text-xs">
             {(["GK", "DF", "MF", "FW"] as const).map((p) => (
-              <span key={p} className={overfilled(p) ? "font-bold text-red-600" : "text-gray-500"}>
+              <span key={p} className={overfilled(p) ? "font-bold text-red-600 dark:text-red-400" : "text-fg-muted"}>
                 {p} {counts[p]}/{template.positions[p]}
               </span>
             ))}
@@ -76,7 +76,7 @@ export function QuarterLineupCard({
                 const from = Number(e.target.value);
                 if (from) onCopyFrom(from);
               }}
-              className="w-auto !px-2 !py-1 !text-xs text-gray-600"
+              className="w-auto !px-2 !py-1 !text-xs text-fg-2"
               title="다른 쿼터 포메이션을 이 쿼터로 복사"
               aria-label={`${lineup.quarter}쿼터로 다른 쿼터 포메이션 불러오기`}
             >
@@ -95,10 +95,10 @@ export function QuarterLineupCard({
         {attendeeIds.map((id) => {
           const cur = stateOf(id);
           return (
-            <div key={id} className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-gray-50">
+            <div key={id} className="flex items-center justify-between gap-2 rounded-md px-1 py-0.5 text-sm hover:bg-surface-2">
               <span className="flex items-center gap-2">
                 {cur === "REST" ? <Badge tone="gray">휴식</Badge> : <PositionBadge position={cur} />}
-                <span className={cur === "REST" ? "text-gray-500" : "font-semibold text-gray-800"}>{nameOf(id)}</span>
+                <span className={cur === "REST" ? "text-fg-muted" : "font-semibold text-fg"}>{nameOf(id)}</span>
               </span>
               <Select
                 value={cur}
@@ -115,7 +115,7 @@ export function QuarterLineupCard({
             </div>
           );
         })}
-        {attendeeIds.length === 0 && <p className="px-1 py-2 text-sm text-gray-500">참여 인원이 없습니다.</p>}
+        {attendeeIds.length === 0 && <p className="px-1 py-2 text-sm text-fg-muted">참여 인원이 없습니다.</p>}
       </div>
     </Card>
   );

@@ -2,20 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ══════════════════════════════════════════════════════════
+   HARPER SEVEN 디자인 토큰 — RGB 트리플렛 (tailwind.config.ts 가 rgb(var()) 로 참조)
+   라이트: 로고의 검정 바탕/흰 마크를 뒤집은 밝은 UI, 브랜드 = 검정
+   다크:   로고 그대로 — 검정 바탕, 브랜드 = 흰색
+   ══════════════════════════════════════════════════════════ */
 :root {
   color-scheme: light;
+  --c-app: 245 246 250; /* #F5F6FA */
+  --c-surface: 255 255 255;
+  --c-surface-2: 244 245 248;
+  --c-surface-3: 233 235 240;
+  --c-line: 228 231 236; /* #E4E7EC */
+  --c-line-soft: 238 240 244;
+  --c-fg: 17 19 24; /* #111318 */
+  --c-fg-2: 63 68 81; /* #3F4451 */
+  --c-fg-muted: 107 114 128; /* #6B7280 */
+  --c-brand: 17 19 24; /* 검정 */
+  --c-brand-hover: 42 46 56;
+  --c-brand-fg: 255 255 255;
 
-  /* ── HAPER SEVEN 디자인 토큰 (tailwind.config.ts 의 brand/app/line/pitch 와 동일 값) ── */
-  --brand: #5b4cf0;
-  --brand-hover: #4c3ee5;
-  --app-bg: #f5f6fa;
-  --surface: #ffffff;
-  --border: #e4e7ec;
-  --text-primary: #101828;
-  --text-secondary: #667085;
+  /* 전술 보드 전용 (테마 무관) */
   --tactical-bg: #0b1117;
   --pitch-green: #17542e;
   --tactical-green: #20e878;
+}
+
+.dark {
+  color-scheme: dark;
+  --c-app: 11 13 18; /* #0B0D12 */
+  --c-surface: 21 24 31; /* #15181F */
+  --c-surface-2: 28 32 41;
+  --c-surface-3: 38 43 54;
+  --c-line: 42 47 58;
+  --c-line-soft: 34 39 50;
+  --c-fg: 245 246 250;
+  --c-fg-2: 201 205 214;
+  --c-fg-muted: 139 145 158;
+  --c-brand: 255 255 255; /* 흰색 */
+  --c-brand-hover: 229 231 235;
+  --c-brand-fg: 17 19 24;
 }
 
 html,
@@ -25,16 +51,15 @@ body {
 
 body {
   margin: 0;
-  color: var(--text-primary);
-  background-color: var(--app-bg);
+  color: rgb(var(--c-fg));
+  background-color: rgb(var(--c-app));
   font-family:
     -apple-system, BlinkMacSystemFont, "Pretendard Variable", "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* 한글 어절 중간 줄바꿈 방지 + 긴 토큰은 강제 개행 */
   word-break: keep-all;
   overflow-wrap: anywhere;
-  /* 데이터 도구: 숫자 폭 고정 */
   font-variant-numeric: tabular-nums;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
 button,
@@ -44,9 +69,9 @@ textarea {
   font: inherit;
 }
 
-/* 키보드 포커스 링 — 브라우저 기본 대신 브랜드색 2px (마우스 클릭 시엔 표시 안 함) */
+/* 키보드 포커스 링 — 브랜드색 2px (마우스 클릭 시엔 표시 안 함) */
 :focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid rgb(var(--c-brand));
   outline-offset: 2px;
 }
 
@@ -57,7 +82,7 @@ input[type="number"]::-webkit-inner-spin-button {
   margin: 0;
 }
 
-/* 감소 모션 설정 존중 — 전환/애니메이션 사실상 제거 */
+/* 감소 모션 설정 존중 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -70,10 +95,8 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* ══════════════════════════════════════════════════════════
-   포메이션(FC24 전술 화면) 전용 스타일
+   포메이션(전술 보드) 전용 — 테마와 무관하게 항상 다크
    ══════════════════════════════════════════════════════════ */
-
-/* 다크 셀렉트/인풋 */
 .fm-select,
 .fm-input {
   width: 100%;
@@ -82,7 +105,7 @@ input[type="number"]::-webkit-inner-spin-button {
   background-color: #1a202a;
   color: #e5e7eb;
   padding: 0.55rem 0.75rem;
-  font-size: 1rem; /* 모바일 입력 줌 방지 */
+  font-size: 1rem;
 }
 @media (min-width: 640px) {
   .fm-select,
@@ -95,12 +118,10 @@ input[type="number"]::-webkit-inner-spin-button {
   outline-color: var(--tactical-green);
 }
 
-/* 이미지 저장 중에는 편집용 UI 숨김 */
 [data-export] .export-hide {
   display: none !important;
 }
 
-/* 잔디: 다크 그린 + 아주 약한 가로 스트라이프 */
 .fm-pitch {
   background-image:
     repeating-linear-gradient(
@@ -113,7 +134,6 @@ input[type="number"]::-webkit-inner-spin-button {
     linear-gradient(180deg, #1b5e34 0%, #17542e 55%, #124023 100%);
 }
 
-/* 유니폼 (필드 플레이어: 다크 네이비) */
 .fm-jersey {
   position: relative;
   width: 74px;
@@ -125,22 +145,18 @@ input[type="number"]::-webkit-inner-spin-button {
   border: 1px solid rgba(255, 255, 255, 0.55);
   filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.5));
 }
-
 .fm-jersey::before {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 35%);
 }
-
-/* 골키퍼 유니폼 (노랑) */
 .fm-jersey-gk {
   background:
     linear-gradient(90deg, transparent 0 46%, rgba(0, 0, 0, 0.1) 47% 53%, transparent 54%),
     linear-gradient(180deg, #ffc928 0%, #dfa50f 60%, #a87a06 100%);
   border-color: rgba(0, 0, 0, 0.45);
 }
-
 @media (max-width: 640px) {
   .fm-jersey {
     width: 58px;

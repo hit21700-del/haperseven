@@ -4,14 +4,14 @@ import { TEAM_LABEL } from "@/types/member";
 
 type Tone = "green" | "red" | "yellow" | "gray" | "blue" | "purple";
 
-/* 12px 텍스트 기준 AA(4.5:1) 통과 쌍 — 상태(성공/위험/경고)에만 사용 */
+/* 12px 텍스트 기준 AA 통과 쌍 — 상태(성공/위험/경고)에만 사용. 다크에서는 반투명 배경 + 밝은 텍스트 */
 const TONE_CLASS: Record<Tone, string> = {
-  green: "bg-emerald-50 text-emerald-700",
-  red: "bg-red-50 text-red-700",
-  yellow: "bg-amber-50 text-amber-700",
-  gray: "bg-gray-100 text-gray-700",
-  blue: "bg-sky-50 text-sky-700",
-  purple: "bg-purple-50 text-purple-700",
+  green: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  red: "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300",
+  yellow: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  gray: "bg-surface-3 text-fg-2",
+  blue: "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
+  purple: "bg-purple-50 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
 };
 
 export function Badge({ children, tone = "gray" }: { children: React.ReactNode; tone?: Tone }) {
@@ -33,8 +33,8 @@ export function MemberTypeBadge({ type }: { type: MemberType }) {
   const inactive = type === "휴식" || type === "탈퇴";
   return (
     <span
-      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${
-        inactive ? "bg-gray-100 text-gray-500" : "bg-gray-100 text-gray-700"
+      className={`inline-block whitespace-nowrap rounded-full bg-surface-3 px-2 py-0.5 text-xs font-medium ${
+        inactive ? "text-fg-muted" : "text-fg-2"
       }`}
     >
       {type}
@@ -54,13 +54,13 @@ export function AttendanceBadge({ status }: { status: "ATTEND" | "ABSENT" | "LAT
   return <Badge tone={tone}>{label}</Badge>;
 }
 
-/** 자체전 팀 배지 (화이트=화이트 칩 / 블랙=다크 칩). 감독이면 ⭐ */
+/** 자체전 팀 배지 — 팀 색 자체가 의미라 테마와 무관하게 흰/검정 고정. 감독이면 ⭐ */
 export function TeamBadge({ team, coach }: { team?: TeamColor; coach?: boolean }) {
-  if (!team) return <span className="text-xs text-gray-500">-</span>;
+  if (!team) return <span className="text-xs text-fg-muted">-</span>;
   return (
     <span
       className={`inline-flex items-center gap-0.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${
-        team === "WHITE" ? "border border-gray-300 bg-white text-gray-800" : "bg-gray-900 text-white"
+        team === "WHITE" ? "border border-gray-300 bg-white text-gray-900" : "border border-white/20 bg-black text-white"
       }`}
     >
       {coach && (
@@ -73,10 +73,10 @@ export function TeamBadge({ team, coach }: { team?: TeamColor; coach?: boolean }
   );
 }
 
-/** 포지션 배지 — 라이트 화면에서는 중립색 + 굵은 텍스트로 구분 (색상 구분은 전술 보드에서만) */
+/** 포지션 배지 — 라이트 화면에서는 중립색 + 굵은 텍스트 (색상 구분은 전술 보드에서만) */
 export function PositionBadge({ position }: { position: string }) {
   return (
-    <span className="inline-block whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold tracking-wide text-gray-700">
+    <span className="inline-block whitespace-nowrap rounded-full bg-surface-3 px-2 py-0.5 text-xs font-bold tracking-wide text-fg-2">
       {position}
     </span>
   );

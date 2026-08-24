@@ -35,7 +35,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-sm text-gray-600">{message}</p>
+      <p className="text-sm text-fg-2">{message}</p>
     </Modal>
   );
 }

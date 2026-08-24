@@ -116,9 +116,9 @@ export function MembersPage() {
 
       {/* 지표 카드 + 검색/필터 */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatIconCard icon="👥" iconBg="bg-brand-50" iconColor="text-brand-600" label="전체 회원" value={`${members.length}명`} sub="팀의 모든 등록 회원" />
-        <StatIconCard icon="🛡" iconBg="bg-sky-50" iconColor="text-sky-600" label="정회원" value={`${jeongCount}명`} sub="월 회비 납부 회원" />
-        <StatIconCard icon="🧑" iconBg="bg-red-50" iconColor="text-red-600" label="스텝" value={`${stepCount}명`} sub="코칭 및 운영 스텝" />
+        <StatIconCard icon="👥" iconBg="bg-brand-50" iconColor="text-brand" label="전체 회원" value={`${members.length}명`} sub="팀의 모든 등록 회원" />
+        <StatIconCard icon="🛡" iconBg="bg-sky-50 dark:bg-sky-500/15" iconColor="text-sky-600 dark:text-sky-400" label="정회원" value={`${jeongCount}명`} sub="월 회비 납부 회원" />
+        <StatIconCard icon="🧑" iconBg="bg-red-50 dark:bg-red-500/15" iconColor="text-red-600 dark:text-red-400" label="스텝" value={`${stepCount}명`} sub="코칭 및 운영 스텝" />
         <Card className="!p-4">
           <TextInput
             placeholder="이름 검색"
@@ -150,7 +150,7 @@ export function MembersPage() {
 
       {/* 테이블 */}
       <Card>
-        <div className="mb-2 text-sm text-gray-500">총 회원 수 {filtered.length}명</div>
+        <div className="mb-2 text-sm text-fg-muted">총 회원 수 {filtered.length}명</div>
 
         {/* 데스크톱: 테이블 */}
         <div className="hidden md:block">
@@ -176,9 +176,9 @@ export function MembersPage() {
                 const attend = stat?.attendCount ?? 0;
                 const goals = stat?.goals ?? 0;
                 return (
-                  <TR key={m.id} className={!m.isActive ? "text-gray-500" : ""}>
-                    <TD className="text-gray-500">{m.no ?? "-"}</TD>
-                    <TD className="font-semibold text-gray-700">{m.name}</TD>
+                  <TR key={m.id} className={!m.isActive ? "text-fg-muted" : ""}>
+                    <TD className="text-fg-muted">{m.no ?? "-"}</TD>
+                    <TD className="font-semibold text-fg-2">{m.name}</TD>
                     <TD>
                       <MemberTypeBadge type={m.memberType} />
                     </TD>
@@ -196,15 +196,15 @@ export function MembersPage() {
                     <TD>
                       {m.fixedGK ? <Badge tone="purple">고정GK</Badge> : m.canPlayGK ? <Badge tone="blue">가능</Badge> : "-"}
                     </TD>
-                    <TD>{attend > 0 ? `${attend}회` : <span className="text-gray-500">-</span>}</TD>
-                    <TD>{goals > 0 ? `${goals}골` : <span className="text-gray-500">-</span>}</TD>
+                    <TD>{attend > 0 ? `${attend}회` : <span className="text-fg-muted">-</span>}</TD>
+                    <TD>{goals > 0 ? `${goals}골` : <span className="text-fg-muted">-</span>}</TD>
                     <TD className="font-medium">{formatWon(m.feeAmount)}</TD>
                     <TD>
                       <div className="flex gap-1">
                         <button
                           type="button"
                           onClick={() => openEdit(m)}
-                          className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                          className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-line bg-surface px-2.5 py-1 text-xs text-fg-2 hover:bg-surface-2"
                         >
                           <Pencil size={13} aria-hidden="true" />
                           수정
@@ -212,7 +212,7 @@ export function MembersPage() {
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(m)}
-                          className="inline-flex min-h-8 items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs text-red-600 hover:bg-red-100"
+                          className="inline-flex min-h-8 items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs text-red-600 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
                         >
                           <Trash2 size={13} aria-hidden="true" />
                           삭제
@@ -246,7 +246,7 @@ export function MembersPage() {
               >
                 <div className="min-w-0 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-bold text-gray-800">{m.name}</span>
+                    <span className="font-bold text-fg">{m.name}</span>
                     <MemberTypeBadge type={m.memberType} />
                     <TeamBadge team={m.team} coach={m.isCoach} />
                   </div>
@@ -257,19 +257,19 @@ export function MembersPage() {
                       ))}
                     </div>
                   )}
-                  <div className="flex gap-3 text-xs text-gray-500">
+                  <div className="flex gap-3 text-xs text-fg-muted">
                     <span>
-                      출석 {attend > 0 ? <span className="font-semibold text-gray-700">{attend}회</span> : <span className="text-gray-500">-</span>}
+                      출석 {attend > 0 ? <span className="font-semibold text-fg-2">{attend}회</span> : <span className="text-fg-muted">-</span>}
                     </span>
                     <span>
-                      득점 {goals > 0 ? <span className="font-semibold text-gray-700">{goals}골</span> : <span className="text-gray-500">-</span>}
+                      득점 {goals > 0 ? <span className="font-semibold text-fg-2">{goals}골</span> : <span className="text-fg-muted">-</span>}
                     </span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => openEdit(m)}
-                  className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border border-line bg-white px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                  className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg border border-line bg-surface px-2.5 py-1 text-xs text-fg-2 hover:bg-surface-2"
                   aria-label={`${m.name} 수정`}
                 >
                   <Pencil size={13} aria-hidden="true" />
@@ -283,14 +283,14 @@ export function MembersPage() {
 
         {/* 페이지네이션 */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-sm text-gray-500">전체 {filtered.length}명</span>
+          <span className="text-sm text-fg-muted">전체 {filtered.length}명</span>
           <nav className="flex items-center gap-1" aria-label="페이지 이동">
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={curPage <= 1}
               aria-label="이전 페이지"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface text-fg-2 hover:bg-surface-2 disabled:opacity-40"
             >
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
@@ -298,7 +298,7 @@ export function MembersPage() {
               .filter((p) => Math.abs(p - curPage) <= 2 || p === 1 || p === totalPages)
               .map((p, idx, arr) => (
                 <React.Fragment key={p}>
-                  {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-gray-500">…</span>}
+                  {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-1 text-fg-muted">…</span>}
                   <button
                     type="button"
                     onClick={() => setPage(p)}
@@ -306,8 +306,8 @@ export function MembersPage() {
                     aria-current={p === curPage ? "page" : undefined}
                     className={`flex h-8 min-w-8 items-center justify-center px-2 text-sm ${
                       p === curPage
-                        ? "rounded-lg bg-brand-600 font-semibold text-white"
-                        : "rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50"
+                        ? "rounded-lg bg-brand font-semibold text-brand-fg"
+                        : "rounded-lg border border-line bg-surface text-fg-2 hover:bg-surface-2"
                     }`}
                   >
                     {p}
@@ -319,7 +319,7 @@ export function MembersPage() {
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={curPage >= totalPages}
               aria-label="다음 페이지"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-line bg-surface text-fg-2 hover:bg-surface-2 disabled:opacity-40"
             >
               <ChevronRight size={16} aria-hidden="true" />
             </button>

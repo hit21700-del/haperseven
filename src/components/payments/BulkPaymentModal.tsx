@@ -11,10 +11,10 @@ import { formatWon } from "@/lib/utils/format";
 type Half = 1 | 2; // 1=상반기(1~6월), 2=하반기(7~12월)
 
 const STATUS_OPTIONS: { value: PaymentStatus; label: string; cls: string }[] = [
-  { value: "PAID", label: "납부", cls: "bg-emerald-50 text-emerald-700 ring-emerald-300" },
-  { value: "UNPAID", label: "미납", cls: "bg-red-50 text-red-700 ring-red-300" },
-  { value: "EXEMPT", label: "면제", cls: "bg-gray-100 text-gray-700 ring-gray-300" },
-  { value: "UNKNOWN", label: "지우기", cls: "bg-white text-gray-700 ring-gray-300" },
+  { value: "PAID", label: "납부", cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 ring-emerald-300 dark:ring-emerald-500/30" },
+  { value: "UNPAID", label: "미납", cls: "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300 ring-red-300 dark:ring-red-500/30" },
+  { value: "EXEMPT", label: "면제", cls: "bg-surface-3 text-fg-2 ring-line" },
+  { value: "UNKNOWN", label: "지우기", cls: "bg-surface text-fg-2 ring-line" },
 ];
 
 /** 반기의 현재 상태 요약(점 표시용) */
@@ -29,10 +29,10 @@ function halfStatus(m: Member, half: Half): PaymentStatus {
 
 // 현재 상태 점 + 텍스트 라벨 — 색만으로 전달하지 않도록 라벨을 항상 함께 표시
 const DOT: Record<PaymentStatus, { dot: string; label: string; text: string }> = {
-  PAID: { dot: "bg-emerald-500", label: "납부", text: "text-emerald-700" },
-  UNPAID: { dot: "bg-red-500", label: "미납", text: "text-red-700" },
-  EXEMPT: { dot: "bg-gray-400", label: "면제", text: "text-gray-700" },
-  UNKNOWN: { dot: "bg-gray-300", label: "미정", text: "text-gray-500" },
+  PAID: { dot: "bg-emerald-500", label: "납부", text: "text-emerald-700 dark:text-emerald-400" },
+  UNPAID: { dot: "bg-red-500", label: "미납", text: "text-red-700 dark:text-red-400" },
+  EXEMPT: { dot: "bg-fg-muted", label: "면제", text: "text-fg-2" },
+  UNKNOWN: { dot: "bg-line", label: "미정", text: "text-fg-muted" },
 };
 
 /**
@@ -118,7 +118,7 @@ export function BulkPaymentModal({
       {/* 반기 + 상태 선택 */}
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <fieldset>
-          <legend className="mb-1 text-xs font-semibold text-gray-600">기간 (반기)</legend>
+          <legend className="mb-1 text-xs font-semibold text-fg-2">기간 (반기)</legend>
           <div className="flex gap-2">
             {(
               [
@@ -133,8 +133,8 @@ export function BulkPaymentModal({
                 onClick={() => setHalf(h)}
                 className={`min-h-10 flex-1 rounded-lg border px-3 py-2 text-sm transition-colors ${
                   half === h
-                    ? "border-brand-500 bg-brand-50 font-semibold text-brand-700"
-                    : "border-line text-gray-600 hover:bg-gray-50"
+                    ? "border-brand bg-brand-50 font-semibold text-brand"
+                    : "border-line text-fg-2 hover:bg-surface-2"
                 }`}
               >
                 {label}
@@ -143,7 +143,7 @@ export function BulkPaymentModal({
           </div>
         </fieldset>
         <fieldset>
-          <legend className="mb-1 text-xs font-semibold text-gray-600">등록할 상태</legend>
+          <legend className="mb-1 text-xs font-semibold text-fg-2">등록할 상태</legend>
           <div className="flex gap-1.5">
             {STATUS_OPTIONS.map((o) => (
               <button
@@ -152,7 +152,7 @@ export function BulkPaymentModal({
                 aria-pressed={status === o.value}
                 onClick={() => setStatus(o.value)}
                 className={`min-h-10 flex-1 rounded-lg px-2 py-2 text-xs font-semibold ring-1 transition-colors ${
-                  status === o.value ? o.cls + " ring-2" : "bg-white text-gray-600 ring-line hover:bg-gray-50"
+                  status === o.value ? o.cls + " ring-2" : "bg-surface text-fg-2 ring-line hover:bg-surface-2"
                 }`}
               >
                 {o.label}
@@ -174,14 +174,14 @@ export function BulkPaymentModal({
         <button
           type="button"
           onClick={toggleAll}
-          className="min-h-8 whitespace-nowrap text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+          className="min-h-8 whitespace-nowrap text-xs font-medium text-brand hover:text-brand-hover hover:underline"
         >
           {allChecked ? "전체 해제" : "전체 선택"}
         </button>
         <button
           type="button"
           onClick={pickFeeOnly}
-          className="min-h-8 whitespace-nowrap text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+          className="min-h-8 whitespace-nowrap text-xs font-medium text-brand hover:text-brand-hover hover:underline"
         >
           회비 대상만
         </button>
@@ -193,12 +193,12 @@ export function BulkPaymentModal({
           return (
             <label
               key={m.id}
-              className="flex cursor-pointer items-center gap-2 border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 hover:bg-gray-50"
+              className="flex cursor-pointer items-center gap-2 border-b border-line-soft px-3 py-2 text-sm last:border-b-0 hover:bg-surface-2"
             >
               <input type="checkbox" checked={picked.has(m.id)} onChange={() => toggle(m.id)} />
-              <span className="w-16 font-semibold text-gray-700">{m.name}</span>
+              <span className="w-16 font-semibold text-fg-2">{m.name}</span>
               <MemberTypeBadge type={m.memberType} />
-              <span className="ml-auto flex items-center gap-2 text-xs text-gray-500">
+              <span className="ml-auto flex items-center gap-2 text-xs text-fg-muted">
                 <span className="tabular-nums">{m.feeAmount > 0 ? formatWon(m.feeAmount) : "회비 없음"}</span>
                 <span className={`inline-flex items-center gap-1 text-xs font-medium ${cur.text}`} title="현재 상태">
                   <span className={`h-2.5 w-2.5 rounded-full ${cur.dot}`} aria-hidden="true" />
@@ -211,11 +211,11 @@ export function BulkPaymentModal({
         {list.length === 0 && <EmptyState compact title="검색 결과가 없습니다." description="다른 이름으로 검색해 보세요." />}
       </div>
       {error && (
-        <p role="alert" className="mt-1 text-xs text-red-600">
+        <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
           {error}
         </p>
       )}
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-fg-muted">
         ※ 선택한 회원의 {half === 1 ? "1~6월" : "7~12월"} 전체가 한 번에 변경됩니다. 오른쪽 점과 라벨은 현재 상태입니다.
       </p>
     </Modal>

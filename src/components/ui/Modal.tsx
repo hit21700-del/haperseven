@@ -74,27 +74,27 @@ export function Modal({
       aria-modal="true"
       aria-labelledby={titleId}
     >
-      <div className="absolute inset-0 animate-fade-in bg-gray-900/40" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 animate-fade-in bg-black/40 dark:bg-black/65" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative z-10 flex max-h-[90vh] w-full max-w-2xl animate-modal-in flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-xl outline-none overscroll-contain"
+        className="relative z-10 flex max-h-[90vh] w-full max-w-2xl animate-modal-in flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-xl outline-none overscroll-contain"
       >
-        <div className="flex items-center justify-between gap-3 border-b border-gray-100 py-2 pl-5 pr-2">
-          <h3 id={titleId} className="min-w-0 text-base font-bold text-gray-900">
+        <div className="flex items-center justify-between gap-3 border-b border-line-soft py-2 pl-5 pr-2">
+          <h3 id={titleId} className="min-w-0 text-base font-bold text-fg">
             {title}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="inline-grid h-10 w-10 shrink-0 place-items-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            className="inline-grid h-10 w-10 shrink-0 place-items-center rounded-lg text-fg-muted hover:bg-surface-3 hover:text-fg"
             aria-label="닫기"
           >
             <X size={18} aria-hidden="true" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-gray-100 px-5 py-3">{footer}</div>}
+        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-line-soft px-5 py-3">{footer}</div>}
       </div>
     </div>,
     document.body,

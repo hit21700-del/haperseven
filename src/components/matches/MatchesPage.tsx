@@ -19,9 +19,9 @@ import { todayISO } from "@/lib/utils/format";
 const EMPTY_DRAFT = { date: todayISO(), title: "", opponent: "", time: "", location: "", kind: "MATCH" as MatchType };
 
 const RESULT_BADGE: Record<"W" | "D" | "L", { label: string; cls: string }> = {
-  W: { label: "승", cls: "bg-emerald-50 text-emerald-700" },
-  D: { label: "무", cls: "bg-gray-100 text-gray-700" },
-  L: { label: "패", cls: "bg-red-50 text-red-700" },
+  W: { label: "승", cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
+  D: { label: "무", cls: "bg-surface-3 text-fg-2" },
+  L: { label: "패", cls: "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300" },
 };
 
 const KIND_OPTIONS: { value: MatchType; label: string; icon: React.ReactNode }[] = [
@@ -126,12 +126,12 @@ export function MatchesPage() {
                       onClick={() => setSelectedId(m.id)}
                       aria-current={active ? "true" : undefined}
                       className={`w-full rounded-xl border px-3.5 py-3 pr-14 text-left transition ${
-                        active ? "border-brand-500 bg-brand-50" : "border-line hover:bg-gray-50"
+                        active ? "border-brand bg-brand-50" : "border-line hover:bg-surface-2"
                       }`}
                     >
                       <span className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-gray-900">{m.date.slice(5).replace("-", ".")}</span>
-                        {m.time && <span className="text-xs text-gray-500">{m.time}</span>}
+                        <span className="text-sm font-bold text-fg">{m.date.slice(5).replace("-", ".")}</span>
+                        {m.time && <span className="text-xs text-fg-muted">{m.time}</span>}
                         {scrim && <Badge tone="purple">자체전</Badge>}
                         {m.status === "CANCELED" ? (
                           <Badge tone="gray">취소</Badge>
@@ -140,10 +140,10 @@ export function MatchesPage() {
                         ) : null}
                       </span>
                       <span className="mt-1 flex items-center gap-2">
-                        <span className="min-w-0 flex-1 truncate font-semibold text-gray-800">{name}</span>
+                        <span className="min-w-0 flex-1 truncate font-semibold text-fg">{name}</span>
                         {m.score && (
                           <span className="flex shrink-0 items-center gap-1.5">
-                            <span className="text-base font-bold tabular-nums text-gray-900">
+                            <span className="text-base font-bold tabular-nums text-fg">
                               {m.score.us} : {m.score.them}
                             </span>
                             {result && (
@@ -154,7 +154,7 @@ export function MatchesPage() {
                           </span>
                         )}
                       </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-gray-500">
+                      <span className="mt-1 flex flex-wrap items-center gap-x-1 text-xs text-fg-muted">
                         {m.location && (
                           <>
                             <MapPin size={12} aria-hidden="true" />
@@ -170,7 +170,7 @@ export function MatchesPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(m)}
-                      className="absolute right-2 top-2 inline-flex min-h-8 items-center rounded px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+                      className="absolute right-2 top-2 inline-flex min-h-8 items-center rounded px-2 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-500/15 dark:hover:text-red-300"
                       aria-label={`${name} 삭제`}
                     >
                       삭제
@@ -184,7 +184,7 @@ export function MatchesPage() {
             <button
               type="button"
               onClick={() => setCreateOpen(true)}
-              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 py-2.5 text-sm font-medium text-gray-500 hover:border-brand-400 hover:text-brand-600"
+              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-line py-2.5 text-sm font-medium text-fg-muted hover:border-brand hover:text-brand"
             >
               <Plus size={16} aria-hidden="true" />
               경기 등록
@@ -198,7 +198,7 @@ export function MatchesPage() {
             <MatchEditor match={selected} members={members} onChange={upsertMatch} />
           ) : (
             <Card>
-              <p className="text-sm text-gray-500">경기를 선택하거나 등록하세요.</p>
+              <p className="text-sm text-fg-muted">경기를 선택하거나 등록하세요.</p>
             </Card>
           )}
         </div>
@@ -231,8 +231,8 @@ export function MatchesPage() {
                       aria-pressed={selectedKind}
                       className={`inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${
                         selectedKind
-                          ? "border-brand-500 bg-brand-50 font-semibold text-brand-600"
-                          : "border-line text-gray-500 hover:bg-gray-50"
+                          ? "border-brand bg-brand-50 font-semibold text-brand"
+                          : "border-line text-fg-muted hover:bg-surface-2"
                       }`}
                     >
                       {opt.icon}
@@ -244,7 +244,7 @@ export function MatchesPage() {
             </FormRow>
           </div>
           {draft.kind === "SCRIMMAGE" && (
-            <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand-600 sm:col-span-2">
+            <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs text-brand sm:col-span-2">
               화이트/블랙 팀에 배정된 활동 회원 전원이 <b>참석</b>으로 자동 추가됩니다. 포메이션 화면에서 팀별로 편성하세요.
             </div>
           )}

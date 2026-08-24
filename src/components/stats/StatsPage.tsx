@@ -16,7 +16,7 @@ type SortKey = "attendCount" | "goals" | "assists" | "momCount";
 
 const RESULT_CHIP: Record<"W" | "D" | "L", { label: string; cls: string }> = {
   W: { label: "승", cls: "bg-emerald-700 text-white" },
-  D: { label: "무", cls: "bg-gray-200 text-gray-700" },
+  D: { label: "무", cls: "bg-surface-3 text-fg-2" },
   L: { label: "패", cls: "bg-red-600 text-white" },
 };
 
@@ -37,8 +37,8 @@ function RankingCard({
   const [first, ...rest] = entries;
   return (
     <Card>
-      <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500">
-        <span className="flex shrink-0 items-center text-brand-600" aria-hidden="true">
+      <div className="flex items-center gap-1.5 text-[13px] font-medium text-fg-muted">
+        <span className="flex shrink-0 items-center text-brand" aria-hidden="true">
           {icon}
         </span>
         {title}
@@ -46,21 +46,21 @@ function RankingCard({
       {first ? (
         <>
           <div className="mt-2 flex items-baseline justify-between gap-2">
-            <div className="min-w-0 truncate text-lg font-bold text-gray-900">{first.name}</div>
-            <div className="shrink-0 whitespace-nowrap text-lg font-bold text-brand-600">
+            <div className="min-w-0 truncate text-lg font-bold text-fg">{first.name}</div>
+            <div className="shrink-0 whitespace-nowrap text-lg font-bold text-brand">
               {first[valueKey]}
-              <span className="ml-0.5 text-xs font-medium text-gray-500">{unit}</span>
+              <span className="ml-0.5 text-xs font-medium text-fg-muted">{unit}</span>
             </div>
           </div>
           {rest.length > 0 && (
-            <div className="mt-2 space-y-1 border-t border-gray-100 pt-2">
+            <div className="mt-2 space-y-1 border-t border-line-soft pt-2">
               {rest.map((a, i) => (
                 <div key={a.memberId} className="flex items-center justify-between gap-2 text-xs">
-                  <div className="min-w-0 truncate text-gray-500">
-                    <span className="mr-1 font-semibold text-gray-500">{i + 2}</span>
+                  <div className="min-w-0 truncate text-fg-muted">
+                    <span className="mr-1 font-semibold text-fg-muted">{i + 2}</span>
                     {a.name}
                   </div>
-                  <div className="shrink-0 whitespace-nowrap font-semibold text-gray-700">
+                  <div className="shrink-0 whitespace-nowrap font-semibold text-fg-2">
                     {a[valueKey]}
                     {unit}
                   </div>
@@ -76,10 +76,10 @@ function RankingCard({
   );
 }
 
-function RecordStat({ label, value, cls = "text-gray-900" }: { label: string; value: React.ReactNode; cls?: string }) {
+function RecordStat({ label, value, cls = "text-fg" }: { label: string; value: React.ReactNode; cls?: string }) {
   return (
-    <div className="rounded-lg bg-gray-50 px-3 py-2 text-center">
-      <div className="text-[11px] font-medium text-gray-500">{label}</div>
+    <div className="rounded-lg bg-surface-2 px-3 py-2 text-center">
+      <div className="text-[11px] font-medium text-fg-muted">{label}</div>
       <div className={`mt-0.5 whitespace-nowrap text-base font-bold ${cls}`}>{value}</div>
     </div>
   );
@@ -129,18 +129,18 @@ export function StatsPage() {
                 label="승-무-패"
                 value={
                   <>
-                    <span className="text-emerald-700">{record.win}</span>
-                    <span className="text-gray-500"> - {record.draw} - </span>
-                    <span className="text-red-600">{record.loss}</span>
+                    <span className="text-emerald-700 dark:text-emerald-400">{record.win}</span>
+                    <span className="text-fg-muted"> - {record.draw} - </span>
+                    <span className="text-red-600 dark:text-red-400">{record.loss}</span>
                   </>
                 }
               />
-              <RecordStat label="득점" value={record.goalsFor} cls="text-emerald-700" />
-              <RecordStat label="실점" value={record.goalsAgainst} cls="text-red-600" />
-              <RecordStat label="경기당 득점" value={(record.goalsFor / record.games).toFixed(1)} cls="text-brand-600" />
+              <RecordStat label="득점" value={record.goalsFor} cls="text-emerald-700 dark:text-emerald-400" />
+              <RecordStat label="실점" value={record.goalsAgainst} cls="text-red-600 dark:text-red-400" />
+              <RecordStat label="경기당 득점" value={(record.goalsFor / record.games).toFixed(1)} cls="text-brand" />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500">최근 5경기</span>
+              <span className="text-xs font-medium text-fg-muted">최근 5경기</span>
               <div className="flex gap-1">
                 {record.recent.map((r, i) => (
                   <span
@@ -179,7 +179,7 @@ export function StatsPage() {
                   type="button"
                   onClick={() => setSortKey(k)}
                   aria-pressed={sortKey === k}
-                  className={`px-3 py-1 font-semibold ${sortKey === k ? "rounded-lg bg-brand-600 text-white hover:bg-brand-700" : "rounded-lg border border-line bg-white text-gray-700 hover:bg-gray-50"}`}
+                  className={`px-3 py-1 font-semibold ${sortKey === k ? "rounded-lg bg-brand text-brand-fg hover:bg-brand-hover" : "rounded-lg border border-line bg-surface text-fg-2 hover:bg-surface-2"}`}
                 >
                   {label}
                 </button>
@@ -204,7 +204,7 @@ export function StatsPage() {
           <tbody>
             {sorted.map((a, i) => (
               <TR key={a.memberId}>
-                <TD className="font-bold text-brand-600">{i + 1}</TD>
+                <TD className="font-bold text-brand">{i + 1}</TD>
                 <TD className="font-medium">{a.name}</TD>
                 <TD>{a.attendCount}</TD>
                 <TD>{a.goals}</TD>
@@ -216,7 +216,7 @@ export function StatsPage() {
             {sorted.length === 0 && (
               <TR>
                 {/* ui/Table 의 TD 는 colSpan 을 받지 않으므로 빈 행만 raw td 사용 */}
-                <td colSpan={7} className="px-4 py-3 text-gray-700">
+                <td colSpan={7} className="px-4 py-3 text-fg-2">
                   <EmptyState
                     compact
                     title="해당 기간 기록이 없습니다"

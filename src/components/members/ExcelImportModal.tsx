@@ -73,7 +73,7 @@ export function ExcelImportModal({
     >
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-sm text-gray-600">
+          <p className="mb-2 text-sm text-fg-2">
             회원 명단 엑셀 파일(.xlsx)을 선택하세요. <code>2023년 명단</code> / <code>2024년 명단</code> /{" "}
             <code>2025</code> 처럼 연도별 시트를 인식하며, 기본으로 <b>최신 연도 시트</b>를 선택합니다.
           </p>
@@ -83,10 +83,10 @@ export function ExcelImportModal({
             aria-label="엑셀 파일 선택"
             aria-invalid={fileError ? true : undefined}
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:font-semibold file:text-white"
+            className="block w-full text-sm text-fg-2 file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:font-semibold file:text-brand-fg"
           />
           {fileError && (
-            <p role="alert" className="mt-2 text-sm text-red-600">
+            <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
               {fileError}
             </p>
           )}
@@ -113,7 +113,7 @@ export function ExcelImportModal({
             </div>
 
             {parsed.errors.length > 0 && (
-              <div role="alert" className="space-y-0.5 rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
+              <div role="alert" className="space-y-0.5 rounded-lg bg-amber-50 p-2 text-xs text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                 {parsed.errors.map((e, i) => (
                   <div key={i} className="flex items-start gap-1">
                     <TriangleAlert size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -125,7 +125,7 @@ export function ExcelImportModal({
 
             <div className="max-h-48 overflow-y-auto rounded-lg border border-line text-sm">
               <table className="w-full">
-                <thead className="sticky top-0 bg-gray-50 text-xs text-gray-600">
+                <thead className="sticky top-0 bg-surface-2 text-xs text-fg-2">
                   <tr>
                     <th className="px-2 py-1 text-left">이름</th>
                     <th className="px-2 py-1 text-left">구분</th>
@@ -134,7 +134,7 @@ export function ExcelImportModal({
                 </thead>
                 <tbody>
                   {members.slice(0, 50).map((m) => (
-                    <tr key={m.id} className="border-t border-gray-100">
+                    <tr key={m.id} className="border-t border-line-soft">
                       <td className="px-2 py-1">{m.name}</td>
                       <td className="px-2 py-1">{m.memberType}</td>
                       <td className="px-2 py-1 text-right tabular-nums">{m.feeAmount.toLocaleString()}</td>
@@ -143,7 +143,7 @@ export function ExcelImportModal({
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-fg-muted">
               나이/포지션/GK 가능 여부는 엑셀에 없으므로 가져온 뒤 회원 수정에서 입력하세요.
             </p>
           </>

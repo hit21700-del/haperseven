@@ -25,10 +25,10 @@ const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
 
 // 반기(6개월) 상태 표시 배지 스타일/라벨 — 12px 텍스트 AA 대비(-700) + 클릭 어포던스용 ring/hover
 const HALF_BADGE: Record<PaymentStatus, { label: string; cls: string }> = {
-  PAID: { label: "납부", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100" },
-  UNPAID: { label: "미납", cls: "bg-red-50 text-red-700 ring-red-200 hover:bg-red-100" },
-  EXEMPT: { label: "면제", cls: "bg-gray-100 text-gray-700 ring-gray-300 hover:bg-gray-200" },
-  UNKNOWN: { label: "－", cls: "bg-gray-50 text-gray-500 ring-gray-200 hover:bg-gray-100" },
+  PAID: { label: "납부", cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/25" },
+  UNPAID: { label: "미납", cls: "bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300 ring-red-200 dark:ring-red-500/30 hover:bg-red-100 dark:hover:bg-red-500/25" },
+  EXEMPT: { label: "면제", cls: "bg-surface-3 text-fg-2 ring-line hover:bg-surface-3" },
+  UNKNOWN: { label: "－", cls: "bg-surface-2 text-fg-muted ring-line hover:bg-surface-3" },
 };
 
 const HALF_LABEL: Record<1 | 2, string> = { 1: "상반기", 2: "하반기" };
@@ -196,23 +196,23 @@ export function PaymentsPage() {
               <Landmark size={20} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-medium text-gray-500">입금 계좌</div>
-              <div className="text-sm font-bold text-gray-900">{ACCOUNT_INFO.bank}</div>
+              <div className="text-xs font-medium text-fg-muted">입금 계좌</div>
+              <div className="text-sm font-bold text-fg">{ACCOUNT_INFO.bank}</div>
               <div className="mt-1 flex items-center gap-1">
-                <div className="break-all text-2xl font-bold leading-none tabular-nums text-brand-600">
+                <div className="whitespace-nowrap text-lg font-bold leading-none tracking-tight tabular-nums text-brand sm:text-xl">
                   {ACCOUNT_INFO.number}
                 </div>
                 <IconButton aria-label="계좌번호 복사" title="계좌번호 복사" onClick={copyAccount} className="shrink-0">
                   <Copy size={16} aria-hidden="true" />
                 </IconButton>
               </div>
-              <div className="text-xs text-gray-500">예금주: {ACCOUNT_INFO.holder}</div>
+              <div className="text-xs text-fg-muted">예금주: {ACCOUNT_INFO.holder}</div>
             </div>
           </div>
         </Card>
         <Card>
           <label className="block">
-            <span className="block text-xs font-medium text-gray-500">현재 총 회비 (잔고)</span>
+            <span className="block text-xs font-medium text-fg-muted">현재 총 회비 (잔고)</span>
             <input
               type="text"
               inputMode="numeric"
@@ -223,10 +223,10 @@ export function PaymentsPage() {
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
               }}
               title="현재 팀 잔고 직접 입력 (엔터로 저장)"
-              className="mt-2 w-full whitespace-nowrap rounded-sm border border-transparent bg-transparent text-2xl font-bold leading-none tabular-nums text-brand-600 hover:border-line focus:border-brand-400 focus:outline-none"
+              className="mt-2 w-full whitespace-nowrap rounded-sm border border-transparent bg-transparent text-2xl font-bold leading-none tabular-nums text-brand hover:border-line focus:border-brand focus:outline-none"
             />
           </label>
-          <div className="mt-2 text-xs text-gray-500">클릭해서 수정 가능</div>
+          <div className="mt-2 text-xs text-fg-muted">클릭해서 수정 가능</div>
         </Card>
         <StatCard label="회비 합계 (청구 기준)" value={formatWon(t.totalExpected)} />
         <StatCard label="총 납부" value={formatWon(t.totalPaid)} tone="green" sub={`납부율 ${t.paymentRate}%`} />
@@ -238,7 +238,7 @@ export function PaymentsPage() {
           icon={<Receipt size={16} />}
           action={
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
+              <label className="flex items-center gap-2 text-sm text-fg-2">
                 <input type="checkbox" checked={onlyUnpaid} onChange={(e) => setOnlyUnpaid(e.target.checked)} />
                 미납자만 보기
               </label>
@@ -287,7 +287,7 @@ export function PaymentsPage() {
                       <TD>
                         <EditablePaid value={s.paid} onCommit={(v) => setPaidAmount(s.member.id, v)} />
                       </TD>
-                      <TD className={`tabular-nums ${s.unpaid > 0 ? "font-semibold text-red-600" : ""}`}>
+                      <TD className={`tabular-nums ${s.unpaid > 0 ? "font-semibold text-red-600 dark:text-red-400" : ""}`}>
                         {formatWon(s.unpaid)}
                       </TD>
                       <TD>
@@ -307,9 +307,9 @@ export function PaymentsPage() {
             {/* 모바일: 카드 리스트 */}
             <div className="space-y-2 md:hidden">
               {visible.map((s) => (
-                <div key={s.member.id} className="rounded-xl border border-line bg-white p-3 shadow-sm">
+                <div key={s.member.id} className="rounded-xl border border-line bg-surface p-3 shadow-sm dark:shadow-none">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-bold text-gray-800">{s.member.name}</span>
+                    <span className="font-bold text-fg">{s.member.name}</span>
                     <MemberTypeBadge type={s.member.memberType} />
                     <span className="ml-auto">
                       <PaymentStatusBadge status={s.status} />
@@ -317,16 +317,16 @@ export function PaymentsPage() {
                   </div>
                   <dl className="mt-2 grid grid-cols-3 gap-2 text-xs">
                     <div>
-                      <dt className="text-gray-500">회비</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-gray-700">{formatWon(s.expected)}</dd>
+                      <dt className="text-fg-muted">회비</dt>
+                      <dd className="mt-0.5 font-semibold tabular-nums text-fg-2">{formatWon(s.expected)}</dd>
                     </div>
                     <div>
-                      <dt className="text-gray-500">납부</dt>
-                      <dd className="mt-0.5 font-semibold tabular-nums text-emerald-700">{formatWon(s.paid)}</dd>
+                      <dt className="text-fg-muted">납부</dt>
+                      <dd className="mt-0.5 font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{formatWon(s.paid)}</dd>
                     </div>
                     <div>
-                      <dt className="text-gray-500">미납</dt>
-                      <dd className={`mt-0.5 font-semibold tabular-nums ${s.unpaid > 0 ? "text-red-600" : "text-gray-700"}`}>
+                      <dt className="text-fg-muted">미납</dt>
+                      <dd className={`mt-0.5 font-semibold tabular-nums ${s.unpaid > 0 ? "text-red-600 dark:text-red-400" : "text-fg-2"}`}>
                         {formatWon(s.unpaid)}
                       </dd>
                     </div>
@@ -334,11 +334,11 @@ export function PaymentsPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
                     {([1, 2] as const).map((half) => (
                       <div key={half} className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">{HALF_LABEL[half]}</span>
+                        <span className="text-xs text-fg-muted">{HALF_LABEL[half]}</span>
                         {renderHalfButton(s.member.id, s.member.monthlyPaymentStatus, half)}
                       </div>
                     ))}
-                    <label className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
+                    <label className="ml-auto flex items-center gap-1.5 text-xs text-fg-muted">
                       납부액
                       <EditablePaid value={s.paid} onCommit={(v) => setPaidAmount(s.member.id, v)} />
                     </label>
@@ -349,10 +349,10 @@ export function PaymentsPage() {
           </>
         )}
 
-        <p className="mt-2 text-xs text-gray-500">
-          ※ 회비는 <b className="text-gray-700">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
-          <b className="text-emerald-700">납부</b> → <b className="text-red-600">미납</b> →{" "}
-          <b className="text-gray-700">면제</b> → 해제 순으로 바뀌고, <b className="text-gray-700">납부 금액</b> 칸은 직접
+        <p className="mt-2 text-xs text-fg-muted">
+          ※ 회비는 <b className="text-fg-2">6개월(반기) 단위</b>입니다. 상반기/하반기 배지를 클릭하면{" "}
+          <b className="text-emerald-700 dark:text-emerald-400">납부</b> → <b className="text-red-600 dark:text-red-400">미납</b> →{" "}
+          <b className="text-fg-2">면제</b> → 해제 순으로 바뀌고, <b className="text-fg-2">납부 금액</b> 칸은 직접
           입력(엔터로 저장)도 가능합니다.
         </p>
       </Card>
@@ -370,7 +370,7 @@ export function PaymentsPage() {
         >
           환불 관리
         </SectionTitle>
-        <p className="mb-2 text-xs text-gray-500">{REFUND_POLICY.description}</p>
+        <p className="mb-2 text-xs text-fg-muted">{REFUND_POLICY.description}</p>
         {refunds.length === 0 ? (
           <EmptyState
             compact
@@ -401,7 +401,7 @@ export function PaymentsPage() {
                   <TD>{r.date}</TD>
                   <TD>{r.approved ? <Badge tone="green">승인</Badge> : <Badge tone="yellow">대기</Badge>}</TD>
                   <TD>
-                    <Button variant="ghost" className="min-h-8 px-2 py-1 text-red-600" onClick={() => removeRefund(r.id)}>
+                    <Button variant="ghost" className="min-h-8 px-2 py-1 text-red-600 dark:text-red-400" onClick={() => removeRefund(r.id)}>
                       삭제
                     </Button>
                   </TD>
@@ -443,7 +443,7 @@ function EditablePaid({ value, onCommit }: { value: number; onCommit: (v: number
       }}
       title="실제 납부 금액 입력 (엔터로 저장)"
       aria-label="실제 납부 금액"
-      className="w-24 rounded-lg border border-line bg-white px-2 py-1 text-right text-sm font-bold tabular-nums text-gray-900 focus:border-brand-500 focus:outline-none"
+      className="w-24 rounded-lg border border-line bg-surface px-2 py-1 text-right text-sm font-bold tabular-nums text-fg focus:border-brand focus:outline-none"
     />
   );
 }

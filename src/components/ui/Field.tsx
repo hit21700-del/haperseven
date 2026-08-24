@@ -6,14 +6,14 @@ import React from "react";
  * - 포커스 링은 globals.css 의 :focus-visible 규칙(브랜드색 2px)을 그대로 사용
  */
 const baseInput =
-  "rounded-lg border border-line bg-white px-3 py-2 text-base text-gray-900 placeholder:text-gray-400 focus:border-brand-500 sm:text-sm";
+  "rounded-lg border border-line bg-surface px-3 py-2 text-base text-fg placeholder:text-fg-muted focus:border-brand sm:text-sm";
 
 const hasWidth = (cls: string) => /(^|\s)(w-|min-w-|max-w-|flex-1|flex-auto)/.test(cls);
 const cx = (cls = "") => `${baseInput} ${hasWidth(cls) ? "" : "w-full"} ${cls}`;
 
 export function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
   return (
-    <label htmlFor={htmlFor} className="mb-1 block text-xs font-medium text-gray-600">
+    <label htmlFor={htmlFor} className="mb-1 block text-xs font-medium text-fg-2">
       {children}
     </label>
   );
@@ -40,21 +40,19 @@ export function FormRow({
 }: {
   label: string;
   children: React.ReactNode;
-  /** 필드 아래 보조 설명 */
   hint?: React.ReactNode;
-  /** 인라인 오류 문구 (있으면 빨간 텍스트로 표시) */
   error?: React.ReactNode;
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-gray-600">{label}</span>
+      <span className="mb-1 block text-xs font-medium text-fg-2">{label}</span>
       {children}
       {error ? (
-        <span role="alert" className="mt-1 block text-xs text-red-600">
+        <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">
           {error}
         </span>
       ) : hint ? (
-        <span className="mt-1 block text-xs text-gray-500">{hint}</span>
+        <span className="mt-1 block text-xs text-fg-muted">{hint}</span>
       ) : null}
     </label>
   );
