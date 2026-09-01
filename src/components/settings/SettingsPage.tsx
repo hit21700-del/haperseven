@@ -1,8 +1,8 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
-import { CloudUpload, LogOut, RefreshCw, ShieldCheck, Trash2, UserCheck } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { CloudUpload, Download, FileUp, LogOut, RefreshCw, ShieldCheck, Trash2, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { useAppStore } from "@/lib/store/AppStore";
+import { useAppStore, isBackupFile, type BackupFile } from "@/lib/store/AppStore";
 import { useToast } from "@/components/ui/Toast";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, SectionTitle } from "@/components/ui/Card";
@@ -19,11 +19,38 @@ const ROLE_LABEL: Record<Profile["role"], string> = { operator: "운영자", mem
 
 export function SettingsPage() {
   const auth = useAuth();
-  const { mode, canWrite, members, resetToSample, importLocalToCloud } = useAppStore();
+  const { mode, canWrite, members, resetToSample, importLocalToCloud, exportSnapshot, importSnapshot } = useAppStore();
   const toast = useToast();
   const [resetOpen, setResetOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [backupTarget, setBackupTarget] = useState<BackupFile | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const downloadBackup = () => {
+    const snap = exportSnapshot();
+    const blob = new Blob([JSON.stringify(snap, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `haperseven-backup-${snap.exportedAt.slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    toast(`백업 파일을 저장했습니다. (회원 ${snap.members.length}명 · 경기 ${snap.matches.length}건)`);
+  };
+
+  const pickBackup = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (!isBackupFile(parsed)) throw new Error("하퍼세븐 백업 파일이 아닙니다.");
+      setBackupTarget(parsed);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "파일을 읽지 못했습니다.", "error");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -64,26 +91,73 @@ export function SettingsPage() {
       {mode === "cloud" && canWrite && <AccountsManager members={members} myId={auth.profile?.id ?? ""} />}
 
       {/* 데이터 */}
-      {canWrite && (
-        <Card>
-          <SectionTitle icon={<RefreshCw size={14} />}>데이터</SectionTitle>
-          <div className="flex flex-wrap gap-2">
-            {mode === "cloud" && (
-              <Button variant="secondary" onClick={() => setImportOpen(true)} disabled={busy}>
-                <CloudUpload size={15} aria-hidden="true" /> 이 브라우저의 데이터를 DB로 올리기
+      <Card>
+        <SectionTitle icon={<RefreshCw size={14} />}>데이터</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={downloadBackup} disabled={busy}>
+            <Download size={15} aria-hidden="true" /> 백업 파일 다운로드 (JSON)
+          </Button>
+          {canWrite && (
+            <>
+              <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={busy}>
+                <FileUp size={15} aria-hidden="true" /> 백업 파일 가져오기
               </Button>
-            )}
-            <Button variant="secondary" onClick={() => setResetOpen(true)} disabled={busy}>
-              <Trash2 size={15} aria-hidden="true" /> 샘플 데이터로 초기화
-            </Button>
-          </div>
-          <p className="mt-2 text-xs text-fg-muted">
-            {mode === "cloud"
-              ? "예전에 이 PC 브라우저에서 입력했던 회원·회비·경기 기록을 DB로 옮길 때 한 번만 사용하세요. DB의 현재 데이터를 덮어씁니다."
-              : "회원·회비·경기·포메이션 기록이 모두 지워지고 기본 샘플로 바뀝니다."}
-          </p>
-        </Card>
-      )}
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                aria-label="백업 파일 선택"
+                onChange={(e) => void pickBackup(e.target.files?.[0])}
+              />
+              {mode === "cloud" && (
+                <Button variant="secondary" onClick={() => setImportOpen(true)} disabled={busy}>
+                  <CloudUpload size={15} aria-hidden="true" /> 이 브라우저의 데이터를 DB로 올리기
+                </Button>
+              )}
+              <Button variant="secondary" onClick={() => setResetOpen(true)} disabled={busy}>
+                <Trash2 size={15} aria-hidden="true" /> 샘플 데이터로 초기화
+              </Button>
+            </>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-fg-muted">
+          백업 파일은 회원·회비·경기·포메이션·잔고 전체를 담습니다.{" "}
+          {mode === "cloud"
+            ? "다른 브라우저에서 내려받은 백업을 '가져오기'로 올리면 DB 데이터가 그 파일로 교체됩니다."
+            : "클라우드로 전환한 뒤 이 파일을 '가져오기'하면 지금 데이터가 그대로 옮겨집니다."}
+        </p>
+      </Card>
+
+      <ConfirmDialog
+        open={backupTarget !== null}
+        title="백업 파일 가져오기"
+        message={
+          backupTarget && (
+            <>
+              <b>{backupTarget.exportedAt.slice(0, 10)}</b> 백업 (회원 {backupTarget.members.length}명 · 경기 {backupTarget.matches.length}건 · 잔고{" "}
+              {backupTarget.teamBalance.toLocaleString("ko-KR")}원)으로 {mode === "cloud" ? "DB" : "이 브라우저"}의 데이터를 모두 교체합니다. 되돌릴 수
+              없습니다.
+            </>
+          )
+        }
+        confirmLabel="가져오기"
+        onConfirm={async () => {
+          const b = backupTarget;
+          setBackupTarget(null);
+          if (!b) return;
+          setBusy(true);
+          try {
+            await importSnapshot(b);
+            toast("백업을 가져왔습니다.");
+          } catch (e) {
+            toast(e instanceof Error ? e.message : "가져오기에 실패했습니다.", "error");
+          } finally {
+            setBusy(false);
+          }
+        }}
+        onCancel={() => setBackupTarget(null)}
+      />
 
       <ConfirmDialog
         open={resetOpen}

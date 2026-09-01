@@ -60,7 +60,41 @@ type AppActions = {
   resetToSample: () => void;
   /** (cloud) 이 브라우저의 localStorage 데이터를 DB 로 올려 덮어쓴다 */
   importLocalToCloud: () => Promise<void>;
+  /** 현재 데이터 전체를 백업 객체로 */
+  exportSnapshot: () => BackupFile;
+  /** 백업 객체로 전체 교체 (cloud: DB / local: localStorage) */
+  importSnapshot: (b: BackupFile) => Promise<void>;
 };
+
+/** JSON 백업 파일 형식 */
+export type BackupFile = {
+  app: "haperseven";
+  version: 1;
+  exportedAt: string;
+  members: Member[];
+  matches: Match[];
+  paymentEntries: PaymentEntry[];
+  extraExpenses: ExtraExpense[];
+  refunds: RefundRecord[];
+  formationTemplates: FormationTemplate[];
+  teamBalance: number;
+};
+
+/** 백업 파일 형식 검증 */
+export function isBackupFile(v: unknown): v is BackupFile {
+  if (!v || typeof v !== "object") return false;
+  const b = v as Record<string, unknown>;
+  return (
+    b.app === "haperseven" &&
+    Array.isArray(b.members) &&
+    Array.isArray(b.matches) &&
+    Array.isArray(b.paymentEntries) &&
+    Array.isArray(b.extraExpenses) &&
+    Array.isArray(b.refunds) &&
+    Array.isArray(b.formationTemplates) &&
+    typeof b.teamBalance === "number"
+  );
+}
 
 const AppContext = createContext<(AppState & AppActions) | null>(null);
 
@@ -366,6 +400,51 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     await refetch();
   }, [isCloud, guard, refetch]);
 
+  const exportSnapshot = useCallback(
+    (): BackupFile => ({
+      app: "haperseven",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      members,
+      matches,
+      paymentEntries,
+      extraExpenses,
+      refunds,
+      formationTemplates,
+      teamBalance,
+    }),
+    [members, matches, paymentEntries, extraExpenses, refunds, formationTemplates, teamBalance],
+  );
+
+  const importSnapshot = useCallback(
+    async (b: BackupFile) => {
+      if (!guard()) return;
+      const s = {
+        members: b.members,
+        matches: b.matches,
+        paymentEntries: b.paymentEntries,
+        extraExpenses: b.extraExpenses,
+        refunds: b.refunds,
+        formationTemplates: b.formationTemplates.length ? b.formationTemplates : DEFAULT_FORMATION_TEMPLATES,
+        teamBalance: b.teamBalance,
+      };
+      if (isCloud) {
+        await cloud.writeSnapshot(s);
+        await refetch();
+        return;
+      }
+      memberRepository.saveAll(s.members);
+      matchRepository.saveAll(s.matches);
+      paymentRepository.saveEntries(s.paymentEntries);
+      paymentRepository.saveExtraExpenses(s.extraExpenses);
+      paymentRepository.saveRefunds(s.refunds);
+      writeJSON(STORAGE_KEYS.formationTemplates, s.formationTemplates);
+      writeJSON(STORAGE_KEYS.teamBalance, s.teamBalance);
+      applySnapshot(s);
+    },
+    [guard, isCloud, refetch, applySnapshot],
+  );
+
   const value: AppState & AppActions = {
     ready,
     mode: auth.mode,
@@ -390,6 +469,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     setTeamBalance,
     resetToSample,
     importLocalToCloud,
+    exportSnapshot,
+    importSnapshot,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
