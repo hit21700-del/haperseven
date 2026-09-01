@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { Match, MatchType } from "@/types/match";
 import { newMatchId } from "@/lib/repository/matchRepository";
 import { matchResult } from "@/lib/stats/statsService";
+import { newVoteToken } from "@/lib/utils/vote";
 import { todayISO } from "@/lib/utils/format";
 
 const EMPTY_DRAFT = { date: todayISO(), title: "", opponent: "", time: "", location: "", kind: "MATCH" as MatchType };
@@ -58,6 +59,7 @@ export function MatchesPage() {
       quarterCount: 4,
       attendance,
       stats: [],
+      voteToken: newVoteToken(), // 등록 즉시 공개 투표 링크 사용 가능
     };
     upsertMatch(m);
     setSelectedId(m.id);

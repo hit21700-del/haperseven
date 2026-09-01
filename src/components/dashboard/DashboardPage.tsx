@@ -36,6 +36,7 @@ import {
   type PlayerAggregate,
 } from "@/lib/stats/statsService";
 import { VotesPanel } from "@/components/matches/VotesPanel";
+import { NewsCard } from "@/components/dashboard/NewsCard";
 import type { Match } from "@/types/match";
 
 const RESULT_CHIP: Record<"W" | "D" | "L", string> = {
@@ -118,7 +119,7 @@ export function DashboardPage() {
             [<Plus size={16} aria-hidden="true" />, "경기 등록", () => go("matches")],
             [<CheckSquare size={16} aria-hidden="true" />, "출석 입력", () => go("matches")],
             [<LayoutGrid size={16} aria-hidden="true" />, "라인업 작성", () => go("formation")],
-            [<Flag size={16} aria-hidden="true" />, "결과 입력", () => go("matches")],
+            [<Flag size={16} aria-hidden="true" />, "선수 스탯 입력", () => go("matches")],
           ] as [React.ReactNode, string, () => void][]
         ).map(([icon, label, onClick]) => (
           <button
@@ -388,6 +389,9 @@ export function DashboardPage() {
           go={go}
         />
       </div>
+
+      {/* 축구 소식 (RSS) */}
+      <NewsCard />
     </div>
   );
 }

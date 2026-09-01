@@ -133,36 +133,84 @@ export function subscribeChanges(onChange: () => void): () => void {
   };
 }
 
-// ── 참석 투표 ──────────────────────────────────────────────────
-export type AttendanceVote = {
-  match_id: string;
-  member_id: string;
-  user_id: string;
+// ── 참석 투표 (공개 링크) ──────────────────────────────────────
+export type MatchVote = {
+  voter_key: string; // 'member:<id>' | 'guest:<name>'
+  member_id: string | null;
+  guest_name: string | null;
+  guest_positions: string | null; // 'CM,ST'
+  guest_age: number | null;
   status: AttendanceStatus;
   memo: string | null;
   updated_at: string;
 };
 
-export async function fetchVotes(matchId: string): Promise<AttendanceVote[]> {
-  const { data, error } = await getSupabase().from("attendance_votes").select("*").eq("match_id", matchId);
+export type VotePageData = {
+  match: {
+    id: string;
+    date: string;
+    time: string | null;
+    title: string | null;
+    opponent: string | null;
+    location: string | null;
+    matchType: "MATCH" | "SCRIMMAGE" | null;
+    status: string | null;
+  };
+  members: { id: string; name: string; memberType: string }[];
+  votes: MatchVote[];
+};
+
+/** (로그인·승인 계정) 경기의 투표 목록 */
+export async function fetchMatchVotes(matchId: string): Promise<MatchVote[]> {
+  const { data, error } = await getSupabase().from("match_votes").select("*").eq("match_id", matchId).order("updated_at");
   if (error) throw error;
-  return (data ?? []) as AttendanceVote[];
+  return (data ?? []) as MatchVote[];
 }
 
-export async function upsertVote(v: {
-  match_id: string;
-  member_id: string;
-  user_id: string;
-  status: AttendanceStatus;
-  memo?: string;
+/** (공개) 투표 페이지 데이터 — 링크 토큰으로 검증 */
+export async function fetchVotePage(matchId: string, token: string): Promise<VotePageData> {
+  const { data, error } = await getSupabase().rpc("vote_page", { p_match_id: matchId, p_token: token });
+  if (error) throw error;
+  return data as VotePageData;
+}
+
+/** (공개) 투표 저장/변경. status null 이면 취소 */
+export async function castVote(input: {
+  matchId: string;
+  token: string;
+  voterKey: string;
+  memberId?: string | null;
+  guestName?: string | null;
+  guestPositions?: string | null;
+  guestAge?: number | null;
+  status: AttendanceStatus | null;
+  memo?: string | null;
 }): Promise<void> {
-  const { error } = await getSupabase().from("attendance_votes").upsert(v);
+  const { error } = await getSupabase().rpc("cast_vote", {
+    p_match_id: input.matchId,
+    p_token: input.token,
+    p_voter_key: input.voterKey,
+    p_member_id: input.memberId ?? null,
+    p_guest_name: input.guestName ?? null,
+    p_guest_positions: input.guestPositions ?? null,
+    p_guest_age: input.guestAge ?? null,
+    p_status: input.status,
+    p_memo: input.memo ?? null,
+  });
   if (error) throw error;
 }
 
-export async function removeVote(matchId: string, memberId: string): Promise<void> {
-  const { error } = await getSupabase().from("attendance_votes").delete().match({ match_id: matchId, member_id: memberId });
-  if (error) throw error;
+/** 투표 변경 실시간 구독 (승인 계정) */
+export function subscribeVotes(matchId: string, onChange: () => void): () => void {
+  const channel = getSupabase()
+    .channel(`votes-${matchId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "match_votes", filter: `match_id=eq.${matchId}` }, () =>
+      onChange(),
+    )
+    .subscribe();
+  return () => {
+    void getSupabase().removeChannel(channel);
+  };
 }
 
 // ── 프로필(계정) 관리 ─────────────────────────────────────────

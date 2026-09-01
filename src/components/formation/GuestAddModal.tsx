@@ -4,11 +4,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { FormRow, TextInput, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
-import type { Member, Position } from "@/types/member";
-import { detailToGroup } from "@/lib/formation/positions";
-
-// 선택 가능한 세부 포지션(좌우중 포함)
-const POS_OPTIONS = ["GK", "CB", "LB", "RB", "DM", "CM", "LM", "RM", "LW", "RW", "ST"];
+import type { Member } from "@/types/member";
+import { buildGuestMember, GUEST_POS_OPTIONS as POS_OPTIONS } from "@/lib/formation/guestMember";
 
 /**
  * 일회용 용병(게스트) 추가 모달.
@@ -41,30 +38,11 @@ export function GuestAddModal({
       toast("이름을 입력하세요.", "error");
       return;
     }
-    const detail = [primary, secondary].filter((p) => p && p !== "");
-    const canPlayGK = detail.includes("GK");
-    const fieldDetail = detail.filter((d) => d !== "GK");
-    const groups = Array.from(
-      new Set(fieldDetail.map((d) => detailToGroup(d)).filter((g): g is Position => Boolean(g))),
-    );
-
-    const guest: Member = {
-      id: `guest-${Date.now().toString(36)}-${Math.floor(performance.now())}`,
-      name: name.trim(),
-      memberType: "용병",
-      feeAmount: 0,
-      feePeriod: "참석시",
+    const guest: Member = buildGuestMember({
+      name,
+      detailPositions: [primary, secondary].filter((p) => p && p !== ""),
       age: age ? Number(age) : undefined,
-      positions: groups.length > 0 ? groups : (["ANY"] as Position[]),
-      preferredDetail: fieldDetail.length > 0 ? fieldDetail : undefined,
-      preferredPosition: groups[0],
-      canPlayGK,
-      // 주 포지션이 GK 면 전담 키퍼(매 쿼터 GK 고정)
-      fixedGK: primary === "GK",
-      isActive: true,
-      note: "일회용 용병",
-      monthlyPaymentStatus: {},
-    };
+    });
     onAdd(guest);
     reset();
     onClose();

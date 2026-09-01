@@ -46,6 +46,8 @@ export type Match = {
   status?: MatchStatus;
   /** 경기 결과 스코어 (선택) */
   score?: MatchScore;
+  /** 공개 참석 투표 링크 토큰 (링크 공유 시 생성) */
+  voteToken?: string;
   /** 쿼터 수(기본 4) */
   quarterCount: number;
   attendance: AttendanceRecord[];

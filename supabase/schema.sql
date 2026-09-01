@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════
--- 하퍼세븐 (Harper Seven) — Supabase 스키마
+-- 하퍼세븐 (Harper Seven) — Supabase 스키마 (v2)
 -- Supabase 대시보드 → SQL Editor 에 이 파일 전체를 붙여 넣고 Run.
 -- 다시 실행해도 안전하도록 if not exists / or replace 로 작성.
 -- ═══════════════════════════════════════════════════════════════
@@ -13,7 +13,7 @@ create table if not exists public.profiles (
   provider text,
   role text not null default 'member' check (role in ('operator', 'member')),
   status text not null default 'pending' check (status in ('pending', 'approved', 'blocked')),
-  member_id text,                     -- 연결된 회원(members.id). 운영자가 승인 시 지정
+  member_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -29,21 +29,27 @@ create table if not exists public.matches (
   data jsonb not null,
   updated_at timestamptz not null default now()
 );
--- 소량 컬렉션(회비 입력/지출/환불/템플릿/잔고)은 key-value 문서로 저장
 create table if not exists public.settings (
   key text primary key,
   value jsonb not null,
   updated_at timestamptz not null default now()
 );
--- 회원 본인이 남기는 참석 투표 (운영자가 출석에 반영)
-create table if not exists public.attendance_votes (
+
+-- ── 참석 투표 (공개 링크로 로그인 없이 투표) ────────────────────
+-- v1 의 attendance_votes 는 match_votes 로 대체 (데이터 없음)
+drop table if exists public.attendance_votes;
+
+create table if not exists public.match_votes (
   match_id text not null,
-  member_id text not null,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  voter_key text not null,          -- 'member:<memberId>' 또는 'guest:<이름>'
+  member_id text,
+  guest_name text,
+  guest_positions text,             -- 'CM,ST' (용병)
+  guest_age int,
   status text not null check (status in ('ATTEND', 'ABSENT', 'LATE', 'INJURED')),
   memo text,
   updated_at timestamptz not null default now(),
-  primary key (match_id, member_id)
+  primary key (match_id, voter_key)
 );
 
 -- ── 권한 헬퍼 (security definer: RLS 우회하여 프로필 조회) ───────
@@ -55,11 +61,6 @@ $$;
 create or replace function public.is_operator()
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.profiles where id = auth.uid() and status = 'approved' and role = 'operator');
-$$;
-
-create or replace function public.my_member_id()
-returns text language sql stable security definer set search_path = public as $$
-  select member_id from public.profiles where id = auth.uid();
 $$;
 
 -- ── 가입 시 프로필 자동 생성: 첫 계정은 운영자(승인), 이후는 회원(승인 대기) ──
@@ -106,20 +107,78 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['profiles','members','matches','settings','attendance_votes'] loop
+  foreach t in array array['profiles','members','matches','settings','match_votes'] loop
     execute format('drop trigger if exists touch_%1$s on public.%1$s', t);
     execute format('create trigger touch_%1$s before update on public.%1$s for each row execute function public.touch_updated_at()', t);
   end loop;
 end $$;
 
--- ── RLS ──────────────────────────────────────────────────────────
-alter table public.profiles         enable row level security;
-alter table public.members          enable row level security;
-alter table public.matches          enable row level security;
-alter table public.settings         enable row level security;
-alter table public.attendance_votes enable row level security;
+-- ── 공개 투표 RPC (링크 토큰 검증 후 security definer 로 처리) ────
+-- 투표 페이지 데이터: 경기 요약 + 활동 회원 명단 + 현재 투표
+create or replace function public.vote_page(p_match_id text, p_token text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  m jsonb;
+begin
+  select data into m from public.matches where id = p_match_id;
+  if m is null or coalesce(m->>'voteToken', '') = '' or m->>'voteToken' <> p_token then
+    raise exception 'invalid_token' using errcode = 'P0001';
+  end if;
+  return jsonb_build_object(
+    'match', jsonb_build_object(
+      'id', p_match_id, 'date', m->>'date', 'time', m->>'time', 'title', m->>'title',
+      'opponent', m->>'opponent', 'location', m->>'location', 'matchType', m->>'matchType',
+      'status', m->>'status'
+    ),
+    'members', (
+      select coalesce(jsonb_agg(jsonb_build_object('id', id, 'name', data->>'name', 'memberType', data->>'memberType')
+                                order by data->>'name'), '[]'::jsonb)
+      from public.members where coalesce((data->>'isActive')::boolean, true)
+    ),
+    'votes', (
+      select coalesce(jsonb_agg(to_jsonb(v) - 'match_id' order by v.updated_at), '[]'::jsonb)
+      from public.match_votes v where v.match_id = p_match_id
+    )
+  );
+end;
+$$;
 
--- profiles: 본인 + 운영자만 조회, 수정은 운영자만
+-- 투표 저장/변경/취소 (p_status null 이면 취소)
+create or replace function public.cast_vote(
+  p_match_id text, p_token text, p_voter_key text,
+  p_member_id text, p_guest_name text, p_guest_positions text, p_guest_age int,
+  p_status text, p_memo text
+) returns void language plpgsql security definer set search_path = public as $$
+declare
+  m jsonb;
+begin
+  select data into m from public.matches where id = p_match_id;
+  if m is null or coalesce(m->>'voteToken', '') = '' or m->>'voteToken' <> p_token then
+    raise exception 'invalid_token' using errcode = 'P0001';
+  end if;
+  if p_status is null then
+    delete from public.match_votes where match_id = p_match_id and voter_key = p_voter_key;
+    return;
+  end if;
+  insert into public.match_votes (match_id, voter_key, member_id, guest_name, guest_positions, guest_age, status, memo)
+  values (p_match_id, p_voter_key, p_member_id, p_guest_name, p_guest_positions, p_guest_age, p_status, p_memo)
+  on conflict (match_id, voter_key) do update
+    set member_id = excluded.member_id, guest_name = excluded.guest_name,
+        guest_positions = excluded.guest_positions, guest_age = excluded.guest_age,
+        status = excluded.status, memo = excluded.memo, updated_at = now();
+end;
+$$;
+
+grant execute on function public.vote_page(text, text) to anon, authenticated;
+grant execute on function public.cast_vote(text, text, text, text, text, text, int, text, text) to anon, authenticated;
+
+-- ── RLS ──────────────────────────────────────────────────────────
+alter table public.profiles    enable row level security;
+alter table public.members     enable row level security;
+alter table public.matches     enable row level security;
+alter table public.settings    enable row level security;
+alter table public.match_votes enable row level security;
+
 drop policy if exists "profiles select" on public.profiles;
 create policy "profiles select" on public.profiles for select
   using (id = auth.uid() or public.is_operator());
@@ -130,7 +189,6 @@ drop policy if exists "profiles delete by operator" on public.profiles;
 create policy "profiles delete by operator" on public.profiles for delete
   using (public.is_operator() and id <> auth.uid());
 
--- 데이터 테이블: 승인된 계정은 읽기, 운영자만 쓰기
 do $$
 declare t text;
 begin
@@ -142,19 +200,18 @@ begin
   end loop;
 end $$;
 
--- 참석 투표: 승인된 계정은 읽기, 본인 회원의 투표만 쓰기 (운영자는 전부)
-drop policy if exists "votes read" on public.attendance_votes;
-create policy "votes read" on public.attendance_votes for select using (public.is_approved());
-drop policy if exists "votes write own" on public.attendance_votes;
-create policy "votes write own" on public.attendance_votes for all
-  using (public.is_operator() or (user_id = auth.uid() and member_id = public.my_member_id()))
-  with check (public.is_operator() or (user_id = auth.uid() and member_id = public.my_member_id()));
+-- 투표: 승인된 계정은 조회, 쓰기는 RPC(cast_vote)로만 / 운영자는 직접 삭제 가능
+drop policy if exists "votes read" on public.match_votes;
+create policy "votes read" on public.match_votes for select using (public.is_approved());
+drop policy if exists "votes operator write" on public.match_votes;
+create policy "votes operator write" on public.match_votes for all
+  using (public.is_operator()) with check (public.is_operator());
 
--- ── 실시간 변경 알림 (다른 기기에서 수정 시 자동 갱신) ──────────
+-- ── 실시간 변경 알림 ─────────────────────────────────────────────
 do $$
 declare t text;
 begin
-  foreach t in array array['profiles','members','matches','settings','attendance_votes'] loop
+  foreach t in array array['profiles','members','matches','settings','match_votes'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
     exception when duplicate_object then null;

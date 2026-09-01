@@ -27,6 +27,9 @@ import type { Member, TeamColor } from "@/types/member";
 import type { AttendanceRecord } from "@/types/match";
 import type { ChatFormationRule } from "@/types/chat";
 import { FEATURES } from "@/lib/config";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { fetchMatchVotes, type MatchVote } from "@/lib/repository/cloudRepository";
+import { buildGuestMember } from "@/lib/formation/guestMember";
 
 // AI 채팅 패널은 기능 플래그가 켜졌을 때만 별도 청크로 로드
 const FormationChatPanel = dynamic(() => import("./FormationChatPanel").then((m) => m.FormationChatPanel), {
@@ -99,6 +102,44 @@ export function FormationPage() {
       .map((a) => a.memberId)
       .filter((id) => activeMembers.some((m) => m.id === id));
   }, [match, activeMembers]);
+
+  // (cloud) 이 경기의 공개 투표 — 용병 참석 등록을 포메이션 용병으로 불러오기 위해 조회
+  const { mode: authMode } = useAuth();
+  const [matchVotes, setMatchVotes] = useState<MatchVote[]>([]);
+  useEffect(() => {
+    if (authMode !== "cloud" || !match?.id) {
+      setMatchVotes([]);
+      return;
+    }
+    let alive = true;
+    fetchMatchVotes(match.id)
+      .then((v) => alive && setMatchVotes(v))
+      .catch(() => alive && setMatchVotes([]));
+    return () => {
+      alive = false;
+    };
+  }, [authMode, match?.id]);
+  const guestVotes = useMemo(
+    () => matchVotes.filter((v) => !v.member_id && v.guest_name && v.status === "ATTEND"),
+    [matchVotes],
+  );
+
+  /** 참석자 + 투표로 등록된 용병을 참여 인원으로 불러오기 */
+  const loadMatchAttendees = () => {
+    const guestMembers = guestVotes.map((v) =>
+      buildGuestMember({
+        id: `guest-vote-${match!.id}-${v.voter_key}`,
+        name: v.guest_name!,
+        detailPositions: (v.guest_positions ?? "CM").split(",").filter(Boolean),
+        age: v.guest_age ?? undefined,
+      }),
+    );
+    setGuests((prev) => {
+      const known = new Set(prev.map((g) => g.id));
+      return [...prev, ...guestMembers.filter((g) => !known.has(g.id))];
+    });
+    setSelectedIds([...matchAttendeeIds, ...guestMembers.map((g) => g.id)]);
+  };
 
   // 경기를 바꾸면: 저장된 포메이션이 있으면 그 명단을 복원, 없으면 참여 인원을 '비워서' 시작
   // (자동 선택하지 않고, 사용자가 '참여 인원 선택'으로 직접 고른다)
@@ -385,15 +426,16 @@ export function FormationPage() {
                 <span className="ml-2 text-sm font-normal text-fg-muted">· 기준 정원 {template?.playerCount ?? "-"}명</span>
               </span>
               <div className="flex flex-wrap gap-2">
-                {match && matchAttendeeIds.length > 0 && (
+                {match && (matchAttendeeIds.length > 0 || guestVotes.length > 0) && (
                   <Button
                     variant="secondary"
                     className="!border-brand !bg-brand-50 !text-brand hover:!bg-brand-100"
-                    onClick={() => setSelectedIds(matchAttendeeIds)}
-                    title="경기 화면에서 체크한 참석/지각 인원을 그대로 불러옵니다"
+                    onClick={loadMatchAttendees}
+                    title="경기 화면에서 체크한 참석/지각 인원과 투표로 등록된 용병을 불러옵니다"
                   >
                     <ClipboardList size={16} aria-hidden="true" />
-                    이 경기 참석자 {matchAttendeeIds.length}명 불러오기
+                    이 경기 참석자 {matchAttendeeIds.length}명
+                    {guestVotes.length > 0 && ` + 용병 ${guestVotes.length}명`} 불러오기
                   </Button>
                 )}
                 <Button variant="secondary" onClick={() => setPickerOpen(true)}>
