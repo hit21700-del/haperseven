@@ -11,6 +11,11 @@ services:
     plan: free # 무료 플랜 (15분 미사용 시 절전, 첫 접속이 느릴 수 있음)
     healthCheckPath: /
     envVars:
+      # Supabase (클라우드 모드) — 대시보드에서 값 설정. 비어 있으면 브라우저 저장 모드
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
       # AI 채팅을 켤 때만 대시보드에서 값 설정 (지금은 기능 꺼져 있어 불필요)
       - key: OPENAI_API_KEY
         sync: false
