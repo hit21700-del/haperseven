@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppStoreProvider } from "@/lib/store/AppStore";
+import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/components/layout/ThemeProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://haperseven.onrender.com"),
@@ -45,7 +47,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
-          <AppStoreProvider>{children}</AppStoreProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <AppStoreProvider>{children}</AppStoreProvider>
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

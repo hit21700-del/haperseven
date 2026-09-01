@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -35,7 +35,7 @@ import {
   upcomingMatch,
   type PlayerAggregate,
 } from "@/lib/stats/statsService";
-import { readJSON, STORAGE_KEYS } from "@/lib/repository/storage";
+import { VotesPanel } from "@/components/matches/VotesPanel";
 import type { Match } from "@/types/match";
 
 const RESULT_CHIP: Record<"W" | "D" | "L", string> = {
@@ -65,7 +65,7 @@ function matchName(m: Match): string {
 }
 
 export function DashboardPage() {
-  const { members, matches, paymentEntries } = useAppStore();
+  const { members, matches, paymentEntries, teamBalance } = useAppStore();
   const go = useNav();
   const router = useRouter();
   const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
@@ -102,10 +102,6 @@ export function DashboardPage() {
   const nextUnchecked = next ? Math.max(0, activeCount - next.attendance.length) : 0;
   const dday = next ? Math.round((new Date(next.date).getTime() - new Date(today).getTime()) / 86400000) : 0;
 
-  const [teamBalance, setTeamBalance] = useState(8_825_526);
-  useEffect(() => {
-    setTeamBalance(readJSON<number>(STORAGE_KEYS.teamBalance, 8_825_526));
-  }, []);
 
   return (
     <div className="space-y-5">
@@ -190,6 +186,9 @@ export function DashboardPage() {
                   <LayoutGrid size={14} aria-hidden="true" />
                   라인업 짜기
                 </button>
+              </div>
+              <div className="mt-3">
+                <VotesPanel match={next} members={members} compact />
               </div>
             </>
           ) : (

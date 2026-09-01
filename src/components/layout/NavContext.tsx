@@ -14,17 +14,17 @@ export const TAB_PATH: Record<TabKey, string> = {
   stats: "/stats",
 };
 
-/** 경로 → 탭 키 (사이드바 활성 표시용) */
-export function tabFromPath(pathname: string): TabKey {
+/** 경로 → 탭 키 (사이드바 활성 표시용). 탭이 아닌 경로(/settings 등)는 null */
+export function tabFromPath(pathname: string): TabKey | null {
+  if (pathname === "/") return "dashboard";
   const entry = (Object.entries(TAB_PATH) as [TabKey, string][]).find(
     ([, path]) => path !== "/" && pathname.startsWith(path),
   );
-  return entry?.[0] ?? "dashboard";
+  return entry?.[0] ?? null;
 }
 
 /**
- * 화면 간 이동 훅. (기존 Context 기반 API와 동일한 시그니처 유지)
- * 대시보드 카드 등에서 `const go = useNav(); go("payments")` 형태로 사용.
+ * 화면 간 이동 훅. 대시보드 카드 등에서 `const go = useNav(); go("payments")` 형태로 사용.
  */
 export function useNav() {
   const router = useRouter();

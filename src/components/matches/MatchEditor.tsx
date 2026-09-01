@@ -9,6 +9,7 @@ import { TextInput, Select, FormRow } from "@/components/ui/Field";
 import { useRouter } from "next/navigation";
 import type { Match, AttendanceStatus, AttendanceRecord, MatchStat, MatchStatus } from "@/types/match";
 import type { Member } from "@/types/member";
+import { VotesPanel } from "./VotesPanel";
 
 const STATUSES: AttendanceStatus[] = ["ATTEND", "LATE", "INJURED", "ABSENT"];
 const STATUS_LABEL: Record<AttendanceStatus, string> = { ATTEND: "참석", LATE: "지각", INJURED: "부상", ABSENT: "불참" };
@@ -224,6 +225,11 @@ export function MatchEditor({
         <SectionTitle icon={<ClipboardCheck size={15} aria-hidden="true" />}>
           출석 · 스탯 입력 <span className="ml-2 text-sm font-normal text-fg-muted">(참석 {attendCount}명)</span>
         </SectionTitle>
+
+        {/* 참석 투표 (cloud 모드): 회원 본인 투표 / 운영자 반영 */}
+        <div className="mb-4">
+          <VotesPanel match={match} members={members} onApply={(attendance) => setField({ attendance })} />
+        </div>
 
         {/* 모바일: 이름 칩 토글 (탭할 때마다 미체크→참석→지각→불참→부상 순환) */}
         <div className="md:hidden">

@@ -1,24 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
   CircleDollarSign,
   LayoutDashboard,
+  LogOut,
   Monitor,
   Moon,
   Settings,
   ShieldCheck,
   Sun,
   Trophy,
+  User,
   Users,
   Workflow,
   type LucideIcon,
 } from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { LogoBox, Wordmark } from "@/components/brand/Logo";
 import { TAB_PATH, tabFromPath, type TabKey } from "./NavContext";
 import { useTheme, type ThemePref } from "./ThemeProvider";
@@ -32,7 +33,7 @@ const NAV: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: "stats", label: "통계", icon: BarChart3 },
 ];
 
-const APP_VERSION = "v2.4.0";
+const APP_VERSION = "v3.0.0";
 
 const THEME_OPTIONS: { value: ThemePref; label: string; icon: LucideIcon }[] = [
   { value: "light", label: "라이트", icon: Sun },
@@ -106,13 +107,36 @@ function ContentGate({ children }: { children: React.ReactNode }) {
   return <div className="animate-fade-in">{children}</div>;
 }
 
+/** 사용자 카드 — cloud 모드면 실제 계정, local 모드면 운영자 */
+function UserCard() {
+  const { mode, profile } = useAuth();
+  const name = mode === "cloud" ? profile?.display_name ?? profile?.email ?? "계정" : "운영자";
+  const roleLabel = mode === "cloud" ? (profile?.role === "operator" ? "운영자" : "회원") : "관리자";
+  const Icon = mode === "cloud" && profile?.role !== "operator" ? User : ShieldCheck;
+  return (
+    <Link
+      href="/settings"
+      className="mb-5 flex items-center gap-3 rounded-xl border border-line-soft bg-surface-2 px-3 py-2.5 hover:bg-surface-3"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50" aria-hidden="true">
+        <Icon size={18} className="text-brand" />
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-sm font-bold text-fg">{name}</span>
+        <span className="flex items-center gap-1 text-[11px] text-fg-muted">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" /> {roleLabel}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 /** 공통 셸 레이아웃 — 데스크톱 사이드바 / 모바일 상단 로고 + 하단 탭바 */
 export function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { resetToSample } = useAppStore();
-  const toast = useToast();
+  const { mode, signOut } = useAuth();
   const active = tabFromPath(pathname ?? "/");
-  const [resetOpen, setResetOpen] = useState(false);
+  const onSettings = pathname?.startsWith("/settings");
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -130,17 +154,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
           <Wordmark />
         </Link>
 
-        <div className="mb-5 flex items-center gap-3 rounded-xl border border-line-soft bg-surface-2 px-3 py-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50" aria-hidden="true">
-            <ShieldCheck size={18} className="text-brand" />
-          </span>
-          <span>
-            <span className="block text-sm font-bold text-fg">운영자</span>
-            <span className="flex items-center gap-1 text-[11px] text-fg-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" /> 관리자
-            </span>
-          </span>
-        </div>
+        <UserCard />
 
         <nav className="flex-1 space-y-1" aria-label="주 메뉴">
           {NAV.map(({ key, label, icon: Icon }) => (
@@ -149,7 +163,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
               href={TAB_PATH[key]}
               aria-current={active === key ? "page" : undefined}
               className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-sm transition-colors duration-100 ${
-                active === key ? "bg-brand text-brand-fg font-semibold" : "font-medium text-fg-2 hover:bg-surface-2 hover:text-fg"
+                active === key ? "bg-brand font-semibold text-brand-fg" : "font-medium text-fg-2 hover:bg-surface-2 hover:text-fg"
               }`}
             >
               <Icon size={18} className="shrink-0" aria-hidden="true" />
@@ -160,13 +174,24 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
 
         <div className="space-y-3 border-t border-line-soft pt-3">
           <ThemeSwitch />
-          <button
-            type="button"
-            onClick={() => setResetOpen(true)}
-            className="flex items-center gap-2 rounded px-1 py-1 text-xs text-fg-muted hover:text-fg"
-          >
-            <Settings size={14} aria-hidden="true" /> 설정 · 샘플 초기화
-          </button>
+          <div className="flex items-center justify-between">
+            <Link
+              href="/settings"
+              aria-current={onSettings ? "page" : undefined}
+              className={`flex items-center gap-2 rounded px-1 py-1 text-xs hover:text-fg ${onSettings ? "font-semibold text-fg" : "text-fg-muted"}`}
+            >
+              <Settings size={14} aria-hidden="true" /> 설정 · 계정
+            </Link>
+            {mode === "cloud" && (
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="flex items-center gap-1 rounded px-1 py-1 text-xs text-fg-muted hover:text-fg"
+              >
+                <LogOut size={14} aria-hidden="true" /> 로그아웃
+              </button>
+            )}
+          </div>
           <div className="px-1 text-[11px] text-fg-muted">© Harper Seven · {APP_VERSION}</div>
         </div>
       </aside>
@@ -180,14 +205,13 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
           </Link>
           <div className="flex items-center">
             <ThemeToggleButton />
-            <button
-              type="button"
-              onClick={() => setResetOpen(true)}
-              className="inline-grid h-10 w-10 place-items-center rounded-lg text-fg-muted hover:bg-surface-3"
-              aria-label="설정 · 샘플 초기화"
+            <Link
+              href="/settings"
+              className={`inline-grid h-10 w-10 place-items-center rounded-lg hover:bg-surface-3 ${onSettings ? "text-fg" : "text-fg-muted"}`}
+              aria-label="설정 · 계정"
             >
               <Settings size={18} aria-hidden="true" />
-            </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -218,19 +242,6 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
           </Link>
         ))}
       </nav>
-
-      <ConfirmDialog
-        open={resetOpen}
-        title="샘플 데이터로 초기화"
-        message="회원·회비·경기·포메이션 기록이 모두 지워지고 기본 샘플로 바뀝니다. 되돌릴 수 없습니다."
-        confirmLabel="초기화"
-        onConfirm={() => {
-          resetToSample();
-          setResetOpen(false);
-          toast("샘플 데이터로 초기화했습니다.", "info");
-        }}
-        onCancel={() => setResetOpen(false)}
-      />
     </div>
   );
 }

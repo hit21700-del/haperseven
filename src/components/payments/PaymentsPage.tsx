@@ -19,7 +19,6 @@ import type { PaymentStatus } from "@/types/member";
 import type { RefundRecord } from "@/types/payment";
 import { RefundModal } from "./RefundModal";
 import { BulkPaymentModal } from "./BulkPaymentModal";
-import { readJSON, writeJSON, STORAGE_KEYS } from "@/lib/repository/storage";
 
 const STATUS_CYCLE: PaymentStatus[] = ["UNKNOWN", "PAID", "UNPAID", "EXEMPT"];
 
@@ -44,26 +43,26 @@ function halfStatusOf(monthly: Record<number, PaymentStatus>, half: 1 | 2): Paym
 }
 
 export function PaymentsPage() {
-  const { members, matches, paymentEntries, setPaymentEntries, upsertMember, refunds, setRefunds } = useAppStore();
+  const { members, matches, paymentEntries, setPaymentEntries, upsertMember, refunds, setRefunds, teamBalance, setTeamBalance } =
+    useAppStore();
   const toast = useToast();
   const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
   const [onlyUnpaid, setOnlyUnpaid] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
 
-  // 현재 팀 잔고(총 회비) — localStorage 에 저장, 직접 수정 가능
-  const DEFAULT_BALANCE = 8_825_526;
-  const [balanceInput, setBalanceInput] = useState(String(DEFAULT_BALANCE));
+  // 현재 팀 잔고(총 회비) — 스토어(local: localStorage / cloud: DB)에 저장, 직접 수정 가능
+  const [balanceInput, setBalanceInput] = useState(teamBalance.toLocaleString("ko-KR") + "원");
   useEffect(() => {
-    setBalanceInput(readJSON<number>(STORAGE_KEYS.teamBalance, DEFAULT_BALANCE).toLocaleString("ko-KR") + "원");
-  }, []);
+    setBalanceInput(teamBalance.toLocaleString("ko-KR") + "원");
+  }, [teamBalance]);
   const commitBalance = () => {
     const n = Number(balanceInput.replace(/[, 원]/g, ""));
     if (!Number.isNaN(n) && n >= 0) {
-      writeJSON(STORAGE_KEYS.teamBalance, Math.round(n));
+      setTeamBalance(Math.round(n));
       setBalanceInput(Math.round(n).toLocaleString("ko-KR") + "원");
     } else {
-      setBalanceInput(readJSON<number>(STORAGE_KEYS.teamBalance, DEFAULT_BALANCE).toLocaleString("ko-KR") + "원");
+      setBalanceInput(teamBalance.toLocaleString("ko-KR") + "원");
     }
   };
 

@@ -170,6 +170,32 @@ NEXT_PUBLIC_OPENAI_PROJECT_URL=https://chatgpt.com/g/g-p-6a39d5a260d481918b5c48d
 
 ---
 
+## ☁️ Supabase 연동 — SSO 로그인 · 계정 관리 · 기기 간 공유 (무료)
+
+환경변수 두 개만 넣으면 앱이 **클라우드 모드**로 전환됩니다. 없으면 기존처럼 브라우저(localStorage) 모드로 동작합니다.
+
+### 1) Supabase 프로젝트 준비
+1. https://supabase.com → New Project (리전: Northeast Asia / Seoul)
+2. **SQL Editor** → `supabase/schema.sql` 내용 전체를 붙여 넣고 Run (테이블·권한(RLS)·트리거·실시간 설정이 한 번에 생성됨)
+3. **Authentication → Providers → Email**: `Confirm email` **끄기** (무료 플랜 기본 메일은 시간당 몇 통 제한이라, 이메일 인증 없이 가입 → 운영자 승인 방식을 씁니다)
+4. **Authentication → URL Configuration**: Site URL = `https://haperseven.onrender.com`, Redirect URLs 에 `http://localhost:3000/**` 추가
+5. (선택) **카카오 로그인**: https://developers.kakao.com 앱 등록 → 카카오 로그인 활성화 → Redirect URI 에 Supabase 가 알려주는 `https://<프로젝트>.supabase.co/auth/v1/callback` 등록 → Supabase Providers → Kakao 에 REST API 키/Client Secret 입력
+6. (선택) 구글 로그인: Google Cloud 콘솔 OAuth 클라이언트 생성 → 같은 callback URI 등록 → Supabase Providers → Google 에 입력
+
+### 2) 앱에 키 연결
+Supabase **Project Settings → API** 의 `Project URL`, `anon public` 키를:
+- 로컬: `.env.local` (`.env.local.example` 참고)
+- 배포: Render → Environment 에 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+anon 키는 공개용(publishable) 키입니다. 데이터 보호는 DB 의 RLS 정책이 담당합니다.
+
+### 3) 계정 흐름
+- **첫 번째로 가입한 계정이 자동으로 운영자(승인)** 가 됩니다. 이후 가입자는 "승인 대기".
+- 운영자는 **설정 → 계정 관리**에서 승인/차단, 역할(운영자/회원), **회원 명단 연결**을 합니다.
+- 운영자: 모든 데이터 편집. 회원: 조회 + 자기 참석 투표(대시보드 다음 경기 / 경기 화면).
+- 운영자는 경기 화면에서 "투표 n건 출석에 반영" 으로 투표를 출석 기록에 옮깁니다.
+- 예전에 브라우저에만 저장했던 데이터는 **설정 → "이 브라우저의 데이터를 DB로 올리기"** 로 한 번에 이전할 수 있습니다.
+
 ## 🗂️ 데이터 저장 구조 (localStorage)
 
 모든 데이터는 `haperseven:` 접두사 키로 브라우저 `localStorage` 에 저장됩니다.
