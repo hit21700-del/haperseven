@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { CloudUpload, Download, FileUp, LogOut, RefreshCw, ShieldCheck, Trash2, UserCheck } from "lucide-react";
+import { CloudUpload, Copy, Download, FileUp, ImageUp, LogOut, RefreshCw, ShieldCheck, Shield, Trash2, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useAppStore, isBackupFile, type BackupFile } from "@/lib/store/AppStore";
 import { useToast } from "@/components/ui/Toast";
@@ -8,11 +8,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Select } from "@/components/ui/Field";
+import { Select, FormRow, TextInput } from "@/components/ui/Field";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, THead, TH, TD, TR } from "@/components/ui/Table";
-import { fetchAllProfiles, updateProfile, deleteProfile, type Profile } from "@/lib/repository/cloudRepository";
+import { TeamLogo } from "@/components/brand/TeamIdentity";
+import { fetchAllProfiles, updateProfile, deleteProfile, updateTeam, type Profile } from "@/lib/repository/cloudRepository";
 
 const STATUS_LABEL: Record<Profile["status"], string> = { pending: "승인 대기", approved: "승인", blocked: "차단" };
 const ROLE_LABEL: Record<Profile["role"], string> = { operator: "운영자", member: "회원" };
@@ -86,6 +87,9 @@ export function SettingsPage() {
           </p>
         )}
       </Card>
+
+      {/* 팀 정보 */}
+      {mode === "cloud" && auth.team && <TeamCard />}
 
       {/* 계정 관리 (운영자) */}
       {mode === "cloud" && canWrite && <AccountsManager members={members} myId={auth.profile?.id ?? ""} />}
@@ -192,6 +196,162 @@ export function SettingsPage() {
       />
     </div>
   );
+}
+
+/** 팀 정보 — 이름/분류코드 수정(운영자), 로고 업로드, 코드 복사 */
+function TeamCard() {
+  const { team, canWrite, refreshProfile } = useAuth();
+  const toast = useToast();
+  const [name, setName] = useState(team?.name ?? "");
+  const [code, setCode] = useState(team?.code ?? "");
+  const [busy, setBusy] = useState(false);
+  const logoRef = useRef<HTMLInputElement>(null);
+
+  // 값 자체가 바뀔 때만 입력창을 동기화 (백그라운드 재조회로 새 team 객체가 와도 편집 중 내용 유지)
+  useEffect(() => {
+    setName(team?.name ?? "");
+    setCode(team?.code ?? "");
+  }, [team?.id, team?.name, team?.code]);
+
+  if (!team) return null;
+  const dirty = name.trim() !== team.name || code.trim().toUpperCase() !== team.code;
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(team.code);
+      toast(`분류코드 ${team.code} 를 복사했습니다. 팀원에게 알려주세요.`);
+    } catch {
+      toast("복사하지 못했습니다.", "error");
+    }
+  };
+
+  const save = async () => {
+    const n = name.trim();
+    const c = code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!n) return toast("팀 이름을 입력하세요.", "error");
+    if (c.length < 2 || c.length > 12) return toast("분류코드는 영문/숫자 2~12자여야 합니다.", "error");
+    setBusy(true);
+    try {
+      await updateTeam(team.id, { name: n, code: c });
+      await refreshProfile();
+      toast("팀 정보를 저장했습니다.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      toast(msg.includes("duplicate") || msg.includes("unique") ? "이미 사용 중인 분류코드입니다." : "저장하지 못했습니다.", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pickLogo = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file, 128);
+      await updateTeam(team.id, { logo_url: dataUrl });
+      await refreshProfile();
+      toast("팀 로고를 변경했습니다.");
+    } catch {
+      toast("로고를 올리지 못했습니다. 이미지 파일인지 확인하세요.", "error");
+    } finally {
+      setBusy(false);
+      if (logoRef.current) logoRef.current.value = "";
+    }
+  };
+
+  return (
+    <Card>
+      <SectionTitle icon={<Shield size={14} />}>팀 정보</SectionTitle>
+      <div className="flex flex-wrap items-start gap-4">
+        <div className="flex flex-col items-center gap-2">
+          <TeamLogo team={team} size={64} />
+          {canWrite && (
+            <>
+              <button
+                type="button"
+                onClick={() => logoRef.current?.click()}
+                disabled={busy}
+                className="inline-flex items-center gap-1 text-xs text-fg-muted hover:text-fg"
+              >
+                <ImageUp size={13} aria-hidden="true" /> 로고 변경
+              </button>
+              <input
+                ref={logoRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                aria-label="팀 로고 이미지 선택"
+                onChange={(e) => void pickLogo(e.target.files?.[0])}
+              />
+            </>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 space-y-3">
+          {canWrite ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FormRow label="팀 이름">
+                <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="팀 이름" />
+              </FormRow>
+              <FormRow label="분류코드" hint="팀원이 가입할 때 입력하는 코드">
+                <TextInput
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="HSFC"
+                  autoCapitalize="characters"
+                />
+              </FormRow>
+            </div>
+          ) : (
+            <div className="text-sm">
+              <div className="font-semibold text-fg">{team.name}</div>
+              <div className="text-fg-muted">분류코드: {team.code}</div>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => void copyCode()}>
+              <Copy size={15} aria-hidden="true" /> 분류코드 복사
+            </Button>
+            {canWrite && dirty && (
+              <Button onClick={() => void save()} disabled={busy}>
+                저장
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-fg-muted">
+            팀원은 가입 화면에서 분류코드 <b className="text-fg">{team.code}</b> 를 입력해 이 팀에 가입할 수 있습니다.
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/** 이미지 파일을 정사각형으로 리사이즈해 PNG data URL 로 변환 */
+async function resizeImageToDataUrl(file: File, size: number): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    if (!iw || !ih) throw new Error("이미지 크기를 읽을 수 없습니다. 다른 이미지를 사용하세요.");
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("canvas");
+    const scale = Math.max(size / iw, size / ih);
+    const w = iw * scale;
+    const h = ih * scale;
+    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+    return canvas.toDataURL("image/png");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 /** 운영자용 계정 승인/역할/회원 연결 */

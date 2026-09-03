@@ -63,73 +63,88 @@ export async function fetchSnapshot(): Promise<CloudSnapshot> {
   };
 }
 
-export async function upsertDoc<T extends { id: string }>(table: DocTable, item: T): Promise<void> {
-  const { error } = await getSupabase().from(table).upsert({ id: item.id, data: item });
+// 모든 쓰기는 team_id 를 명시적으로 실어 보낸다.
+//  - 복합 PK(team_id, id/key) 에 대해 upsert 충돌 대상이 명확해진다.
+//  - RLS WITH CHECK(team_id = my_team_id()) 가 다른 팀 위조를 막아준다.
+export async function upsertDoc<T extends { id: string }>(table: DocTable, item: T, teamId: string): Promise<void> {
+  const { error } = await getSupabase().from(table).upsert({ id: item.id, data: item, team_id: teamId });
   if (error) throw error;
 }
 
-export async function removeDoc(table: DocTable, id: string): Promise<void> {
-  const { error } = await getSupabase().from(table).delete().eq("id", id);
+export async function removeDoc(table: DocTable, id: string, teamId: string): Promise<void> {
+  const { error } = await getSupabase().from(table).delete().eq("team_id", teamId).eq("id", id);
   if (error) throw error;
 }
 
-/** 전체 교체: 전달된 목록으로 upsert 하고, 목록에 없는 행은 삭제 */
-export async function replaceDocs<T extends { id: string }>(table: DocTable, items: T[]): Promise<void> {
+/** 전체 교체: 전달된 목록으로 upsert 하고, 이 팀에서 목록에 없는 행은 삭제 */
+export async function replaceDocs<T extends { id: string }>(table: DocTable, items: T[], teamId: string): Promise<void> {
   const sb = getSupabase();
   if (items.length > 0) {
-    const { error } = await sb.from(table).upsert(items.map((i) => ({ id: i.id, data: i })));
+    const { error } = await sb.from(table).upsert(items.map((i) => ({ id: i.id, data: i, team_id: teamId })));
     if (error) throw error;
   }
-  const { data: existing, error: e2 } = await sb.from(table).select("id");
+  const { data: existing, error: e2 } = await sb.from(table).select("id").eq("team_id", teamId);
   if (e2) throw e2;
   const keep = new Set(items.map((i) => i.id));
   const stale = (existing ?? []).map((r) => r.id as string).filter((id) => !keep.has(id));
   if (stale.length > 0) {
-    const { error: e3 } = await sb.from(table).delete().in("id", stale);
+    const { error: e3 } = await sb.from(table).delete().eq("team_id", teamId).in("id", stale);
     if (e3) throw e3;
   }
 }
 
-async function setSetting(key: string, value: unknown): Promise<void> {
-  const { error } = await getSupabase().from("settings").upsert({ key, value });
+async function setSetting(key: string, value: unknown, teamId: string): Promise<void> {
+  const { error } = await getSupabase().from("settings").upsert({ key, value, team_id: teamId });
   if (error) throw error;
 }
 
 export const cloudSettings = {
-  setPaymentEntries: (v: PaymentEntry[]) => setSetting(SETTING_KEYS.paymentEntries, v),
-  setExtraExpenses: (v: ExtraExpense[]) => setSetting(SETTING_KEYS.extraExpenses, v),
-  setRefunds: (v: RefundRecord[]) => setSetting(SETTING_KEYS.refunds, v),
-  setFormationTemplates: (v: FormationTemplate[]) => setSetting(SETTING_KEYS.formationTemplates, v),
-  setTeamBalance: (v: number) => setSetting(SETTING_KEYS.teamBalance, v),
+  setPaymentEntries: (v: PaymentEntry[], teamId: string) => setSetting(SETTING_KEYS.paymentEntries, v, teamId),
+  setExtraExpenses: (v: ExtraExpense[], teamId: string) => setSetting(SETTING_KEYS.extraExpenses, v, teamId),
+  setRefunds: (v: RefundRecord[], teamId: string) => setSetting(SETTING_KEYS.refunds, v, teamId),
+  setFormationTemplates: (v: FormationTemplate[], teamId: string) => setSetting(SETTING_KEYS.formationTemplates, v, teamId),
+  setTeamBalance: (v: number, teamId: string) => setSetting(SETTING_KEYS.teamBalance, v, teamId),
 };
 
 /** 스냅샷 전체를 DB 에 기록 (초기 시드 / 로컬 데이터 가져오기) */
-export async function writeSnapshot(s: {
-  members: Member[];
-  matches: Match[];
-  paymentEntries: PaymentEntry[];
-  extraExpenses: ExtraExpense[];
-  refunds: RefundRecord[];
-  formationTemplates: FormationTemplate[];
-  teamBalance: number;
-}): Promise<void> {
-  await replaceDocs("members", s.members);
-  await replaceDocs("matches", s.matches);
-  await cloudSettings.setPaymentEntries(s.paymentEntries);
-  await cloudSettings.setExtraExpenses(s.extraExpenses);
-  await cloudSettings.setRefunds(s.refunds);
-  await cloudSettings.setFormationTemplates(s.formationTemplates);
-  await cloudSettings.setTeamBalance(s.teamBalance);
+export async function writeSnapshot(
+  s: {
+    members: Member[];
+    matches: Match[];
+    paymentEntries: PaymentEntry[];
+    extraExpenses: ExtraExpense[];
+    refunds: RefundRecord[];
+    formationTemplates: FormationTemplate[];
+    teamBalance: number;
+  },
+  teamId: string,
+): Promise<void> {
+  await replaceDocs("members", s.members, teamId);
+  await replaceDocs("matches", s.matches, teamId);
+  await cloudSettings.setPaymentEntries(s.paymentEntries, teamId);
+  await cloudSettings.setExtraExpenses(s.extraExpenses, teamId);
+  await cloudSettings.setRefunds(s.refunds, teamId);
+  await cloudSettings.setFormationTemplates(s.formationTemplates, teamId);
+  await cloudSettings.setTeamBalance(s.teamBalance, teamId);
 }
 
-/** 변경 구독 — 어떤 테이블이든 바뀌면 onChange (호출 측에서 디바운스) */
-export function subscribeChanges(onChange: () => void): () => void {
-  const channel = getSupabase()
-    .channel("haperseven-db")
-    .on("postgres_changes", { event: "*", schema: "public" }, () => onChange())
-    .subscribe();
+/**
+ * 변경 구독 — 내 팀의 데이터가 바뀌면 onChange (호출 측에서 디바운스).
+ * team_id 로 필터해 다른 팀의 이벤트(및 DELETE 시 브로드캐스트되는 PK)를 받지 않는다.
+ */
+export function subscribeChanges(teamId: string, onChange: () => void): () => void {
+  const sb = getSupabase();
+  const channel = sb.channel(`team-${teamId}`);
+  for (const table of ["members", "matches", "settings", "match_votes"] as const) {
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table, filter: `team_id=eq.${teamId}` },
+      () => onChange(),
+    );
+  }
+  channel.subscribe();
   return () => {
-    void getSupabase().removeChannel(channel);
+    void sb.removeChannel(channel);
   };
 }
 
@@ -146,6 +161,7 @@ export type MatchVote = {
 };
 
 export type VotePageData = {
+  team: { name: string; logoUrl: string | null };
   match: {
     id: string;
     date: string;
@@ -223,6 +239,7 @@ export type Profile = {
   role: "operator" | "member";
   status: "pending" | "approved" | "blocked";
   member_id: string | null;
+  team_id: string | null;
   created_at: string;
 };
 
@@ -230,6 +247,12 @@ export async function fetchMyProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await getSupabase().from("profiles").select("*").eq("id", userId).maybeSingle();
   if (error) throw error;
   return (data as Profile) ?? null;
+}
+
+/** 로그인했는데 프로필이 없으면(트리거 유실 / 계정 삭제) 되살린다 */
+export async function ensureProfile(): Promise<void> {
+  const { error } = await getSupabase().rpc("ensure_profile");
+  if (error) throw error;
 }
 
 export async function fetchAllProfiles(): Promise<Profile[]> {
@@ -249,4 +272,39 @@ export async function updateProfile(
 export async function deleteProfile(id: string): Promise<void> {
   const { error } = await getSupabase().from("profiles").delete().eq("id", id);
   if (error) throw error;
+}
+
+// ── 팀 (멀티팀: 데이터는 모두 소속 팀으로 격리) ────────────────
+export type Team = {
+  id: string;
+  name: string;
+  code: string;
+  logo_url: string | null;
+};
+
+/** 내 소속 팀 (RLS 로 자기 팀만 보인다) */
+export async function fetchMyTeam(): Promise<Team | null> {
+  const { data, error } = await getSupabase().from("teams").select("id, name, code, logo_url").maybeSingle();
+  if (error) throw error;
+  return (data as Team) ?? null;
+}
+
+/** 팀 정보 수정 (그 팀 운영자만) */
+export async function updateTeam(id: string, patch: Partial<Pick<Team, "name" | "code" | "logo_url">>): Promise<void> {
+  const { error } = await getSupabase().from("teams").update(patch).eq("id", id);
+  if (error) throw error;
+}
+
+/** 새 팀 만들기 — 만든 사람이 그 팀의 운영자가 된다 */
+export async function setupCreateTeam(name: string, code: string): Promise<Team> {
+  const { data, error } = await getSupabase().rpc("setup_create_team", { p_name: name, p_code: code });
+  if (error) throw error;
+  return data as Team;
+}
+
+/** 팀 분류코드로 가입 — 그 팀 운영자의 승인 대기 상태가 된다 */
+export async function setupJoinTeam(code: string): Promise<Team> {
+  const { data, error } = await getSupabase().rpc("setup_join_team", { p_code: code });
+  if (error) throw error;
+  return data as Team;
 }

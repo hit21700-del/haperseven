@@ -117,6 +117,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const toast = useToast();
   const isCloud = auth.mode === "cloud";
+  // cloud 쓰기에 실어 보낼 소속 팀 (canWrite 가 team_id 존재를 보장한다)
+  const teamId = auth.profile?.team_id ?? "";
 
   const [ready, setReady] = useState(false);
   const [members, setMembersState] = useState<Member[]>([]);
@@ -135,7 +137,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     setExtraExpensesState(s.extraExpenses);
     setRefundsState(s.refunds);
     setFormationTemplates(s.formationTemplates ?? DEFAULT_FORMATION_TEMPLATES);
-    setTeamBalanceState(s.teamBalance ?? DEFAULT_BALANCE);
+    // cloud 에서 잔고 미설정(새 팀)은 0 — local 모드는 항상 값이 채워져 들어온다
+    setTeamBalanceState(s.teamBalance ?? 0);
   }, []);
 
   /* ── local 모드 로드 (기존 동작 그대로) ── */
@@ -194,12 +197,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        let snap = await cloud.fetchSnapshot();
-        // 첫 실행(빈 DB)이고 운영자면 샘플로 시작
-        if (snap.members.length === 0 && auth.canWrite) {
-          await cloud.writeSnapshot(sampleSnapshot());
-          snap = await cloud.fetchSnapshot();
-        }
+        // 새 팀은 빈 상태로 시작한다 (샘플이 필요하면 설정 → 샘플 초기화)
+        const snap = await cloud.fetchSnapshot();
         if (cancelled) return;
         applySnapshot(snap);
         setReady(true);
@@ -208,16 +207,18 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         toast("데이터를 불러오지 못했습니다. 네트워크 상태를 확인하거나 새로고침하세요.", "error");
       }
     })();
-    const unsubscribe = cloud.subscribeChanges(() => {
-      if (refetchTimer.current) clearTimeout(refetchTimer.current);
-      refetchTimer.current = setTimeout(() => void refetch(), 400);
-    });
+    const unsubscribe = teamId
+      ? cloud.subscribeChanges(teamId, () => {
+          if (refetchTimer.current) clearTimeout(refetchTimer.current);
+          refetchTimer.current = setTimeout(() => void refetch(), 400);
+        })
+      : () => {};
     return () => {
       cancelled = true;
       unsubscribe();
       if (refetchTimer.current) clearTimeout(refetchTimer.current);
     };
-  }, [isCloud, auth.loading, auth.isApproved, auth.canWrite, applySnapshot, refetch, toast]);
+  }, [isCloud, auth.loading, auth.isApproved, teamId, applySnapshot, refetch, toast]);
 
   /* ── 쓰기 가드 + 영속화 ── */
   const canWrite = auth.canWrite;
@@ -245,10 +246,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     (m: Member[]) => {
       if (!guard()) return;
       setMembersState(m);
-      if (isCloud) persist(cloud.replaceDocs("members", m));
+      if (isCloud) persist(cloud.replaceDocs("members", m, teamId));
       else memberRepository.saveAll(m);
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const upsertMember = useCallback(
     (m: Member) => {
@@ -259,9 +260,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (!isCloud) memberRepository.saveAll(next);
         return next;
       });
-      if (isCloud) persist(cloud.upsertDoc("members", m));
+      if (isCloud) persist(cloud.upsertDoc("members", m, teamId));
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const removeMember = useCallback(
     (id: string) => {
@@ -271,19 +272,19 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (!isCloud) memberRepository.saveAll(next);
         return next;
       });
-      if (isCloud) persist(cloud.removeDoc("members", id));
+      if (isCloud) persist(cloud.removeDoc("members", id, teamId));
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
 
   const setMatches = useCallback(
     (m: Match[]) => {
       if (!guard()) return;
       setMatchesState(sortMatches(m));
-      if (isCloud) persist(cloud.replaceDocs("matches", m));
+      if (isCloud) persist(cloud.replaceDocs("matches", m, teamId));
       else matchRepository.saveAll(m);
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const upsertMatch = useCallback(
     (m: Match) => {
@@ -294,9 +295,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (!isCloud) matchRepository.saveAll(next);
         return next;
       });
-      if (isCloud) persist(cloud.upsertDoc("matches", m));
+      if (isCloud) persist(cloud.upsertDoc("matches", m, teamId));
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const removeMatch = useCallback(
     (id: string) => {
@@ -306,37 +307,37 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (!isCloud) matchRepository.saveAll(next);
         return next;
       });
-      if (isCloud) persist(cloud.removeDoc("matches", id));
+      if (isCloud) persist(cloud.removeDoc("matches", id, teamId));
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
 
   const setPaymentEntries = useCallback(
     (e: PaymentEntry[]) => {
       if (!guard()) return;
       setPaymentEntriesState(e);
-      if (isCloud) persist(cloud.cloudSettings.setPaymentEntries(e));
+      if (isCloud) persist(cloud.cloudSettings.setPaymentEntries(e, teamId));
       else paymentRepository.saveEntries(e);
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const setExtraExpenses = useCallback(
     (e: ExtraExpense[]) => {
       if (!guard()) return;
       setExtraExpensesState(e);
-      if (isCloud) persist(cloud.cloudSettings.setExtraExpenses(e));
+      if (isCloud) persist(cloud.cloudSettings.setExtraExpenses(e, teamId));
       else paymentRepository.saveExtraExpenses(e);
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const setRefunds = useCallback(
     (e: RefundRecord[]) => {
       if (!guard()) return;
       setRefundsState(e);
-      if (isCloud) persist(cloud.cloudSettings.setRefunds(e));
+      if (isCloud) persist(cloud.cloudSettings.setRefunds(e, teamId));
       else paymentRepository.saveRefunds(e);
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const upsertFormationTemplate = useCallback(
     (t: FormationTemplate) => {
@@ -344,29 +345,29 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       setFormationTemplates((prev) => {
         const exists = prev.some((x) => x.id === t.id);
         const next = exists ? prev.map((x) => (x.id === t.id ? t : x)) : [...prev, t];
-        if (isCloud) persist(cloud.cloudSettings.setFormationTemplates(next));
+        if (isCloud) persist(cloud.cloudSettings.setFormationTemplates(next, teamId));
         else writeJSON(STORAGE_KEYS.formationTemplates, next);
         return next;
       });
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
   const setTeamBalance = useCallback(
     (n: number) => {
       if (!guard()) return;
       const v = Math.max(0, Math.round(n));
       setTeamBalanceState(v);
-      if (isCloud) persist(cloud.cloudSettings.setTeamBalance(v));
+      if (isCloud) persist(cloud.cloudSettings.setTeamBalance(v, teamId));
       else writeJSON(STORAGE_KEYS.teamBalance, v);
     },
-    [guard, isCloud, persist],
+    [guard, isCloud, persist, teamId],
   );
 
   const resetToSample = useCallback(() => {
     if (!guard()) return;
     const s = sampleSnapshot();
     if (isCloud) {
-      persist(cloud.writeSnapshot(s).then(refetch));
+      persist(cloud.writeSnapshot(s, teamId).then(refetch));
       return;
     }
     clearAll();
@@ -382,7 +383,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     writeJSON(STORAGE_KEYS.teamsSeeded, true);
     writeJSON(STORAGE_KEYS.paymentSeeded, SEED_VERSION_PAYMENT);
     applySnapshot({ ...s, formationTemplates: DEFAULT_FORMATION_TEMPLATES });
-  }, [guard, isCloud, persist, refetch, applySnapshot]);
+  }, [guard, isCloud, persist, refetch, applySnapshot, teamId]);
 
   const importLocalToCloud = useCallback(async () => {
     if (!isCloud || !guard()) return;
@@ -396,9 +397,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       teamBalance: readJSON<number>(STORAGE_KEYS.teamBalance, DEFAULT_BALANCE),
     };
     if (local.members.length === 0) throw new Error("이 브라우저에 저장된 회원 데이터가 없습니다.");
-    await cloud.writeSnapshot(local);
+    await cloud.writeSnapshot(local, teamId);
     await refetch();
-  }, [isCloud, guard, refetch]);
+  }, [isCloud, guard, refetch, teamId]);
 
   const exportSnapshot = useCallback(
     (): BackupFile => ({
@@ -429,7 +430,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         teamBalance: b.teamBalance,
       };
       if (isCloud) {
-        await cloud.writeSnapshot(s);
+        await cloud.writeSnapshot(s, teamId);
         await refetch();
         return;
       }
@@ -442,7 +443,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       writeJSON(STORAGE_KEYS.teamBalance, s.teamBalance);
       applySnapshot(s);
     },
-    [guard, isCloud, refetch, applySnapshot],
+    [guard, isCloud, refetch, applySnapshot, teamId],
   );
 
   const value: AppState & AppActions = {

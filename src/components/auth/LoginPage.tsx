@@ -23,6 +23,23 @@ export function LoginPage() {
     if (mode === "local" || (!loading && session)) router.replace("/");
   }, [mode, loading, session, router]);
 
+  // OAuth 리다이렉트 복귀 시 오류(사용자 취소·프로바이더 설정 오류) 표시
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const hashParams = new URLSearchParams(url.hash.startsWith("#") ? url.hash.slice(1) : "");
+      const err =
+        url.searchParams.get("error_description") ||
+        url.searchParams.get("error") ||
+        hashParams.get("error_description") ||
+        hashParams.get("error");
+      if (err) {
+        setError(decodeURIComponent(err.replace(/\+/g, " ")));
+        window.history.replaceState({}, "", url.pathname);
+      }
+    } catch {}
+  }, []);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -57,12 +74,12 @@ export function LoginPage() {
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm dark:shadow-none">
           {done ? (
             <div className="text-center">
-              <p className="text-base font-bold text-fg">가입 요청이 접수됐습니다</p>
+              <p className="text-base font-bold text-fg">계정이 만들어졌습니다</p>
               <p className="mt-2 text-sm text-fg-muted">
-                운영자가 승인하면 이용할 수 있습니다. 승인되면 이 화면이 자동으로 바뀝니다.
+                잠시 후 팀 설정 화면으로 이동합니다. 팀 분류코드로 가입하거나 새 팀을 만들 수 있습니다.
               </p>
               <Button className="mt-4 w-full" onClick={() => router.replace("/")}>
-                확인
+                팀 설정으로 이동
               </Button>
             </div>
           ) : (
@@ -122,7 +139,7 @@ export function LoginPage() {
 
               <form onSubmit={submit} className="space-y-3">
                 {tab === "signup" && (
-                  <FormRow label="이름 (회원 명단과 같은 이름)">
+                  <FormRow label="이름 (팀 명단과 같은 이름)">
                     <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="홍길동" autoComplete="name" />
                   </FormRow>
                 )}
@@ -150,7 +167,9 @@ export function LoginPage() {
               </form>
 
               <p className="mt-4 text-center text-xs text-fg-muted">
-                {tab === "signin" ? "처음이신가요? 가입 후 운영자 승인이 필요합니다." : "가입 후 운영자가 승인하면 이용할 수 있습니다."}
+                {tab === "signin"
+                  ? "처음이신가요? 가입 후 팀 코드로 가입하거나 새 팀을 만들 수 있습니다."
+                  : "가입 후 팀 분류코드로 팀에 가입하거나, 새 팀을 만들어 운영할 수 있습니다."}
               </p>
             </>
           )}

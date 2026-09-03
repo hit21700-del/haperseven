@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchVotePage, castVote, type VotePageData, type MatchVote } from "@/lib/repository/cloudRepository";
 import { GUEST_POS_OPTIONS } from "@/lib/formation/guestMember";
 import { LogoBox, Wordmark } from "@/components/brand/Logo";
+import { TeamLogo } from "@/components/brand/TeamIdentity";
 import { Button } from "@/components/ui/Button";
 import { FormRow, TextInput, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
@@ -62,6 +63,19 @@ export function VotePage() {
       if (saved) setMemberId(saved);
     } catch {}
   }, [load]);
+
+  // 저장된 이름이 이 팀 명단에 없으면(다른 팀 링크를 열었을 때) 선택을 비운다
+  useEffect(() => {
+    if (data && memberId && !data.members.some((m) => m.id === memberId)) setMemberId("");
+  }, [data, memberId]);
+
+  // 이름(신원)을 바꿀 때 그 사람의 저장된 메모를 입력창에 채운다 (data 재조회로는 덮어쓰지 않음)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const v = memberId ? data?.votes.find((x) => x.member_id === memberId) : undefined;
+    setMemo(v?.memo ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [memberId]);
 
   const myVote = useMemo<MatchVote | undefined>(
     () => data?.votes.find((v) => v.member_id === memberId),
@@ -135,14 +149,30 @@ export function VotePage() {
   ];
 
   const m = data?.match;
-  const title = m ? (m.matchType === "SCRIMMAGE" ? m.title ?? "자체전" : m.opponent ? `하퍼세븐 vs ${m.opponent}` : m.title ?? "경기") : "";
+  const teamName = data?.team?.name ?? "";
+  const title = m
+    ? m.matchType === "SCRIMMAGE"
+      ? m.title ?? "자체전"
+      : m.opponent
+        ? `${teamName || "우리 팀"} vs ${m.opponent}`
+        : m.title ?? "경기"
+    : "";
 
   return (
     <main className="min-h-screen bg-app px-4 py-8">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-5 flex items-center justify-center gap-3">
-          <LogoBox size={40} />
-          <Wordmark size="sm" />
+          {data?.team ? (
+            <>
+              <TeamLogo team={{ id: "", name: data.team.name, code: "", logo_url: data.team.logoUrl }} size={40} />
+              <span className="text-base font-bold text-fg">{data.team.name}</span>
+            </>
+          ) : (
+            <>
+              <LogoBox size={40} />
+              <Wordmark size="sm" />
+            </>
+          )}
         </div>
 
         {loading ? (
@@ -299,7 +329,7 @@ export function VotePage() {
               {memberVotes.length === 0 && guestVotes.length === 0 && <p className="text-sm text-fg-muted">아직 투표가 없습니다. 첫 번째로 투표해보세요!</p>}
             </section>
 
-            <p className="pb-6 text-center text-xs text-fg-muted">하퍼세븐 · 투표는 운영자가 출석과 라인업에 반영합니다.</p>
+            <p className="pb-6 text-center text-xs text-fg-muted">{teamName || "하퍼세븐"} · 투표는 운영자가 출석과 라인업에 반영합니다.</p>
           </div>
         )}
       </div>

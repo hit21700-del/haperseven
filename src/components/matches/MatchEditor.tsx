@@ -7,6 +7,7 @@ import { MemberTypeBadge, Badge } from "@/components/ui/Badge";
 import { IconButton } from "@/components/ui/Button";
 import { TextInput, Select, FormRow } from "@/components/ui/Field";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Match, AttendanceStatus, AttendanceRecord, MatchStat, MatchStatus } from "@/types/match";
 import type { Member } from "@/types/member";
 import { VotesPanel } from "./VotesPanel";
@@ -59,6 +60,8 @@ export function MatchEditor({
   const attOf = (id: string): AttendanceRecord | undefined => match.attendance.find((a) => a.memberId === id);
   const statOf = (id: string): MatchStat | undefined => match.stats.find((s) => s.memberId === id);
   const isScrimmage = match.matchType === "SCRIMMAGE";
+  const { team } = useAuth();
+  const teamName = team?.name ?? "하퍼세븐";
 
   const setField = (patch: Partial<Match>) => onChange({ ...match, ...patch });
 
@@ -172,7 +175,7 @@ export function MatchEditor({
         <div className="mt-4 grid grid-cols-1 items-end gap-3 sm:grid-cols-2">
           <div>
             <div className="mb-1 text-xs font-medium text-fg-2">
-              경기 결과 {isScrimmage ? "(화이트 : 블랙)" : "(하퍼세븐 : 상대)"}
+              경기 결과 {isScrimmage ? "(화이트 : 블랙)" : `(${teamName} : 상대)`}
             </div>
             <div className="flex items-center gap-2">
               <TextInput
@@ -182,7 +185,7 @@ export function MatchEditor({
                 value={match.score?.us ?? ""}
                 onChange={(e) => setScore("us", e.target.value)}
                 placeholder="-"
-                aria-label={isScrimmage ? "화이트 득점" : "하퍼세븐 득점"}
+                aria-label={isScrimmage ? "화이트 득점" : `${teamName} 득점`}
               />
               <span className="text-lg font-bold text-fg-muted" aria-hidden="true">
                 :

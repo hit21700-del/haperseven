@@ -28,7 +28,7 @@ export function VotesPanel({
   onApply?: (attendance: Match["attendance"]) => void;
   compact?: boolean;
 }) {
-  const { mode, canWrite } = useAuth();
+  const { mode, canWrite, team } = useAuth();
   const { upsertMatch } = useAppStore();
   const toast = useToast();
   const [votes, setVotes] = useState<MatchVote[]>([]);
@@ -64,7 +64,7 @@ export function VotesPanel({
       upsertMatch(target);
     }
     const u = voteUrl(target)!;
-    const r = await shareVoteLink(target, u);
+    const r = await shareVoteLink(target, u, team?.name ?? "하퍼세븐");
     if (r === "copied") toast("투표 링크를 복사했습니다. 카톡에 붙여넣어 공유하세요.");
     else if (r === "failed") toast("공유하지 못했습니다. 링크를 직접 복사하세요.", "error");
   };

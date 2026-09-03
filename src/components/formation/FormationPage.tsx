@@ -104,7 +104,8 @@ export function FormationPage() {
   }, [match, activeMembers]);
 
   // (cloud) 이 경기의 공개 투표 — 용병 참석 등록을 포메이션 용병으로 불러오기 위해 조회
-  const { mode: authMode } = useAuth();
+  const { mode: authMode, team } = useAuth();
+  const teamName = team?.name ?? "하퍼세븐";
   const [matchVotes, setMatchVotes] = useState<MatchVote[]>([]);
   useEffect(() => {
     if (authMode !== "cloud" || !match?.id) {
@@ -248,12 +249,12 @@ export function FormationPage() {
       await wait(300); // 렌더 완료 대기
       if (!boardRef.current) continue;
       const blob = await toBlob(boardRef.current, { pixelRatio: 2, backgroundColor: "#0B1117" });
-      if (blob) out.push({ name: `하퍼세븐_포메이션_${q.quarter}쿼터.png`, blob });
+      if (blob) out.push({ name: `${teamName}_포메이션_${q.quarter}쿼터.png`, blob });
       setProgress(++done);
     }
     if (summaryRef.current) {
       const blob = await toBlob(summaryRef.current, { pixelRatio: 2, backgroundColor: "#FFFFFF" });
-      if (blob) out.push({ name: `하퍼세븐_포메이션_출전요약.png`, blob });
+      if (blob) out.push({ name: `${teamName}_포메이션_출전요약.png`, blob });
       setProgress(++done);
     }
     return out;
@@ -306,7 +307,7 @@ export function FormationPage() {
         typeof navigator !== "undefined" && !!navigator.canShare && navigator.canShare({ files });
       if (canShareFiles) {
         try {
-          await navigator.share({ files, title: "하퍼세븐 포메이션" });
+          await navigator.share({ files, title: `${teamName} 포메이션` });
         } catch (e) {
           // 사용자가 공유 시트를 닫은 경우(AbortError)는 조용히 무시
           if (!(e instanceof DOMException && e.name === "AbortError")) {

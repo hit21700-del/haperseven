@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { LogoBox, Wordmark } from "@/components/brand/Logo";
+import { TeamIdentity } from "@/components/brand/TeamIdentity";
 import { TAB_PATH, tabFromPath, type TabKey } from "./NavContext";
 import { useTheme, type ThemePref } from "./ThemeProvider";
 
@@ -150,8 +150,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
       {/* 좌측 사이드바 (데스크톱) */}
       <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface p-4 md:flex">
         <Link href="/" className="mb-5 flex items-center gap-3 border-b border-line-soft pb-5">
-          <LogoBox size={44} />
-          <Wordmark />
+          <TeamIdentity />
         </Link>
 
         <UserCard />
@@ -200,8 +199,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden">
         <div className="flex items-center justify-between px-4 py-2.5">
           <Link href="/" className="flex items-center gap-2.5">
-            <LogoBox size={32} />
-            <Wordmark size="sm" />
+            <TeamIdentity size="sm" />
           </Link>
           <div className="flex items-center">
             <ThemeToggleButton />

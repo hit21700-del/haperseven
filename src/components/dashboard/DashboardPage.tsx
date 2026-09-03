@@ -16,6 +16,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useAppStore } from "@/lib/store/AppStore";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { Badge, MemberTypeBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
@@ -60,13 +61,15 @@ function FooterLink({ children, onClick }: { children: React.ReactNode; onClick:
 }
 
 /** 경기 표시명 */
-function matchName(m: Match): string {
+function matchName(m: Match, teamName: string): string {
   if (m.matchType === "SCRIMMAGE") return m.title ?? "자체전 (화이트 vs 블랙)";
-  return m.opponent ? `하퍼세븐 vs ${m.opponent}` : m.title ?? "경기";
+  return m.opponent ? `${teamName} vs ${m.opponent}` : m.title ?? "경기";
 }
 
 export function DashboardPage() {
   const { members, matches, paymentEntries, teamBalance } = useAppStore();
+  const { team } = useAuth();
+  const teamName = team?.name ?? "하퍼세븐";
   const go = useNav();
   const router = useRouter();
   const [period, setPeriod] = useState<Period>({ type: "year", year: currentYear() });
@@ -108,7 +111,7 @@ export function DashboardPage() {
     <div className="space-y-5">
       <PageHeader
         title="대시보드"
-        description={`하퍼세븐의 현재 운영 현황입니다 · ${periodLabel(period)} 기준`}
+        description={`${teamName}의 현재 운영 현황입니다 · ${periodLabel(period)} 기준`}
         action={<PeriodFilter value={period} onChange={setPeriod} />}
       />
 
@@ -151,7 +154,7 @@ export function DashboardPage() {
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-xl font-bold text-fg">{matchName(next)}</div>
+                  <div className="text-xl font-bold text-fg">{matchName(next, teamName)}</div>
                   <div className="mt-1 text-sm text-fg-muted">
                     {next.date} {next.time && `· ${next.time}`}{" "}
                     {next.location && (
@@ -307,7 +310,7 @@ export function DashboardPage() {
                         </span>
                       )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-semibold text-fg">{matchName(m)}</span>
+                        <span className="block truncate font-semibold text-fg">{matchName(m, teamName)}</span>
                         <span className="block text-xs text-fg-muted">{m.date}</span>
                       </span>
                       <span className="shrink-0 text-right">

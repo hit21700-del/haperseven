@@ -29,11 +29,11 @@ export function matchLabel(m: Pick<Match, "date" | "time" | "title" | "opponent"
  * 투표 링크 공유 — 모바일은 공유 시트(카톡 선택 가능), 미지원이면 클립보드 복사.
  * @returns "shared" | "copied" | "failed"
  */
-export async function shareVoteLink(match: Match, url: string): Promise<"shared" | "copied" | "failed"> {
-  const text = `⚽ 하퍼세븐 참석 투표\n${matchLabel(match)}\n아래 링크에서 이름 선택 후 참석/불참을 눌러주세요.`;
+export async function shareVoteLink(match: Match, url: string, teamName = "하퍼세븐"): Promise<"shared" | "copied" | "failed"> {
+  const text = `⚽ ${teamName} 참석 투표\n${matchLabel(match)}\n아래 링크에서 이름 선택 후 참석/불참을 눌러주세요.`;
   try {
     if (typeof navigator !== "undefined" && navigator.share) {
-      await navigator.share({ title: "하퍼세븐 참석 투표", text, url });
+      await navigator.share({ title: `${teamName} 참석 투표`, text, url });
       return "shared";
     }
   } catch (e) {
