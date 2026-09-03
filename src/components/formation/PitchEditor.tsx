@@ -330,6 +330,16 @@ export function PitchEditor({
   const dragging = (id: string) => drag?.id === id && drag.moved;
   const colorTransition = drag ? "" : "transition-colors duration-100";
 
+  const grpOf = (lbl: string): Group => (lbl === "GK" ? "GK" : ((detailToGroup(lbl) ?? "MF") as Group));
+  // 드래그 중 왼쪽 상단 "어디서 → 어디로" 표시용
+  let dragFromLabel: string | null = null;
+  if (drag) {
+    for (const [l, m] of placement) if (m === drag.id) { dragFromLabel = l; break; }
+    if (!dragFromLabel) dragFromLabel = groupOf(drag.id);
+  }
+  const dragToLabel = drag?.hover ?? null;
+  const dragToOccupant = dragToLabel ? placement.get(dragToLabel) : undefined;
+
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-pitch-bg p-4 sm:p-5">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_230px]">
@@ -423,7 +433,11 @@ export function PitchEditor({
                     aria-label={`${nameOf(mid)}, ${label}${isMoving ? " (이동 중)" : ""}`}
                     aria-pressed={isMoving}
                     className={`cursor-grab touch-none rounded-lg active:cursor-grabbing ${
-                      isMoving ? "ring-2 ring-pitch-green ring-offset-2 ring-offset-pitch-bg" : ""
+                      isMoving
+                        ? "ring-2 ring-pitch-green ring-offset-2 ring-offset-pitch-bg"
+                        : targeted
+                          ? "bg-pitch-green/25 ring-2 ring-pitch-green" // 교체 대상 하이라이트
+                          : ""
                     }`}
                   >
                     <PlayerJersey number={numberOf.get(mid) ?? 0} name={nameOf(mid)} slot={label} gk={label === "GK"} />
@@ -456,6 +470,34 @@ export function PitchEditor({
                   slot={drag.hover ?? groupOf(drag.id)}
                   gk={drag.hover === "GK"}
                 />
+              </div>
+            )}
+
+            {/* 왼쪽 상단: 드래그 중 "어디서 → 어디로" 바뀌는지 표시 */}
+            {drag && drag.moved && (
+              <div
+                className="export-hide pointer-events-none absolute left-2 top-2 z-50 min-w-[128px] rounded-lg border border-white/15 bg-[#04070B]/90 px-3 py-2 shadow-[0_4px_16px_rgba(0,0,0,.5)]"
+                aria-hidden="true"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-9 text-[11px] font-extrabold" style={{ color: POS_HEX[grpOf(dragFromLabel ?? "MF")] }}>
+                    {dragFromLabel ?? "?"}
+                  </span>
+                  <span className="max-w-[88px] truncate text-xs font-bold text-white">{nameOf(drag.id)}</span>
+                </div>
+                <div className="my-0.5 text-center text-[11px] leading-none text-white/50">▼</div>
+                {dragToLabel ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-9 text-[11px] font-extrabold" style={{ color: POS_HEX[grpOf(dragToLabel)] }}>
+                      {dragToLabel}
+                    </span>
+                    <span className="max-w-[88px] truncate text-xs font-bold text-white">
+                      {dragToOccupant ? nameOf(dragToOccupant) : "빈 자리"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-[11px] font-semibold text-white/50">{drag.overBench ? "후보로 내리기" : "놓을 자리로 이동"}</div>
+                )}
               </div>
             )}
           </div>
