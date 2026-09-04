@@ -6,7 +6,10 @@ import { LogoBox, Wordmark } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/Button";
 import { FormRow, TextInput } from "@/components/ui/Field";
 
-/** 로그인 / 가입 화면 — 카카오·구글 SSO + 이메일/비밀번호 */
+/** 카카오·구글 로그인 프로바이더 준비 전까지 숨김 (설정 완료되면 true 로) */
+const SSO_ENABLED = false;
+
+/** 로그인 / 가입 화면 — (SSO 준비 중) 이메일/비밀번호 */
 export function LoginPage() {
   const router = useRouter();
   const { mode, loading, session, signInWithPassword, signUpWithPassword, signInWithOAuth } = useAuth();
@@ -109,33 +112,37 @@ export function LoginPage() {
                 ))}
               </div>
 
-              {/* SSO */}
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => oauth("kakao")}
-                  disabled={busy}
-                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-sm font-semibold text-[#191919] transition hover:brightness-95 disabled:opacity-50"
-                >
-                  <KakaoIcon />
-                  카카오로 {tab === "signin" ? "로그인" : "시작하기"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => oauth("google")}
-                  disabled={busy}
-                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-surface text-sm font-semibold text-fg transition hover:bg-surface-2 disabled:opacity-50"
-                >
-                  <GoogleIcon />
-                  Google로 {tab === "signin" ? "로그인" : "시작하기"}
-                </button>
-              </div>
+              {/* SSO (카카오·구글) — 준비 전까지 숨김 */}
+              {SSO_ENABLED && (
+                <>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => oauth("kakao")}
+                      disabled={busy}
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#FEE500] text-sm font-semibold text-[#191919] transition hover:brightness-95 disabled:opacity-50"
+                    >
+                      <KakaoIcon />
+                      카카오로 {tab === "signin" ? "로그인" : "시작하기"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => oauth("google")}
+                      disabled={busy}
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-line bg-surface text-sm font-semibold text-fg transition hover:bg-surface-2 disabled:opacity-50"
+                    >
+                      <GoogleIcon />
+                      Google로 {tab === "signin" ? "로그인" : "시작하기"}
+                    </button>
+                  </div>
 
-              <div className="my-4 flex items-center gap-3 text-xs text-fg-muted">
-                <span className="h-px flex-1 bg-line" />
-                또는 이메일로
-                <span className="h-px flex-1 bg-line" />
-              </div>
+                  <div className="my-4 flex items-center gap-3 text-xs text-fg-muted">
+                    <span className="h-px flex-1 bg-line" />
+                    또는 이메일로
+                    <span className="h-px flex-1 bg-line" />
+                  </div>
+                </>
+              )}
 
               <form onSubmit={submit} className="space-y-3">
                 {tab === "signup" && (

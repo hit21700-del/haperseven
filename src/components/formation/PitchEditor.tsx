@@ -374,7 +374,7 @@ export function PitchEditor({
               <PitchMarkings />
             </div>
 
-            {/* 빈 슬롯 */}
+            {/* 빈 자리: 포지션 라벨 없이 영역(드롭존)으로 표시 — 드래그로 들어오면 초록 */}
             {zones.map((z) => {
               const p = SLOT_POS[z.label];
               if (!p || placement.has(z.label)) return null;
@@ -389,14 +389,14 @@ export function PitchEditor({
                   }}
                   aria-label={`${z.label} 빈 자리${moving ? ` — ${nameOf(moving)} 놓기` : ""}`}
                   aria-pressed={pickingZone === z.label}
-                  className={`export-hide absolute z-10 flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md text-[11px] font-bold ${colorTransition} ${
+                  className={`export-hide absolute z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-lg font-bold ${colorTransition} ${
                     active
-                      ? "bg-pitch-green text-[#062313]"
-                      : "border border-dashed border-white/30 bg-black/30 text-white/70 hover:bg-black/50 hover:text-white"
+                      ? "scale-110 border-2 border-pitch-green bg-pitch-green/30 text-pitch-green"
+                      : "border border-dashed border-white/20 bg-white/[0.03] text-white/30 hover:border-white/40 hover:bg-white/[0.08] hover:text-white/60"
                   }`}
                   style={{ left: `${xAdj(p.x, p.y)}%`, top: `${p.y}%` }}
                 >
-                  {z.label}
+                  +
                 </button>
               );
             })}
