@@ -1,0 +1,19 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (keep project active)
+        run: |
+          URL="https://oxxwoyxqlzafmgpihwhq.supabase.co/auth/v1/settings"
+          ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94eHdveXhxbHphZm1ncGlod2hxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMjYwNDEsImV4cCI6MjEwMzgwMjA0MX0.BkBszY3oBovc01f1yO0F6IsYzFMGAP191Cdg8EAdc5I"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" -H "apikey: $ANON")
+          echo "keep-alive -> HTTP $code ($(date -u))"
+          if [ "$code" != "200" ]; then echo "::error::status $code"; exit 1; fi
+          echo "OK"
