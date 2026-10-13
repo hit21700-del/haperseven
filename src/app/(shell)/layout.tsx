@@ -16,16 +16,17 @@ function CenterMessage({ children }: { children: React.ReactNode }) {
 
 /** 인증 게이트: cloud 모드에서 로그인·팀 설정·승인 상태에 따라 화면을 분기 */
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { mode, loading, session, profile, profileLoading, profileError, needsTeamSetup, isApproved, refreshProfile } =
+  const { mode, loading, session, profile, profileLoading, profileError, needsTeamSetup, isApproved, autoLoginActive, refreshProfile } =
     useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (mode === "cloud" && !loading && !session) router.replace("/login");
-  }, [mode, loading, session, router]);
+    // 자동 로그인 모드에선 로그인 화면으로 보내지 않고, 자동 입장될 때까지 기다린다
+    if (mode === "cloud" && !loading && !session && !autoLoginActive) router.replace("/login");
+  }, [mode, loading, session, autoLoginActive, router]);
 
   if (mode === "cloud") {
-    if (loading || !session) return <CenterMessage>로그인 확인 중…</CenterMessage>;
+    if (loading || !session) return <CenterMessage>{autoLoginActive ? "들어가는 중…" : "로그인 확인 중…"}</CenterMessage>;
     // 프로필을 아직 못 받았으면 로딩 — '승인 대기' 화면이 잘못 깜빡이는 것을 막는다
     if (profileLoading && !profile) return <CenterMessage>계정 정보를 불러오는 중…</CenterMessage>;
     // 조회 실패로 상태를 알 수 없음 — 재시도 (승인된 사용자를 대기 화면에 가두지 않는다)

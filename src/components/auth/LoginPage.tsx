@@ -12,7 +12,7 @@ const SSO_ENABLED = false;
 /** 로그인 / 가입 화면 — (SSO 준비 중) 이메일/비밀번호 */
 export function LoginPage() {
   const router = useRouter();
-  const { mode, loading, session, signInWithPassword, signUpWithPassword, signInWithOAuth } = useAuth();
+  const { mode, loading, session, autoLoginActive, signInWithPassword, signUpWithPassword, signInWithOAuth } = useAuth();
   const [tab, setTab] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,10 +21,10 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  // 이미 로그인됐거나 로컬 모드면 홈으로
+  // 이미 로그인됐거나 로컬 모드면, 또는 자동 로그인 모드면 홈으로 (로그인 화면 숨김)
   useEffect(() => {
-    if (mode === "local" || (!loading && session)) router.replace("/");
-  }, [mode, loading, session, router]);
+    if (mode === "local" || autoLoginActive || (!loading && session)) router.replace("/");
+  }, [mode, loading, session, autoLoginActive, router]);
 
   // OAuth 리다이렉트 복귀 시 오류(사용자 취소·프로바이더 설정 오류) 표시
   useEffect(() => {

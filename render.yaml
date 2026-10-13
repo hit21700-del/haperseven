@@ -16,6 +16,12 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
+      # (선택) 자동 로그인 — 두 값 설정 시 로그인 화면 없이 그 계정으로 자동 입장
+      # ⚠️ 공개 코드에 포함되어 주소를 아는 누구나 그 권한으로 접근 가능해짐
+      - key: NEXT_PUBLIC_AUTO_LOGIN_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_AUTO_LOGIN_PASSWORD
+        sync: false
       # AI 채팅을 켤 때만 대시보드에서 값 설정 (지금은 기능 꺼져 있어 불필요)
       - key: OPENAI_API_KEY
         sync: false

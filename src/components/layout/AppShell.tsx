@@ -134,7 +134,7 @@ function UserCard() {
 /** 공통 셸 레이아웃 — 데스크톱 사이드바 / 모바일 상단 로고 + 하단 탭바 */
 export function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { mode, signOut } = useAuth();
+  const { mode, signOut, autoLoginActive } = useAuth();
   const active = tabFromPath(pathname ?? "/");
   const onSettings = pathname?.startsWith("/settings");
 
@@ -181,7 +181,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
             >
               <Settings size={14} aria-hidden="true" /> 설정 · 계정
             </Link>
-            {mode === "cloud" && (
+            {mode === "cloud" && !autoLoginActive && (
               <button
                 type="button"
                 onClick={() => void signOut()}

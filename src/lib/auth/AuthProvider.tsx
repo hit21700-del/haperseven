@@ -33,6 +33,8 @@ type AuthState = {
   isApproved: boolean;
   /** 운영자 (쓰기 가능). local 모드는 항상 true */
   canWrite: boolean;
+  /** 자동 로그인(로그인 화면 없음) 활성 여부 */
+  autoLoginActive: boolean;
   signInWithPassword: (email: string, password: string) => Promise<string | null>;
   signUpWithPassword: (email: string, password: string, name: string) => Promise<string | null>;
   signInWithOAuth: (provider: "kakao" | "google") => Promise<string | null>;
@@ -46,6 +48,16 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+// ── 자동 로그인(로그인 화면 없이 지정 계정으로 입장) ─────────────────
+//   NEXT_PUBLIC_AUTO_LOGIN_EMAIL / _PASSWORD 가 둘 다 설정되면 활성화된다.
+//   빌드 시 코드에 인라인되어 공개되므로, 그 계정 권한이 "주소를 아는 누구나"
+//   에게 열린다는 점을 이해하고 설정해야 한다. 미설정 시 기존 로그인 화면 사용.
+const AUTO_LOGIN: { email: string; password: string } | null = (() => {
+  const email = process.env.NEXT_PUBLIC_AUTO_LOGIN_EMAIL;
+  const password = process.env.NEXT_PUBLIC_AUTO_LOGIN_PASSWORD;
+  return email && password ? { email, password } : null;
+})();
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const cloud = isSupabaseConfigured();
   const [loading, setLoading] = useState(cloud);
@@ -54,6 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [team, setTeam] = useState<Team | null>(null);
   const [profileLoading, setProfileLoading] = useState(cloud);
   const [profileError, setProfileError] = useState(false);
+  const [autoLoginFailed, setAutoLoginFailed] = useState(false);
+  const autoLoginActive = cloud && !!AUTO_LOGIN && !autoLoginFailed;
 
   const loadProfile = useCallback(async (userId: string | undefined) => {
     if (!userId) {
@@ -92,6 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let active = true;
     sb.auth.getSession().then(async ({ data }) => {
       if (!active) return;
+      // 세션이 없고 자동 로그인이 설정돼 있으면 지정 계정으로 바로 로그인
+      if (!data.session && AUTO_LOGIN) {
+        const { error } = await sb.auth.signInWithPassword(AUTO_LOGIN);
+        if (!active) return;
+        if (error) {
+          // 자동 로그인 실패 → 일반 로그인 화면으로 폴백
+          setAutoLoginFailed(true);
+          setLoading(false);
+        }
+        // 성공 시 onAuthStateChange 가 세션/프로필을 설정하고 loading 을 내린다
+        return;
+      }
       setSession(data.session);
       await loadProfile(data.session?.user.id);
       setLoading(false);
@@ -157,6 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       needsTeamSetup,
       isApproved,
       canWrite,
+      autoLoginActive,
       async signInWithPassword(email, password) {
         const { error } = await getSupabase().auth.signInWithPassword({ email, password });
         return error ? translateAuthError(error.message) : null;
@@ -174,6 +201,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return error ? translateAuthError(error.message) : null;
       },
       async signOut() {
+        // 자동 로그인 모드에선 로그아웃이 의미 없다(바로 다시 입장되므로 막아 혼선 방지)
+        if (autoLoginActive) return;
         await getSupabase().auth.signOut();
         setProfile(null);
         setTeam(null);
@@ -201,7 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       },
     };
-  }, [cloud, loading, session, profile, team, profileLoading, profileError, loadProfile]);
+  }, [cloud, loading, session, profile, team, profileLoading, profileError, autoLoginActive, loadProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

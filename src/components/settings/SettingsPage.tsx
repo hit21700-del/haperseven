@@ -76,9 +76,11 @@ export function SettingsPage() {
                 )}
               </div>
             </div>
-            <Button variant="secondary" onClick={() => void auth.signOut()}>
-              <LogOut size={15} aria-hidden="true" /> 로그아웃
-            </Button>
+            {!auth.autoLoginActive && (
+              <Button variant="secondary" onClick={() => void auth.signOut()}>
+                <LogOut size={15} aria-hidden="true" /> 로그아웃
+              </Button>
+            )}
           </div>
         ) : (
           <p className="text-sm text-fg-muted">
