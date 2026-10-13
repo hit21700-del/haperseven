@@ -49,12 +49,15 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null);
 
 // ── 자동 로그인(로그인 화면 없이 지정 계정으로 입장) ─────────────────
-//   NEXT_PUBLIC_AUTO_LOGIN_EMAIL / _PASSWORD 가 둘 다 설정되면 활성화된다.
-//   빌드 시 코드에 인라인되어 공개되므로, 그 계정 권한이 "주소를 아는 누구나"
-//   에게 열린다는 점을 이해하고 설정해야 한다. 미설정 시 기존 로그인 화면 사용.
+//   기본값으로 admin 계정이 켜져 있어, 접속 즉시 로그인 화면 없이 입장된다.
+//   - 계정/비번은 NEXT_PUBLIC_AUTO_LOGIN_EMAIL / _PASSWORD 로 덮어쓸 수 있다.
+//   - 끄려면 NEXT_PUBLIC_AUTO_LOGIN_DISABLED=true (그러면 일반 로그인 화면 사용).
+//   ⚠️ 비번이 공개 코드에 포함되므로 주소를 아는 누구나 이 계정 권한(운영자면
+//      전체 데이터 열람·수정)으로 접근 가능. 공개 운영 시에는 끄는 것을 권장.
 const AUTO_LOGIN: { email: string; password: string } | null = (() => {
-  const email = process.env.NEXT_PUBLIC_AUTO_LOGIN_EMAIL;
-  const password = process.env.NEXT_PUBLIC_AUTO_LOGIN_PASSWORD;
+  if (process.env.NEXT_PUBLIC_AUTO_LOGIN_DISABLED === "true") return null;
+  const email = process.env.NEXT_PUBLIC_AUTO_LOGIN_EMAIL || "admin@haperseven.app";
+  const password = process.env.NEXT_PUBLIC_AUTO_LOGIN_PASSWORD || "admin123!";
   return email && password ? { email, password } : null;
 })();
 
