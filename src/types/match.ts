@@ -2,6 +2,18 @@
 // 경기(Match) / 출석 / 스탯 관련 타입 정의
 // ─────────────────────────────────────────────────────────────
 import type { FormationPlan } from "./formation";
+import type { TeamColor } from "./member";
+
+/** 이 경기의 용병(이름·포지션·팀) — 회원 명단에 저장하지 않고 경기 데이터에 함께 저장 */
+export type MatchGuest = {
+  id: string;
+  name: string;
+  /** 세부 포지션 문자열 (첫 번째 = 주). 예: "CM,ST" */
+  positions: string;
+  age?: number;
+  /** 자체전 팀 (화이트/블랙) */
+  team?: TeamColor;
+};
 
 /** 출석 상태 */
 export type AttendanceStatus = "ATTEND" | "ABSENT" | "LATE" | "INJURED";
@@ -54,4 +66,8 @@ export type Match = {
   stats: MatchStat[];
   /** 저장된 포메이션 결과(있으면) */
   formationPlan?: FormationPlan;
+  /** 이 경기의 용병 명단(이름·포지션·팀). 포메이션/명단에 함께 사용 */
+  guests?: MatchGuest[];
+  /** 이 경기에서만 적용되는 팀 배정. (회원·용병 id) → 화이트/블랙. 전역 member.team 과 별개 */
+  teamAssignments?: Record<string, TeamColor>;
 };

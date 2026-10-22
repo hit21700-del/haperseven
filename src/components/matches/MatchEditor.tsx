@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Match, AttendanceStatus, AttendanceRecord, MatchStat, MatchStatus } from "@/types/match";
 import type { Member } from "@/types/member";
 import { VotesPanel } from "./VotesPanel";
+import { MatchTeamPanel } from "./MatchTeamPanel";
 
 const STATUSES: AttendanceStatus[] = ["ATTEND", "LATE", "INJURED", "ABSENT"];
 const STATUS_LABEL: Record<AttendanceStatus, string> = { ATTEND: "참석", LATE: "지각", INJURED: "부상", ABSENT: "불참" };
@@ -376,6 +377,9 @@ export function MatchEditor({
           </Table>
         </div>
       </Card>
+
+      {/* 자체전 팀 편성 + 용병 (이 경기 한정) */}
+      <MatchTeamPanel match={match} members={members} onChange={onChange} />
     </div>
   );
 }

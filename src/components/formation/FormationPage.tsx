@@ -24,12 +24,12 @@ import { summarizeQuarters } from "@/lib/formation/recompute";
 import { DEFAULT_BASE_RULES } from "@/types/formation";
 import type { FormationPlan, FormationTemplate, QuarterLineup } from "@/types/formation";
 import type { Member, TeamColor } from "@/types/member";
-import type { AttendanceRecord } from "@/types/match";
+import type { AttendanceRecord, MatchGuest } from "@/types/match";
 import type { ChatFormationRule } from "@/types/chat";
 import { FEATURES } from "@/lib/config";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { fetchMatchVotes, type MatchVote } from "@/lib/repository/cloudRepository";
-import { buildGuestMember } from "@/lib/formation/guestMember";
+import { buildGuestMember, matchGuestToMember, guestPositionsOf } from "@/lib/formation/guestMember";
 
 // AI 채팅 패널은 기능 플래그가 켜졌을 때만 별도 청크로 로드
 const FormationChatPanel = dynamic(() => import("./FormationChatPanel").then((m) => m.FormationChatPanel), {
@@ -142,10 +142,14 @@ export function FormationPage() {
     setSelectedIds([...matchAttendeeIds, ...guestMembers.map((g) => g.id)]);
   };
 
-  // 경기를 바꾸면: 저장된 포메이션이 있으면 그 명단을 복원, 없으면 참여 인원을 '비워서' 시작
-  // (자동 선택하지 않고, 사용자가 '참여 인원 선택'으로 직접 고른다)
+  // 경기를 바꾸면: 그 경기에 저장된 용병을 불러오고, 저장된 포메이션이 있으면 명단을 복원
   useEffect(() => {
-    const saved = match?.formationPlan ?? null;
+    const m = matches.find((x) => x.id === matchId) ?? null;
+    // 경기에 저장된 용병(이름·포지션) 복원
+    const savedGuests = (m?.guests ?? []).map(matchGuestToMember);
+    setGuests(savedGuests);
+    const known = new Set([...members, ...savedGuests].filter((x) => x.isActive).map((x) => x.id));
+    const saved = m?.formationPlan ?? null;
     setPlan(saved);
     if (saved) {
       const ids = new Set<string>();
@@ -153,7 +157,7 @@ export function FormationPage() {
         q.players.forEach((p) => ids.add(p.memberId));
         q.rests.forEach((r) => ids.add(r));
       });
-      setSelectedIds([...ids].filter((id) => activeMembers.some((m) => m.id === id)));
+      setSelectedIds([...ids].filter((id) => known.has(id)));
     } else {
       setSelectedIds([]);
     }
@@ -189,11 +193,34 @@ export function FormationPage() {
   const clearRules = () => setChatRules([]);
 
   // 자체전 팀 → 참여 인원으로 로드
-  const teamCount = (tc: TeamColor) => activeMembers.filter((m) => m.team === tc).length;
+  //  경기가 선택돼 있으면: 그 경기의 팀 배정(참석자 + 용병)을 우선 사용
+  //  경기가 없으면: 회원의 기본 팀(member.team)
+  const teamOfId = (id: string): TeamColor | undefined => {
+    if (match?.teamAssignments && match.teamAssignments[id]) return match.teamAssignments[id];
+    const g = match?.guests?.find((x) => x.id === id);
+    if (g?.team) return g.team;
+    return members.find((x) => x.id === id)?.team;
+  };
+  const teamRoster = (tc: TeamColor): string[] => {
+    if (match) {
+      const pool = new Set<string>([
+        ...match.attendance.filter((a) => a.status === "ATTEND" || a.status === "LATE").map((a) => a.memberId),
+        ...(match.guests ?? []).map((g) => g.id),
+      ]);
+      return [...pool].filter((id) => teamOfId(id) === tc && activeMembers.some((m) => m.id === id));
+    }
+    return activeMembers.filter((m) => m.team === tc).map((m) => m.id);
+  };
+  const teamCount = (tc: TeamColor) => teamRoster(tc).length;
   const loadTeam = (tc: TeamColor) => {
-    const ids = activeMembers.filter((m) => m.team === tc).map((m) => m.id);
+    const ids = teamRoster(tc);
     if (ids.length === 0) {
-      toast(`${tc === "WHITE" ? "화이트" : "블랙"} 팀에 배정된 회원이 없습니다. '팀 편집'에서 배정하세요.`, "error");
+      toast(
+        match
+          ? `이 경기 ${tc === "WHITE" ? "화이트" : "블랙"} 팀에 배정된 인원이 없습니다. 경기 화면의 '자체전 팀 편성'에서 배정하세요.`
+          : `${tc === "WHITE" ? "화이트" : "블랙"} 팀에 배정된 회원이 없습니다. '팀 편집'에서 배정하세요.`,
+        "error",
+      );
       return;
     }
     setSelectedIds(ids);
@@ -230,8 +257,23 @@ export function FormationPage() {
 
   const savePlan = () => {
     if (!match || !plan) return;
-    upsertMatch({ ...match, formationPlan: plan });
-    toast("이 경기에 포메이션을 저장했습니다.");
+    // 명단/플랜에 등장하는 용병을 이름·포지션·팀과 함께 경기에 저장(새로고침 후에도 복원)
+    const inUse = new Set<string>(selectedIds);
+    plan.quarters.forEach((q) => {
+      q.players.forEach((p) => inUse.add(p.memberId));
+      q.rests.forEach((r) => inUse.add(r));
+    });
+    const guestRecords: MatchGuest[] = guests
+      .filter((g) => inUse.has(g.id))
+      .map((g) => ({
+        id: g.id,
+        name: g.name,
+        positions: guestPositionsOf(g),
+        age: g.age,
+        team: match.teamAssignments?.[g.id] ?? match.guests?.find((x) => x.id === g.id)?.team,
+      }));
+    upsertMatch({ ...match, formationPlan: plan, guests: guestRecords });
+    toast("이 경기에 포메이션을 저장했습니다. (용병·팀 배정 포함)");
   };
 
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));

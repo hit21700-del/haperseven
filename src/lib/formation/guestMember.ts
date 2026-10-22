@@ -7,6 +7,25 @@ import { detailToGroup } from "@/lib/formation/positions";
 /** 선택 가능한 세부 포지션(좌우중 포함) */
 export const GUEST_POS_OPTIONS = ["GK", "CB", "LB", "RB", "DM", "CM", "LM", "RM", "LW", "RW", "ST"];
 
+/** 경기에 저장된 용병(MatchGuest) → 포메이션용 Member 로 변환 */
+export function matchGuestToMember(g: { id: string; name: string; positions: string; age?: number }): Member {
+  return buildGuestMember({
+    id: g.id,
+    name: g.name,
+    detailPositions: (g.positions || "CM").split(",").map((p) => p.trim()).filter(Boolean),
+    age: g.age,
+  });
+}
+
+/** 포메이션용 용병 Member → 저장용 포지션 문자열 (주/부 순서 유지) */
+export function guestPositionsOf(m: Member): string {
+  const detail = m.preferredDetail && m.preferredDetail.length ? [...m.preferredDetail] : [];
+  if (m.fixedGK && !detail.includes("GK")) detail.unshift("GK");
+  if (detail.length) return detail.join(",");
+  if (m.canPlayGK) return "GK";
+  return m.preferredPosition ?? m.positions.find((p) => p !== "ANY") ?? "CM";
+}
+
 export function buildGuestMember(input: {
   name: string;
   /** 세부 포지션 목록 (첫 번째 = 주 포지션) 예: ["CM","ST"] */
