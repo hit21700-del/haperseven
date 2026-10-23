@@ -54,6 +54,8 @@ export function FormationPage() {
   const [templateId, setTemplateId] = useState<string>(formationTemplates[0]?.id ?? "");
   const [chatRules, setChatRules] = useState<ChatFormationRule[]>([]);
   const [plan, setPlan] = useState<FormationPlan | null>(null);
+  // 현재 편집/저장 대상 팀 (자체전: 화이트/블랙 버튼으로 선택 / null = 매칭·전체 라인업)
+  const [activeTeam, setActiveTeam] = useState<TeamColor | null>(null);
   const [showCustom, setShowCustom] = useState(false);
   // 참여 인원(직접 선택). 경기를 고르면 그 경기 출석자로 자동 채워지고, 이후 자유롭게 가감 가능
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -145,6 +147,7 @@ export function FormationPage() {
   // 경기를 바꾸면: 그 경기에 저장된 용병을 불러오고, 저장된 포메이션이 있으면 명단을 복원
   useEffect(() => {
     const m = matches.find((x) => x.id === matchId) ?? null;
+    setActiveTeam(null);
     // 경기에 저장된 용병(이름·포지션) 복원
     const savedGuests = (m?.guests ?? []).map(matchGuestToMember);
     setGuests(savedGuests);
@@ -223,7 +226,10 @@ export function FormationPage() {
       );
       return;
     }
+    // 이 팀을 편집 대상으로 전환 — 그 팀에 저장된 포메이션이 있으면 복원, 없으면 비움
+    setActiveTeam(tc);
     setSelectedIds(ids);
+    setPlan(match?.teamFormations?.[tc] ?? null);
   };
 
   // 수동 쿼터 수정
@@ -257,23 +263,42 @@ export function FormationPage() {
 
   const savePlan = () => {
     if (!match || !plan) return;
-    // 명단/플랜에 등장하는 용병을 이름·포지션·팀과 함께 경기에 저장(새로고침 후에도 복원)
+    // 명단/플랜에 등장하는 용병
     const inUse = new Set<string>(selectedIds);
     plan.quarters.forEach((q) => {
       q.players.forEach((p) => inUse.add(p.memberId));
       q.rests.forEach((r) => inUse.add(r));
     });
-    const guestRecords: MatchGuest[] = guests
-      .filter((g) => inUse.has(g.id))
-      .map((g) => ({
-        id: g.id,
-        name: g.name,
-        positions: guestPositionsOf(g),
-        age: g.age,
-        team: match.teamAssignments?.[g.id] ?? match.guests?.find((x) => x.id === g.id)?.team,
-      }));
-    upsertMatch({ ...match, formationPlan: plan, guests: guestRecords });
-    toast("이 경기에 포메이션을 저장했습니다. (용병·팀 배정 포함)");
+    // 용병은 교체가 아니라 병합: 기존 명단은 그대로 두고, 포메이션에서 새로 추가된 것만 더한다
+    // (다른 팀 용병·경기 화면에서 추가한 용병이 사라지지 않도록)
+    const existingGuests = match.guests ?? [];
+    const existingIds = new Set(existingGuests.map((g) => g.id));
+    const addedAssigns: Record<string, TeamColor> = {};
+    const addedGuests: MatchGuest[] = guests
+      .filter((g) => inUse.has(g.id) && !existingIds.has(g.id))
+      .map((g) => {
+        const t = match.teamAssignments?.[g.id] ?? activeTeam ?? undefined;
+        if (t && !match.teamAssignments?.[g.id]) addedAssigns[g.id] = t;
+        return { id: g.id, name: g.name, positions: guestPositionsOf(g), age: g.age, team: t };
+      });
+    const mergedGuests = [...existingGuests, ...addedGuests];
+    const teamAssignments = Object.keys(addedAssigns).length
+      ? { ...(match.teamAssignments ?? {}), ...addedAssigns }
+      : match.teamAssignments;
+
+    if (activeTeam) {
+      // 자체전: 그 팀 슬롯에만 저장 — 다른 팀 포메이션은 보존
+      upsertMatch({
+        ...match,
+        teamFormations: { ...(match.teamFormations ?? {}), [activeTeam]: plan },
+        guests: mergedGuests,
+        teamAssignments,
+      });
+      toast(`${activeTeam === "WHITE" ? "화이트" : "블랙"} 팀 포메이션을 저장했습니다.`);
+    } else {
+      upsertMatch({ ...match, formationPlan: plan, guests: mergedGuests, teamAssignments });
+      toast("이 경기에 포메이션을 저장했습니다.");
+    }
   };
 
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -376,6 +401,7 @@ export function FormationPage() {
   };
 
   const shareLabel = exporting ? `${progress}/${CAPTURE_TOTAL} 생성 중…` : "공유";
+  const saveLabel = activeTeam ? `${activeTeam === "WHITE" ? "화이트" : "블랙"} 팀 저장` : "경기에 저장";
 
   return (
     <div className="space-y-4">
@@ -439,17 +465,36 @@ export function FormationPage() {
             <button
               type="button"
               onClick={() => loadTeam("WHITE")}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+              aria-pressed={activeTeam === "WHITE"}
+              className={`rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 ${
+                activeTeam === "WHITE" ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+              }`}
             >
               ● 화이트 {teamCount("WHITE")}
             </button>
             <button
               type="button"
               onClick={() => loadTeam("BLACK")}
-              className="rounded-lg border border-white/20 bg-black px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-800"
+              aria-pressed={activeTeam === "BLACK"}
+              className={`rounded-lg border border-white/20 bg-black px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-800 ${
+                activeTeam === "BLACK" ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+              }`}
             >
               ● 블랙 {teamCount("BLACK")}
             </button>
+            {activeTeam && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand">
+                {activeTeam === "WHITE" ? "화이트" : "블랙"} 팀 편집 중
+                <button
+                  type="button"
+                  onClick={() => setActiveTeam(null)}
+                  className="rounded-full px-1 text-brand/70 hover:text-brand"
+                  aria-label="팀 편집 해제"
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              </span>
+            )}
             <button
               type="button"
               onClick={() => setTeamModalOpen(true)}
@@ -619,7 +664,7 @@ export function FormationPage() {
                   </div>
 
                   <Button onClick={savePlan} className="hidden md:inline-flex">
-                    경기에 저장
+                    {saveLabel}
                   </Button>
                 </div>
               </div>
@@ -749,7 +794,7 @@ export function FormationPage() {
           <div className="h-16 md:hidden" aria-hidden="true" />
           <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+3.5rem)] z-20 border-t border-line bg-surface/90 px-4 py-3 backdrop-blur md:hidden">
             <Button onClick={savePlan} className="w-full">
-              경기에 저장
+              {saveLabel}
             </Button>
           </div>
         </>

@@ -126,7 +126,12 @@ export function MatchEditor({
 
   const activeMembers = members.filter((m) => m.isActive);
   const attendCount = match.attendance.filter((a) => a.status === "ATTEND" || a.status === "LATE").length;
-  const lineupCount = match.formationPlan?.quarters[0]?.players.length ?? 0;
+  const lineupCount =
+    match.formationPlan?.quarters[0]?.players.length ??
+    match.teamFormations?.WHITE?.quarters[0]?.players.length ??
+    match.teamFormations?.BLACK?.quarters[0]?.players.length ??
+    0;
+  const hasLineup = !!(match.formationPlan || match.teamFormations?.WHITE || match.teamFormations?.BLACK);
 
   return (
     <div className="space-y-4">
@@ -140,7 +145,7 @@ export function MatchEditor({
               onClick={() => router.push(`/formation?match=${match.id}`)}
               className="inline-flex min-h-8 items-center rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-fg-2 hover:bg-surface-2"
             >
-              {match.formationPlan ? `라인업 보기/수정 (${lineupCount}명)` : "라인업 작성"}
+              {hasLineup ? `라인업 보기/수정 (${lineupCount}명)` : "라인업 작성"}
             </button>
           }
         >

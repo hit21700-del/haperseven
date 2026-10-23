@@ -64,8 +64,10 @@ export type Match = {
   quarterCount: number;
   attendance: AttendanceRecord[];
   stats: MatchStat[];
-  /** 저장된 포메이션 결과(있으면) */
+  /** 저장된 포메이션 결과 — 매칭(외부전) 또는 팀 미지정 전체 라인업 */
   formationPlan?: FormationPlan;
+  /** 자체전 팀별 포메이션 (화이트/블랙 각각 따로 저장되어 서로 덮어쓰지 않음) */
+  teamFormations?: Partial<Record<TeamColor, FormationPlan>>;
   /** 이 경기의 용병 명단(이름·포지션·팀). 포메이션/명단에 함께 사용 */
   guests?: MatchGuest[];
   /** 이 경기에서만 적용되는 팀 배정. (회원·용병 id) → 화이트/블랙. 전역 member.team 과 별개 */
