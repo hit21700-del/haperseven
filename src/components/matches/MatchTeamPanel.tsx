@@ -12,15 +12,16 @@ import type { Member, TeamColor } from "@/types/member";
 const TEAMS: { key: TeamColor; label: string; active: string; idle: string }[] = [
   {
     key: "WHITE",
+    // 선택됨: 흰 버튼 + 초록 inset 링/굵은 글씨로 '선택' 상태를 명확히 (부모 overflow 에 안 잘리게 inset)
+    active: "bg-white font-extrabold text-gray-900 ring-2 ring-inset ring-emerald-500 dark:bg-gray-100",
+    idle: "bg-surface font-medium text-fg-muted hover:bg-surface-2",
     label: "화이트",
-    active: "border-gray-400 bg-white text-gray-900 shadow-sm dark:border-gray-300 dark:bg-gray-100",
-    idle: "border-line bg-surface text-fg-muted hover:bg-surface-2",
   },
   {
     key: "BLACK",
+    active: "bg-neutral-900 font-extrabold text-white ring-2 ring-inset ring-emerald-500",
+    idle: "bg-surface font-medium text-fg-muted hover:bg-surface-2",
     label: "블랙",
-    active: "border-black bg-neutral-900 text-white",
-    idle: "border-line bg-surface text-fg-muted hover:bg-surface-2",
   },
 ];
 

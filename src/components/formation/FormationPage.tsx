@@ -400,6 +400,119 @@ export function FormationPage() {
     }
   };
 
+  /** 1~4쿼터 보드를 캡처해 한 장(2열 그리드)으로 합친 PNG Blob 생성 */
+  const captureCombined = async (): Promise<Blob | null> => {
+    if (!plan) return null;
+    const { toBlob } = await import("html-to-image");
+    const shots: Blob[] = [];
+    setProgress(0);
+    await wait(120);
+    let done = 0;
+    for (const q of plan.quarters) {
+      setActiveQuarter(q.quarter);
+      await wait(300);
+      if (!boardRef.current) continue;
+      const blob = await toBlob(boardRef.current, { pixelRatio: 2, backgroundColor: "#0B1117" });
+      if (blob) shots.push(blob);
+      setProgress(++done);
+    }
+    if (shots.length === 0) return null;
+    // 블롭 → 이미지
+    const loaded = await Promise.all(
+      shots.map(
+        (b) =>
+          new Promise<{ img: HTMLImageElement; url: string }>((res, rej) => {
+            const url = URL.createObjectURL(b);
+            const img = new Image();
+            img.onload = () => res({ img, url });
+            img.onerror = rej;
+            img.src = url;
+          }),
+      ),
+    );
+    const cols = loaded.length <= 1 ? 1 : 2;
+    const rows = Math.ceil(loaded.length / cols);
+    const cw = loaded[0].img.naturalWidth;
+    const ch = loaded[0].img.naturalHeight;
+    const gap = Math.round(cw * 0.03);
+    const labelH = Math.round(ch * 0.075);
+    const canvas = document.createElement("canvas");
+    canvas.width = gap + cols * (cw + gap);
+    canvas.height = gap + rows * (ch + labelH + gap);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      loaded.forEach((l) => URL.revokeObjectURL(l.url));
+      return null;
+    }
+    ctx.fillStyle = "#0B1117";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    loaded.forEach(({ img }, i) => {
+      const r = Math.floor(i / cols);
+      const c = i % cols;
+      const x = gap + c * (cw + gap);
+      const y = gap + r * (ch + labelH + gap);
+      ctx.fillStyle = "#20E878";
+      ctx.font = `bold ${Math.round(labelH * 0.62)}px system-ui, sans-serif`;
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${i + 1}쿼터`, x + Math.round(gap * 0.3), y + labelH / 2);
+      ctx.drawImage(img, x, y + labelH, cw, ch);
+    });
+    loaded.forEach((l) => URL.revokeObjectURL(l.url));
+    return new Promise<Blob | null>((res) => canvas.toBlob((b) => res(b), "image/png"));
+  };
+
+  /** 공통: 캡처 래퍼 (뷰 전환/상태 복원) */
+  const runCapture = async (fn: () => Promise<void>) => {
+    if (!plan || exporting) return;
+    const prevQuarter = activeQuarter;
+    const prevView = viewMode;
+    setViewMode("pitch");
+    setExporting(true);
+    try {
+      await fn();
+    } catch (e) {
+      toast("이미지 생성 중 오류가 발생했습니다. 다시 시도하세요.", "error");
+      console.error(e);
+    } finally {
+      setActiveQuarter(prevQuarter);
+      setViewMode(prevView);
+      setExporting(false);
+      setProgress(0);
+    }
+  };
+
+  const combinedName = `${teamName}_포메이션_1-4쿼터.png`;
+
+  const exportCombined = () =>
+    runCapture(async () => {
+      const blob = await captureCombined();
+      if (!blob) return;
+      downloadAll([{ name: combinedName, blob }]);
+      toast("1~4쿼터를 한 장으로 저장했습니다.");
+    });
+
+  const shareCombined = () =>
+    runCapture(async () => {
+      const blob = await captureCombined();
+      if (!blob) return;
+      const file = new File([blob], combinedName, { type: "image/png" });
+      const canShareFiles =
+        typeof navigator !== "undefined" && !!navigator.canShare && navigator.canShare({ files: [file] });
+      if (canShareFiles) {
+        try {
+          await navigator.share({ files: [file], title: `${teamName} 포메이션 (1~4쿼터)` });
+        } catch (e) {
+          if (!(e instanceof DOMException && e.name === "AbortError")) {
+            downloadAll([{ name: combinedName, blob }]);
+            toast("공유가 지원되지 않아 이미지를 저장했습니다.", "info");
+          }
+        }
+      } else {
+        downloadAll([{ name: combinedName, blob }]);
+        toast("이 브라우저(PC 등)에서는 공유 시트를 열 수 없어 이미지를 저장했습니다. 휴대폰에서 열면 카톡으로 바로 공유됩니다.", "info");
+      }
+    });
+
   const shareLabel = exporting ? `${progress}/${CAPTURE_TOTAL} 생성 중…` : "공유";
   const saveLabel = activeTeam ? `${activeTeam === "WHITE" ? "화이트" : "블랙"} 팀 저장` : "경기에 저장";
 
@@ -467,7 +580,7 @@ export function FormationPage() {
               onClick={() => loadTeam("WHITE")}
               aria-pressed={activeTeam === "WHITE"}
               className={`rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 ${
-                activeTeam === "WHITE" ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+                activeTeam === "WHITE" ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-surface" : ""
               }`}
             >
               ● 화이트 {teamCount("WHITE")}
@@ -477,7 +590,7 @@ export function FormationPage() {
               onClick={() => loadTeam("BLACK")}
               aria-pressed={activeTeam === "BLACK"}
               className={`rounded-lg border border-white/20 bg-black px-4 py-1.5 text-sm font-semibold text-white hover:bg-neutral-800 ${
-                activeTeam === "BLACK" ? "ring-2 ring-brand ring-offset-2 ring-offset-surface" : ""
+                activeTeam === "BLACK" ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-surface" : ""
               }`}
             >
               ● 블랙 {teamCount("BLACK")}
@@ -632,8 +745,35 @@ export function FormationPage() {
                         <div
                           role="menu"
                           aria-label="공유 방법"
-                          className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-lg"
+                          className="absolute right-0 z-20 mt-1 w-56 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-lg"
                         >
+                          <div className="px-3 pb-1 pt-1.5 text-[11px] font-bold text-fg-muted">1~4쿼터 한 장으로</div>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setShareMenuOpen(false);
+                              exportCombined();
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg-2 hover:bg-surface-2"
+                          >
+                            <ImageIcon size={16} aria-hidden="true" />
+                            모아서 저장 (1장)
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setShareMenuOpen(false);
+                              shareCombined();
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg-2 hover:bg-surface-2"
+                          >
+                            <Share2 size={16} aria-hidden="true" />
+                            모아서 카톡 공유 (1장)
+                          </button>
+                          <div className="my-1 border-t border-line-soft" />
+                          <div className="px-3 pb-1 pt-0.5 text-[11px] font-bold text-fg-muted">쿼터별 따로 (5장)</div>
                           <button
                             type="button"
                             role="menuitem"
@@ -644,7 +784,7 @@ export function FormationPage() {
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg-2 hover:bg-surface-2"
                           >
                             <ImageIcon size={16} aria-hidden="true" />
-                            이미지로 저장
+                            쿼터별 저장 (5장)
                           </button>
                           <button
                             type="button"
@@ -656,7 +796,7 @@ export function FormationPage() {
                             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg-2 hover:bg-surface-2"
                           >
                             <Share2 size={16} aria-hidden="true" />
-                            카톡으로 공유
+                            쿼터별 카톡 공유 (5장)
                           </button>
                         </div>
                       </>
